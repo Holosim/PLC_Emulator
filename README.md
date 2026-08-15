@@ -1,23 +1,22 @@
 # PLC Emulator
 
-TEMPLATE INFORMATION TO BE UPDATED.
-A template for building a semi-automated team of software engineering
-AI agents — a Product Manager, a Solutions Architect, a Systems
-Engineer, a Software Engineer, a Test Engineer, and CI/CD — using
-GitHub as the distributor for the agents, handling communication via
-Issue messages. No long-running process is required: every hand-off
-is a fresh, ephemeral Claude Code session, triggered by a label
-change, that reads the issue thread, does its work, and hands off to
-the next role.
+A highly configurable local server application to simulate a programmable logic controller and corresponding automation network components, including relays, display panels, inputs, etc. The construction of this emulator will test the semi-automated team of software engineering AI agents using GitHub as the distributor for the agents, handling communication via Issue messages. 
+— **Product Manager
+- **Solutions Architect
+- **Systems Engineer
+- **Software Engineer
+- **Test Engineer
+- **CI/CD —
 
-## Where to begin
+No long-running process is required: every hand-off is a fresh, ephemeral Claude Code session, triggered by a label change, that reads the issue thread, does its work, and hands off to the next role.
+
+## Begin Project
 
 Starting a brand-new project from this template:
 
-- **Create a New Repo** - Duplicate this repo and give it a logical based on the Subject_Goals of the project.
+- **Create a New Repo** [DONE] - Duplicate this repo and give it a logical based on the Subject_Goals of the project.
 - **Fill in Kickoff Runbook** - **[`KICKOFF_RUNBOOK.md`](./KICKOFF_RUNBOOK.md)** — the fill-in-the-blanks
-questionnaire and step-by-step setup instructions. Start there, not
-here.
+questionnaire and step-by-step setup instructions. 
 
 ## Where to go next — the project documents, in the order they're actually produced
 
