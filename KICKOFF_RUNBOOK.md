@@ -15,11 +15,11 @@ This file lives at the root of the project which was cloned from AGENT_TEMPLATE 
 
 | Field | Value |
 | --- | --- |
-| Project Name | |
-| Client Name | |
-| Preferred Software Programming Language | |
-| Description of deliverable(s) | |
-| General budget (time/tokens) | |
+| Project Name | PLC Emulator |
+| Client Name | HoloSim Entertainment |
+| Preferred Software Programming Language | C# |
+| Description of deliverable(s) | Server application, extensible with drivers that emulate multiple different components of an automation network |
+| General budget (time/tokens) | Limited. Need to work within the confines of a throttled monthly Anthropic subscription and Github services. |
 
 **Notes on specific fields:**
 
