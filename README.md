@@ -1,5 +1,6 @@
-# =TEMPLATE=
+# PLC Emulator
 
+TEMPLATE INFORMATION TO BE UPDATED.
 A template for building a semi-automated team of software engineering
 AI agents — a Product Manager, a Solutions Architect, a Systems
 Engineer, a Software Engineer, a Test Engineer, and CI/CD — using
