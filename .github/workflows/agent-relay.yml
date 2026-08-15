@@ -1,0 +1,345 @@
+name: agent-relay
+
+# Fires whenever an "agent:*" label lands on an issue. Label changes
+# are the sole trigger -- comments never trigger anything, by design.
+# See .github/AGENT_LABELS.md for the label convention this workflow
+# depends on.
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+  actions: read
+
+concurrency:
+  group: agent-relay-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  relay:
+    if: startsWith(github.event.label.name, 'agent:')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # RELAY_TOKEN must be a personal access token or GitHub App
+    # installation token, NOT the default GITHUB_TOKEN. Labels added
+    # using the default token don't fire new workflow runs, which would
+    # silently break the handoff to the next role. See setup notes below.
+    env:
+      GH_TOKEN: ${{ secrets.RELAY_TOKEN }}
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Determine which role should act
+        id: role
+        run: |
+          ROLE="${{ github.event.label.name }}"
+          ROLE="${ROLE#agent:}"
+          if [ -z "$ROLE" ]; then
+            echo "No agent role matched in this event — nothing to do."
+            exit 1
+          fi
+          echo "role=$ROLE" >> "$GITHUB_OUTPUT"
+          echo "issue=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Mark issue in progress
+        run: |
+          gh issue edit ${{ steps.role.outputs.issue }} --add-label "status:in-progress" || true
+
+      - name: Run Claude Code as ${{ steps.role.outputs.role }}
+        id: run_claude
+        continue-on-error: true
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          allowed_bots: "claude[bot]"
+          # Full output includes the actual error detail (error/error_type/
+          # message) on failure, not just the summary result object -- what
+          # we were missing this time. Tradeoff: it also means raw prompts
+          # and tool output land in the log, visible to anyone with read
+          # access to this repo. Reasonable here; worth reconsidering for
+          # anything more sensitive built from this template later.
+          show_full_output: "true"
+          # Alternative if you'd rather go back to separate API billing,
+          # decoupled from your subscription's own usage window:
+          # anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            ISSUE: #${{ steps.role.outputs.issue }}
+
+            You are acting as the ${{ steps.role.outputs.role }} on this
+            project. Your responsibilities and communication rules are
+            defined in .claude/agents/${{ steps.role.outputs.role }}.md —
+            follow them.
+
+            1. Read issue #${{ steps.role.outputs.issue }} in full,
+               including every comment, to understand the current state
+               of this handoff.
+            2. Read .claude/agent-memory/${{ steps.role.outputs.role }}/MEMORY.md
+               for anything relevant you've learned on past issues.
+            3. If this task touches one of the standard docs
+               (docs/PROJECT_DEFINITION.md, docs/RTVM.md, docs/SDD.md,
+               docs/IMPLEMENTATION_PLAN.md), check whether it already
+               exists before writing to it — every project starts with
+               a pre-structured skeleton for these. Fill in that
+               existing structure; don't replace it with something new.
+            4. Do the work the issue is asking of you.
+            5. Post one comment on the issue before you finish — no
+               matter what happened. This isn't conditional on
+               success: if you completed the task, say what you did;
+               if you hit an error, ran out of information you
+               couldn't resolve, or got blocked by something outside
+               your control, say that instead, as specifically as you
+               can. The comment thread should never go quiet with no
+               record of what was attempted. Follow the comment
+               structure in .github/AGENT_LABELS.md exactly: first
+               line is "<Addressee>, <Your role>:", last line is a
+               "**Next:**" status line. The Next line isn't
+               decoration — stall-recovery.yml parses it to route a
+               recovered hand-off correctly, so get the exact format
+               right.
+            6. Hand off by running exactly one command:
+                 gh issue edit ${{ steps.role.outputs.issue }} \
+                   --remove-label "agent:${{ steps.role.outputs.role }}" \
+                   --remove-label "status:in-progress" \
+                   --add-label "agent:<next-role>"
+               If you're blocked, add "status:blocked" and set the next
+               role to agent:solutions-architect instead of the normal
+               next step. Exception: if your role's own instructions
+               say you're waiting on a human reply rather than handing
+               off to another role, follow that instead — just remove
+               "status:in-progress" and leave your own agent:* label in
+               place, so nothing else gets triggered on this issue
+               until they reply.
+            7. If you learned something durable — a pattern, a gotcha,
+               an architectural decision — append it to your MEMORY.md.
+               Keep entries short and dated.
+          claude_args: |
+            --agent ${{ steps.role.outputs.role }}
+            --permission-mode bypassPermissions
+
+      - name: Handle known infrastructure failures, or fail normally
+        if: steps.run_claude.outcome == 'failure'
+        run: |
+          # Brief pause: querying this run's own log immediately after the
+          # previous step finished has, at least once, come back empty even
+          # for a run that clearly did produce output -- possibly a lag
+          # between a step finishing and its log being available via the
+          # API. Cheap hedge against that either way.
+          sleep 5
+          RUN_LOG="$(gh run view ${{ github.run_id }} --log 2>/dev/null || true)"
+
+          notify() {
+            gh issue comment ${{ steps.role.outputs.issue }} --body "$1"
+            gh issue edit ${{ steps.role.outputs.issue }} \
+              --remove-label "agent:${{ steps.role.outputs.role }}" \
+              --remove-label "status:in-progress" \
+              --add-label "status:needs-human"
+          }
+
+          if echo "$RUN_LOG" | grep -qi "credit balance is too low"; then
+            notify "$(cat <<'EOF'
+          **This run could not execute — the Anthropic API reported a credit-balance error.**
+
+          This usually means the account's API credit balance needs
+          topping up at console.anthropic.com. It has also been reported
+          for unrelated causes (e.g. an orphaned API key, where the
+          balance looks fine but the key/workspace link is broken) — if
+          the balance already looks fine there, try regenerating
+          ANTHROPIC_API_KEY before assuming more funds are needed.
+
+          Once resolved, remove status:needs-human and re-add
+          agent:${{ steps.role.outputs.role }} to resume.
+          EOF
+          )"
+            exit 0
+          fi
+
+          if echo "$RUN_LOG" | grep -qiE "authentication_error|authentication_failed|API key is invalid"; then
+            notify "$(cat <<'EOF'
+          **This run could not execute — the Anthropic API rejected the key as invalid.**
+
+          ANTHROPIC_API_KEY is likely missing, mistyped, or revoked.
+          Check Settings -> Secrets and variables -> Actions, and confirm
+          the key still exists at console.anthropic.com — regenerate it
+          if you're unsure.
+
+          Once resolved, remove status:needs-human and re-add
+          agent:${{ steps.role.outputs.role }} to resume.
+          EOF
+          )"
+            exit 0
+          fi
+
+          if echo "$RUN_LOG" | grep -qi "permission_error"; then
+            notify "$(cat <<'EOF'
+          **This run could not execute — the API key doesn't have access to the model it tried to use.**
+
+          Check the key's workspace and organization model access at
+          console.anthropic.com.
+
+          Once resolved, remove status:needs-human and re-add
+          agent:${{ steps.role.outputs.role }} to resume.
+          EOF
+          )"
+            exit 0
+          fi
+
+          if echo "$RUN_LOG" | grep -qi "Could not fetch an OIDC token"; then
+            notify "$(cat <<'EOF'
+          **This run could not execute — GitHub couldn't issue an OIDC token for the workflow.**
+
+          This should already be fixed (id-token: write is set in
+          agent-relay.yml's permissions), so seeing it again suggests
+          that permission was removed, or this workflow file got copied
+          to a new repo without it.
+
+          Once resolved, remove status:needs-human and re-add
+          agent:${{ steps.role.outputs.role }} to resume.
+          EOF
+          )"
+            exit 0
+          fi
+
+          if echo "$RUN_LOG" | grep -qi "Workflow initiated by non-human actor"; then
+            notify "$(cat <<'EOF'
+          **This run could not execute — claude-code-action rejected it because a bot, not a human, triggered it.**
+
+          This should already be fixed (allowed_bots: "claude[bot]" is
+          set in agent-relay.yml), so seeing it again suggests that
+          setting was removed, or this workflow file got copied to a
+          new repo without it. This happens whenever an agent's own
+          hand-off uses claude-code-action's GitHub App identity rather
+          than RELAY_TOKEN to relabel an issue -- a normal, expected
+          part of how agents hand off to each other, which is exactly
+          why it needs to stay allow-listed rather than fixed by
+          changing how agents hand off.
+
+          Once resolved, remove status:needs-human and re-add
+          agent:${{ steps.role.outputs.role }} to resume.
+          EOF
+          )"
+            exit 0
+          fi
+
+          if echo "$RUN_LOG" | grep -qiE "rate_limit_error|overloaded_error"; then
+            if echo "$RUN_LOG" | grep -qi "rate_limit_error"; then
+              ERROR_KIND="rate limit"
+              ERROR_DESC="The account is sending requests faster than its current usage tier allows — likely several issues running concurrently at once."
+            else
+              ERROR_KIND="service overload"
+              ERROR_DESC="Anthropic's API itself is temporarily overloaded — this is about their service capacity, not this account specifically."
+            fi
+
+            CURRENT_LABELS="$(gh issue view ${{ steps.role.outputs.issue }} --json labels -q '.labels[].name')"
+            CURRENT_RETRY=0
+            echo "$CURRENT_LABELS" | grep -q "^status:retry-1$" && CURRENT_RETRY=1
+            echo "$CURRENT_LABELS" | grep -q "^status:retry-2$" && CURRENT_RETRY=2
+            echo "$CURRENT_LABELS" | grep -q "^status:retry-3$" && CURRENT_RETRY=3
+            NEXT_RETRY=$((CURRENT_RETRY + 1))
+
+            if (( NEXT_RETRY > 3 )); then
+              gh issue comment ${{ steps.role.outputs.issue }} --body "$(cat <<EOF
+          **Automatic retry is giving up — this run has now failed 3 times in a row with a $ERROR_KIND error.**
+
+          $ERROR_DESC
+
+          Three consecutive failures with the same transient-looking error
+          usually means it isn't actually transient. Retrying a 4th time
+          automatically is unlikely to help without something changing on
+          one end or the other.
+
+          What to check: current usage tier and rate limits at
+          console.anthropic.com (Settings -> Limits), and whether several
+          other issues are actively running right now and competing for
+          the same per-minute request/token budget. If concurrency is the
+          cause, this may resolve on its own once other runs finish —
+          worth a look before assuming the tier itself needs raising.
+
+          This is now status:needs-human rather than continuing to retry
+          silently. Once resolved, remove status:needs-human and
+          status:retry-3, and re-add agent:${{ steps.role.outputs.role }}
+          to resume.
+          EOF
+          )"
+              gh issue edit ${{ steps.role.outputs.issue }} \
+                --remove-label "agent:${{ steps.role.outputs.role }}" \
+                --remove-label "status:in-progress" \
+                --remove-label "status:retry-3" \
+                --add-label "status:needs-human"
+              exit 0
+            fi
+
+            case $NEXT_RETRY in
+              1) DELAY=30 ;;
+              2) DELAY=60 ;;
+              3) DELAY=120 ;;
+            esac
+
+            gh issue comment ${{ steps.role.outputs.issue }} --body "$(cat <<EOF
+          **This run hit a $ERROR_KIND error — retrying automatically (attempt $NEXT_RETRY of 3).**
+
+          $ERROR_DESC
+
+          This is expected to resolve on its own, so no action is needed
+          unless it keeps happening. Waiting ${DELAY}s before the retry —
+          the wait increases each attempt (30s, then 60s, then 120s) to
+          give whatever caused this more room to clear. If this is still
+          failing after attempt 3, it will stop retrying automatically
+          and flag status:needs-human instead of trying indefinitely.
+          EOF
+          )"
+
+            if (( CURRENT_RETRY > 0 )); then
+              gh issue edit ${{ steps.role.outputs.issue }} \
+                --remove-label "status:retry-$CURRENT_RETRY" \
+                --remove-label "status:in-progress" \
+                --add-label "status:retry-$NEXT_RETRY" || true
+            else
+              gh issue edit ${{ steps.role.outputs.issue }} \
+                --remove-label "status:in-progress" \
+                --add-label "status:retry-$NEXT_RETRY"
+            fi
+
+            sleep "$DELAY"
+
+            gh issue edit ${{ steps.role.outputs.issue }} --remove-label "agent:${{ steps.role.outputs.role }}"
+            gh issue edit ${{ steps.role.outputs.issue }} --add-label "agent:${{ steps.role.outputs.role }}"
+            exit 0
+          fi
+
+          IS_ERROR_LINE="$(echo "$RUN_LOG" | grep -o '"is_error":[[:space:]]*true' | head -1 || true)"
+          COST_LINE="$(echo "$RUN_LOG" | grep -oE '"total_cost_usd":[[:space:]]*[0-9.]+' | head -1 || true)"
+          TURNS_LINE="$(echo "$RUN_LOG" | grep -oE '"num_turns":[[:space:]]*[0-9]+' | head -1 || true)"
+
+          if [[ -n "$IS_ERROR_LINE" ]]; then
+            notify "$(cat <<EOF
+          **This run failed partway through — Claude Code reported an error result, but not one this workflow recognizes specifically.**
+
+          What's known from the run log: ${TURNS_LINE:-turn count unavailable}, ${COST_LINE:-cost unavailable}.
+
+          A non-trivial cost alongside an error result usually means
+          something failed partway through a real session rather than
+          at the very start — worth checking whether this coincided
+          with hitting a spending limit mid-run, which can surface
+          differently than the upfront credit-balance error this
+          workflow already catches.
+
+          Check the full run log (Actions -> this run -> "Run Claude
+          Code as ${{ steps.role.outputs.role }}") for the exact cause
+          — this workflow can't pin it down automatically from here.
+
+          Once resolved, remove status:needs-human and re-add
+          agent:${{ steps.role.outputs.role }} to resume.
+          EOF
+          )"
+            exit 0
+          fi
+
+          echo "Claude Code failed for a reason not in the known list, and no result JSON was found either — failing normally."
+          exit 1
