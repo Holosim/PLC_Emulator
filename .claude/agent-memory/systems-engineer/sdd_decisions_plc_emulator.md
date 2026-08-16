@@ -61,6 +61,20 @@ Engineer/Test Engineer questions on `[RTVM-014]`-style issues:
   consumer or `Core`↔`Drivers` would be a circular project reference.
   Standard dependency inversion; CORE-209 still holds since adding a
   driver only touches `PlcEmulator.Drivers`.
+- **`IInstruction.Evaluate(TagTable tags, bool rungState)`** — revised
+  2026-08-16 (issue #9) from the originally-documented single-parameter
+  `Evaluate(TagTable tags)`. Software Engineer flagged that a coil
+  (`OTE`) can't know whether the contacts preceding it in the same rung
+  fired without a channel for rung power flow. `rungState` is standard
+  ladder-logic rung-condition-in/rung-condition-out threading:
+  condition-type instructions (contacts, compares) AND their own
+  tag-based condition into the value and return it; action-type
+  instructions (coils, timers, counters, math) consume it for their
+  side effect and pass it through unchanged. `ScanEngine` seeds
+  `rungState = true` at the start of every rung, not carried across
+  rungs. Instructions remain fully stateless per-call (no change to the
+  NFR-500 reuse-across-controllers property above). Confirmed/signed
+  off in `docs/SDD.md` Architecture + Coding Standards sections.
 
 **Why:** these are exactly the kind of decisions that are expensive to
 change once Software Engineer starts building against them (wire

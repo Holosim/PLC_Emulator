@@ -44,6 +44,13 @@ one.
   evaluators operating on the tag table passed to them — no
   instruction class holds tag state itself, so the same instruction
   logic is reused correctly across multiple controller instances.
+  **Confirmed 2026-08-16 (issue #9):** each instruction also receives
+  the accumulated rung power-flow state ("rung-condition-in") and
+  returns it forward ("rung-condition-out") — see Coding Standards
+  below for the `IInstruction.Evaluate` signature this implies. Seeded
+  `true` (energized from the left power rail) at the start of every
+  rung by the Scan Engine and not carried across rungs; still fully
+  stateless per-call, so the reuse property above is unaffected.
 - **Driver layer.** NETWORK-defined components are instantiated
   through a common `IDriver` interface (CORE-209) and bound to their
   owning controller's `TagTable` at construction — never to a global
@@ -165,10 +172,21 @@ fit cleanly.
   per DATA-IN-100.
 - **Instruction classes:** one class per mnemonic under
   `PlcEmulator.Core.Instructions`, each implementing a shared
-  `IInstruction.Evaluate(TagTable tags)` — stateless, operating only
-  on the tag table it's given (see Architecture above — this is what
-  keeps instruction logic reusable across isolated controller
-  instances).
+  `IInstruction.Evaluate(TagTable tags, bool rungState)` — stateless,
+  operating only on the tag table and rung state it's given (see
+  Architecture above — this is what keeps instruction logic reusable
+  across isolated controller instances). **Confirmed 2026-08-16
+  (issue #9), superseding the single-parameter signature originally
+  documented here:** `rungState` carries standard ladder-logic
+  rung-condition-in/rung-condition-out power flow — condition-type
+  instructions (contacts, compares) AND their own tag-based condition
+  into the value they're given and return the result; action-type
+  instructions (coils, timers, counters, math) consume it to decide
+  their side effect and pass it through unchanged. Without this, an
+  output instruction like `OTE` would have no way to know whether the
+  contacts preceding it in the same rung were true. `ScanEngine` seeds
+  `rungState = true` (energized from the left power rail) at the start
+  of every rung.
 - **Driver interface:** `IDriver.Bind(TagTable tags, NetworkComponentConfig config)`
   at construction, `IDriver.OnScanComplete()` called once per scan
   after tag values settle, for drivers that need to react to state
