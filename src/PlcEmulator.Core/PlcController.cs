@@ -14,10 +14,10 @@ namespace PlcEmulator.Core;
 /// </summary>
 public sealed class PlcController
 {
-    private readonly TagTable _tags = new();
+    private readonly TagTable _tags;
     private readonly ScanEngine _scanEngine = new();
     private readonly WriteQueue _pendingWrites = new();
-    private IReadOnlyList<Rung> _rungs = Array.Empty<Rung>();
+    private readonly IReadOnlyList<Rung> _rungs;
     private IReadOnlyList<IDriver> _drivers = Array.Empty<IDriver>();
 
     /// <summary>
@@ -26,8 +26,10 @@ public sealed class PlcController
     /// </summary>
     public PlcController(ControlLogicDef controlLogic, NetworkDef network)
     {
-        // TODO: build the tag table, rung program, and driver set from
-        // the given definitions (DATA-IN-100/101/102).
+        _tags = ControlLogicBuilder.BuildTagTable(controlLogic);
+        _rungs = ControlLogicBuilder.BuildRungs(controlLogic);
+
+        // TODO: build the driver set from `network` (DATA-IN-102, CORE-209).
     }
 
     /// <summary>

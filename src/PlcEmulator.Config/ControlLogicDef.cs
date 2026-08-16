@@ -12,7 +12,9 @@ namespace PlcEmulator.Config;
 /// </remarks>
 public sealed class ControlLogicDef
 {
-    // TODO: tag definitions (name, TagType, initial value) and ordered
-    // rung/instruction definitions land here as scaffolding gives way
-    // to real parsing (DATA-IN-100, DATA-IN-101).
+    /// <summary>Every tag defined in this CONTROL_LOGIC document, in declaration order (DATA-IN-100).</summary>
+    public required IReadOnlyList<TagDef> Tags { get; init; }
+
+    /// <summary>Every ladder rung defined in this CONTROL_LOGIC document, in program order (DATA-IN-101).</summary>
+    public required IReadOnlyList<RungDef> Rungs { get; init; }
 }

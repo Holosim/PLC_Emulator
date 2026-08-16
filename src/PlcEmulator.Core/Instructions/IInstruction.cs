@@ -11,6 +11,15 @@ namespace PlcEmulator.Core.Instructions;
 public interface IInstruction
 {
     /// <summary>
+    /// The instruction's mnemonic (<c>XIC</c>, <c>OTE</c>, <c>TON</c>,
+    /// etc.), preserved verbatim from CONTROL_LOGIC JSON (DATA-IN-101;
+    /// see docs/SDD.md, Coding Standards / Naming). Used for
+    /// diagnostics/logging (UI-002) and for inspecting a parsed rung's
+    /// instruction sequence (e.g. TP-101).
+    /// </summary>
+    string Mnemonic { get; }
+
+    /// <summary>
     /// Evaluates this instruction against the given tag table,
     /// returning the instruction's rung-true/false result where
     /// applicable (e.g. a contact or compare) and applying any side

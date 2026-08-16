@@ -11,12 +11,18 @@ public sealed class Tag
     public required string Name { get; init; }
     public required TagType Type { get; init; }
 
-    /// <summary>Current scalar value (<c>bool</c>, <c>int</c>, or <c>double</c> per <see cref="Type"/>).</summary>
+    /// <summary>
+    /// Current scalar value (<c>bool</c>, <c>int</c>, or <c>double</c>)
+    /// for <see cref="TagType.Bool"/>/<see cref="TagType.Dint"/>/
+    /// <see cref="TagType.Real"/> tags. Unused (always <see langword="null"/>)
+    /// for <see cref="TagType.Timer"/>/<see cref="TagType.Counter"/>
+    /// tags — those carry their state in <see cref="Timer"/>/<see cref="Counter"/> instead.
+    /// </summary>
     public object? Value { get; set; }
 
-    /// <summary>Populated only for tags driven by a <c>TON</c>/<c>TOF</c> instruction.</summary>
+    /// <summary>Populated only for <see cref="TagType.Timer"/> tags (driven by a <c>TON</c>/<c>TOF</c> instruction).</summary>
     public TimerState? Timer { get; set; }
 
-    /// <summary>Populated only for tags driven by a <c>CTU</c>/<c>CTD</c> instruction.</summary>
+    /// <summary>Populated only for <see cref="TagType.Counter"/> tags (driven by a <c>CTU</c>/<c>CTD</c> instruction).</summary>
     public CounterState? Counter { get; set; }
 }
