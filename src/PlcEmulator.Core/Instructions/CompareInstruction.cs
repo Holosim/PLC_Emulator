@@ -23,7 +23,7 @@ public abstract class CompareInstruction : IInstruction
 
     public abstract string Mnemonic { get; }
 
-    public bool Evaluate(TagTable tags) =>
+    public bool Evaluate(TagTable tags, bool rungState) =>
         throw new NotImplementedException($"{Mnemonic}.Evaluate lands with CORE-207.");
 
     public override string ToString() => $"{Mnemonic}:{Left},{Right}";

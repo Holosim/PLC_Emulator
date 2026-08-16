@@ -38,7 +38,17 @@ public sealed class PlcController
     /// </summary>
     public void RunScan()
     {
-        throw new NotImplementedException("PlcController.RunScan is scaffolding only.");
+        foreach (var (tagName, value) in _pendingWrites.DrainAll())
+        {
+            _tags.Set(tagName, value);
+        }
+
+        _scanEngine.Evaluate(_rungs, _tags);
+
+        foreach (var driver in _drivers)
+        {
+            driver.OnScanComplete();
+        }
     }
 
     /// <summary>Returns a point-in-time snapshot of current tag values (DATA-OUT-300/301).</summary>
