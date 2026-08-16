@@ -27,4 +27,5 @@
      each active product line (VR HMD, gesture-tracking gloves, video
      jukebox controller). -->
 
-- PLC_Emulator: `docs/RTVM.md` populated & Approved (issue #2, closed). SDD next in issue #3.
+- PLC_Emulator: `docs/RTVM.md` populated & Approved (issue #2, closed). `docs/SDD.md` populated (issue #3, closed). Implementation Plan next in issue #4.
+- [SDD decisions — PLC_Emulator](sdd_decisions_plc_emulator.md) — NFR-500 controller-isolation design, TCP/JSON ICD message types (tag_update/tag_write/read_request), DELIV-900 vs NFR-501 verification-schedule split.
