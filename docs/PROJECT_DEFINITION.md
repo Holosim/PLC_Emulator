@@ -153,6 +153,8 @@ as an explicit late-stage v1.0 task (e.g. an implementation-plan item
 near the end of the sequence), not something to defer indefinitely or
 let fall out of scope.
 
+NOTE WELL: Development occurs entirely within the pipeline's native environment (Ubuntu/.NET). Refactoring into a Visual Studio project is a final deliverable step, performed once, after v1.0 is functionally complete and tested — not verified continuously during development. No parallel Windows/MSVC verification pipeline runs per-feature.
+
 ## Status
 
 All open questions from the Issue #1 kickoff have been answered by the
