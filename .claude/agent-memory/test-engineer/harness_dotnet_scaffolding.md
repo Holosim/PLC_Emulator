@@ -1,6 +1,6 @@
 ---
 name: harness-dotnet-scaffolding
-description: How to verify the PlcEmulator .NET solution builds/tests clean and matches SDD's project reference graph
+description: How to verify the PlcEmulator .NET solution builds/tests clean, matches SDD's project reference graph, and where TP-1xx procedures live
 metadata:
   type: project
 ---
@@ -17,7 +17,8 @@ dotnet build PlcEmulator.sln
 dotnet test PlcEmulator.sln
 ```
 Expect 0 warnings/0 errors on build; test count grows as features land
-(was 1/1 — a scaffolding smoke test — as of issue #5).
+(was 1/1 — a scaffolding smoke test — as of issue #5; 11/11 as of issue
+#6, DATA-IN-100/101).
 
 **SDD dependency direction to check on every scaffolding-adjacent
 issue** (grep `ProjectReference` in each `src/*/*.csproj`): `Config` is
@@ -44,6 +45,20 @@ consolidation issues (Implementation Plan #24/#27), that's a red flag —
 check `docs/RTVM.md` TP-501/TP-900 wording first before assuming it's
 required now.
 
+**RTVM test procedures (TP-1xx):** live in `docs/RTVM.md`'s "Test
+Procedures" table, keyed by ID and cross-referenced from the requirement
+rows above it (e.g. DATA-IN-100 → TP-100). The Software Engineer's
+dedicated test methods for a given TP- item are usually named
+`TpNNN_...` in `tests/PlcEmulator.Tests/` — cheap way to locate exactly
+which test implements which procedure, but always read the test body
+against the RTVM row's expected-result text rather than trusting the
+method name alone. Confirmed on issue #6 (2026-08-16): `Tp100_...`/
+`Tp101_...` test names matched TP-100/TP-101 exactly, line-by-line, no
+drift.
+
 **How to apply:** Use this checklist for any issue that touches
 scaffolding, adds a new `src/*` project, or changes project references —
-not just issue #5 itself.
+not just issue #5 itself. For all issues, start test verification by
+grepping `tests/PlcEmulator.Tests/` for the TP-NNN number(s) named in
+the requirement's RTVM row, then confirm build/test clean from a fresh
+`bin`/`obj` wipe.
