@@ -73,3 +73,24 @@ confirm no stray SDD lock markers / dirty `git status` were left behind
 by the merge. No separate regression-specific procedure exists — RTVM
 TP-1xx + this checklist is the whole regression suite at this project
 stage.
+
+**Partial/deferred TP verification is a legitimate pass, if scoped that
+way in the issue itself** (issue #9, CORE-200, 2026-08-16): the issue
+text explicitly said the scan-loop *mechanics* could be proven with
+stub `IInstruction`s, deferring full end-to-end TP-200 (real `XIC`/
+`OTE` semantics) to the next issue (#10). Verify the test suite proves
+exactly what the issue scoped (program order, once-per-rung, rung-state
+threading, no leak across rungs) and that it *explicitly* asserts the
+not-yet-built part still throws `NotImplementedException` (proves the
+deferral is intentional and tracked, not silently skipped) — that's a
+pass, not a partial/blocked result. Don't require the full TP wording
+to be satisfiable before the dependent issue lands.
+
+**Software Engineer flagging an SDD-documented signature as
+stale/needing sign-off is not a build/test failure** — note it in the
+pass comment and hand off normally; it's the Systems Engineer's doc to
+fix, not grounds to withhold a pass. Example: issue #9 extended
+`IInstruction.Evaluate(TagTable tags)` to `Evaluate(TagTable tags, bool
+rungState)` for rung power-flow threading; `docs/SDD.md` line ~168
+still shows the old signature as of 2026-08-16 and needs updating by
+Systems Engineer.
