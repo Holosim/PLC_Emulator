@@ -23,7 +23,7 @@ public abstract class SingleTagInstruction : IInstruction
 
     public abstract string Mnemonic { get; }
 
-    public bool Evaluate(TagTable tags) =>
+    public bool Evaluate(TagTable tags, bool rungState) =>
         throw new NotImplementedException($"{Mnemonic}.Evaluate lands with {_coreItem}.");
 
     public override string ToString() => $"{Mnemonic}:{TagName}";

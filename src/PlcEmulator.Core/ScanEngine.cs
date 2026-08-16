@@ -8,14 +8,35 @@ namespace PlcEmulator.Core;
 /// </summary>
 public sealed class ScanEngine
 {
-    /// <summary>Evaluates every rung, in order, against <paramref name="tags"/>.</summary>
+    /// <summary>
+    /// Evaluates every rung, in program order, against
+    /// <paramref name="tags"/> — one full pass, left to right within
+    /// each rung (CORE-200).
+    /// </summary>
+    /// <remarks>
+    /// For each rung, power flow ("rung state") starts energized
+    /// (<see langword="true"/>, per the left power rail) and is
+    /// threaded instruction-to-instruction via
+    /// <see cref="IInstruction.Evaluate"/>'s return value — see that
+    /// method's documentation for how condition- vs. action-type
+    /// instructions use it. This loop never wraps an instruction's
+    /// <c>Evaluate</c> call in a try/catch: the Scan Engine never
+    /// throws for expected runtime conditions like divide-by-zero
+    /// (CORE-208) — those are the responsibility of the instruction
+    /// itself to turn into a fault flag on its result rather than an
+    /// exception (docs/SDD.md, Coding Standards / Error handling), so
+    /// a single bad rung can't crash the scan loop.
+    /// </remarks>
     public void Evaluate(IReadOnlyList<Rung> rungs, TagTable tags)
     {
-        // TODO: single scan pass over rungs (CORE-200). The Scan
-        // Engine never throws for expected runtime conditions like
-        // divide-by-zero (CORE-208) — those set a fault flag on the
-        // offending tag/instruction result instead (docs/SDD.md,
-        // Coding Standards / Error handling).
-        throw new NotImplementedException("ScanEngine.Evaluate is scaffolding only.");
+        foreach (var rung in rungs)
+        {
+            var rungState = true;
+
+            foreach (var instruction in rung.Instructions)
+            {
+                rungState = instruction.Evaluate(tags, rungState);
+            }
+        }
     }
 }

@@ -20,10 +20,26 @@ public interface IInstruction
     string Mnemonic { get; }
 
     /// <summary>
-    /// Evaluates this instruction against the given tag table,
-    /// returning the instruction's rung-true/false result where
-    /// applicable (e.g. a contact or compare) and applying any side
-    /// effects (e.g. a coil write, a timer/counter update).
+    /// Evaluates this instruction against the given tag table.
     /// </summary>
-    bool Evaluate(TagTable tags);
+    /// <param name="tags">The owning controller's tag table (the only mutable state an instruction ever touches).</param>
+    /// <param name="rungState">
+    /// The rung's accumulated power-flow state immediately before this
+    /// instruction — "rung-condition-in", standard ladder-logic
+    /// terminology. <see cref="ScanEngine"/> seeds this to
+    /// <see langword="true"/> (energized from the left power rail) at
+    /// the start of every rung and threads each instruction's return
+    /// value into the next instruction's <paramref name="rungState"/>,
+    /// left to right (CORE-200). Condition-type instructions (contacts
+    /// <c>XIC</c>/<c>XIO</c>, compares) AND their own tag-based
+    /// condition into <paramref name="rungState"/> and return the
+    /// result ("rung-condition-out"). Action-type instructions (coils,
+    /// timers, counters, math) use <paramref name="rungState"/> to
+    /// decide whether to apply their side effect (e.g. a coil only
+    /// writes true when energized) and normally return it unchanged,
+    /// so power flow continues correctly past them to any further
+    /// instructions on the same rung.
+    /// </param>
+    /// <returns>This instruction's rung-condition-out, fed to the next instruction in the rung as its <paramref name="rungState"/>.</returns>
+    bool Evaluate(TagTable tags, bool rungState);
 }
