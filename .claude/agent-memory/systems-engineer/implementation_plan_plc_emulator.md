@@ -80,3 +80,13 @@ origin/issue-N, not main" for a dependency that's marked closed, don't
 treat that as resolved by silence — explicitly re-flag it in the
 hand-off to whichever role can actually do the merge (`agent:cicd`),
 every time, until it's confirmed landed.
+
+**Resolved 2026-08-16:** CI/CD merged `issue-6` (which carried
+`issue-5`'s full history) into `main` as a fast-forward to `b0ebb72` —
+this landed the #5 scaffold gap and the #6 feature work in one merge.
+`main` now has `src/`/`tests/`/`PlcEmulator.sln` for the first time.
+DATA-IN-100/DATA-IN-101 marked `Verified` in `docs/RTVM.md` with SHA
+`b0ebb72`. `VERSION` file created (1.0), tag `v1.0.1` pushed, but no
+GitHub Release cut yet — most RTVM items still `Approved`/`In Test`.
+Regression testing was requested by CI/CD (trunk merge), so #6 was
+handed to `agent:test-engineer` rather than closed outright.
