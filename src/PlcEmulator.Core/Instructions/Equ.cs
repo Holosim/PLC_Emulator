@@ -2,7 +2,7 @@ using PlcEmulator.Config;
 
 namespace PlcEmulator.Core.Instructions;
 
-/// <summary>Equal-to compare. Evaluation semantics land with CORE-207.</summary>
+/// <summary>Equal-to compare. Evaluation semantics: CORE-207.</summary>
 public sealed class Equ : CompareInstruction
 {
     public Equ(OperandDef left, OperandDef right) : base(left, right)
@@ -10,4 +10,6 @@ public sealed class Equ : CompareInstruction
     }
 
     public override string Mnemonic => "EQU";
+
+    protected override bool Compare(double left, double right) => left == right;
 }
