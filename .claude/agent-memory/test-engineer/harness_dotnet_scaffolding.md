@@ -130,3 +130,16 @@ fix, not grounds to withhold a pass. Example: issue #9 extended
 rungState)` for rung power-flow threading; `docs/SDD.md` line ~168
 still shows the old signature as of 2026-08-16 and needs updating by
 Systems Engineer.
+
+**Regression baseline updated (issue #14, CORE-208, 2026-08-16):**
+36/36 — Math instructions (`ADD`/`SUB`/`MUL`/`DIV`) landed with 9 new
+tests in `MathInstructionTests.cs` (27 prior + 9 = 36). Fault-flag
+pattern for defined runtime errors (DIV-by-zero) confirmed working
+exactly as SDD's "Error handling" standard describes: new `Tag.Fault`
+(nullable string) is set instead of throwing, destination's last good
+`Value` is preserved, `Evaluate` returns `rungState` unchanged so a
+faulted rung doesn't break power flow or crash the scan. This is the
+first RTVM item to actually exercise that fault-flag mechanism
+end-to-end — worth checking for consistent fault-flag usage (same
+clear-on-next-success semantics) if/when other instructions that can
+have defined runtime errors land later.
