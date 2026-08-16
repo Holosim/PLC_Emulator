@@ -5,6 +5,7 @@
 <!-- Module layout, naming conventions, and data-schema decisions that
      should stay consistent across new work. -->
 - [PLC_Emulator scaffold](project_plc_emulator_scaffold.md) — PlcEmulator.sln layout, project reference graph, IDriver placement decision (issue #5)
+- [CONTROL_LOGIC parsing pattern](pattern_control_logic_parsing.md) — Config-generic/Core-specific DTO split; reuse for NETWORK schema (issue #6)
 
 ## Platform-specific notes
 
@@ -32,3 +33,4 @@
 ## Git / tooling gotchas
 
 - [Shallow-clone false "unrelated histories"](gotcha_shallow_clone_merge.md) — unshallow-fetch before assuming trunk was reset when a merge is refused.
+- [Trunk lags a closed dependency](gotcha_trunk_lag_behind_dependency.md) — a closed dependency issue's code may not actually be on `main` yet (CI/CD merge never triggered); check before branching from `main` blind (issue #6).
