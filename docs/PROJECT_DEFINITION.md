@@ -103,10 +103,39 @@ are still open — see kickoff questions below. Flagged for Systems
 Engineer follow-up as a build-tooling/documentation decision once
 confirmed.
 
-1. Build tooling can be whatever development environment is available in 
-  the Github VM.  However, the final v1.0 deliverable must be refactored 
-  to compile successfully in Microsoft Visual Studio as a final step.
-2. Preferred programming language is C#. Preferred data transmission format is JSON. 
-3. Prefer to avoid 3rd party dependencies. However, if introducing a free industry standard 
-  3rd party library will save a significant amount of time and tokens, 
-  then we can use it via interfaces that will simplify replacement later.
+
+## Questions from Issue #1 Project Kickoff: PLC Emulator
+Open questions that need answering to lock the MVP:
+
+1. Engine communication protocol — The emulator does not need to speak to a real Rockwell industrial protocol (EtherNet/IP CIP) in version 1. Protocol-compatiblilty with real PLC hardware/tooling can be added in a later version, perhaps v4.0 or later since v3.0 would more likely be the integration of a GUI interface. It is acceptable for v1 to use a simpler custom TCP/JSON interface between the emulator and Unreal/Unity, with real-protocol compatibility deferred to a later version once the core logic engine is proven.
+
+2.  A. CONTROL_LOGIC definition: Ladder logic and structured text scripting can be defined using a custom JSON schema, not an import of real Rockwell Studio 5000 .L5X project files. Later versions can introduce a shift to working with Rockwell Studio 5000 .L5X project files, such as the previously mentioned Engine communication protocol upgrade proposed for version 4.0 or later.
+    B. NETWORK definition: Network definition can be defined using another custom JSON schema, not an import of real Rockwell Studio 5000 .L5X project files.
+
+
+3.  A. PLC feature scope for MVP v1.0 — 
+    - discrete I/O
+    - basic ladder rungs (contacts/coils)
+    - timers (TON/TOF)
+    - counters (CTU/CTD)
+    - basic compare/math instructions
+    - tag-based data model. 
+
+    B. Explicitly excluding from MVP v1.0: 
+    - Dual-channel safety-rated instructions, motion control, and other advanced GuardLogix-specific instructions. 
+    - Given "safety PLC" is central to the value proposition — it will be crucial to add basic safety I/O behavior (e.g., simple E-stop/interlock logic) and true safety-rated logic in version 2.0 immediately after confirmation of v1.0 is completed.
+
+4. Concurrency:
+  - One PLC emulator instance driving one connected simulation client at a time is sufficient for v1.0 .
+  - Having said that, let's try to architect the server to handle multiple different configurations simultaneously based on the NETWORK definition and CONTROL_LOGIC definition. We can defer testing multiple simulated attractions/controllers running concurrently in a later version. For now we will only define and handle one simulation at a time.
+
+5. State persistence — The emulator does not need to save/restore runtime tag state across restarts for MVP v1.0. It is sufficient to "load program fresh each launch, run in-memory".
+
+6. Language / stack — 
+    - The core programming language is C#/.NET for its strong Unity interop and fast structured-data/networking development
+    - Preferred data transmission format is JSON.
+    - Prefer to avoid 3rd party dependencies. However, if introducing a free industry standard 3rd party library will save a significant amount of time and tokens, then we can use it via interfaces that will simplify replacement later.
+
+7. Deliverable form:
+    - Build tooling can be whatever development environment is available in the Github VM. No specific IDE required for development.
+    - However, the final v1.0 deliverable must be refactored to compile successfully in Microsoft Visual Studio as a final step. Since this is also meant to be extended by my team and used as a teaching tool, the codebase itself is a deliverable, not just a runnable binary.
