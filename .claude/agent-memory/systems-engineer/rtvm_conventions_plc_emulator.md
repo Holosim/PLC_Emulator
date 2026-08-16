@@ -22,3 +22,14 @@ Implementation Plan issue, or later `[RTVM-014]`-style feature issues),
 reuse these category meanings rather than re-deriving them. See
 [[requirements-traps-plc-domain]] for the specific ambiguities resolved
 along the way.
+
+**Status mapping for the `status:ready-for-rtvm-update` fast path
+(added 2026-08-16, issue #6):** when Test Engineer's test passes and
+hands back with `status:ready-for-rtvm-update`, set the RTVM item's
+Status to `In Test` (not straight to `Verified`) and leave the
+Commit(s) column blank. `Verified` + the commit SHA is only set later,
+when CI/CD hands the issue back confirming the actual merge (see
+"Receiving a commit confirmation from CI/CD" in
+systems-engineer.md) — a passing test run isn't the same as a merged
+commit, and the status vocabulary's `In Test` step exists to cover
+exactly that gap.
