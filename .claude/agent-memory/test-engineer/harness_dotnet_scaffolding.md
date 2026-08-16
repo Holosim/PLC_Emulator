@@ -122,6 +122,20 @@ valid object" — looked like the merge had vanished. Running `git fetch
 `main` all along. Always unshallow before concluding a merge is
 missing or a commit reference in an RTVM/issue comment is wrong.
 
+**Regression baseline updated (issue #8, DATA-IN-103, 2026-08-16):** 31/31
+on branch `issue-8` (27 prior baseline + 4 new `ConfigLoaderValidateTests`
+for `ConfigLoader.Validate`, TP-005/TP-103 cross-file tag-reference
+check). Same partial/deferred-TP pass pattern as issue #9: TP-005 also
+traces to UI-003 in `docs/RTVM.md`, and the CLI/Host `Program.cs` wiring
+that would make it a true process-level test (non-zero exit, no TCP
+listener) still doesn't exist — verify at the `ConfigLoader.Validate`
+unit level instead (exception type + message naming both component and
+undefined tag) and call it a legitimate scoped pass, same as CORE-200.
+This is becoming a recurring shape at this project stage: several
+RTVM test procedures assume Host/CLI wiring that lands in a later,
+separate issue — always check whether a TP row cross-references a
+UI-00x item before treating an end-to-end gap as a failure.
+
 **Software Engineer flagging an SDD-documented signature as
 stale/needing sign-off is not a build/test failure** — note it in the
 pass comment and hand off normally; it's the Systems Engineer's doc to
