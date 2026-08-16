@@ -24,3 +24,11 @@
 
 <!-- Pointer to the Systems Engineer's standards doc, plus any
      clarifications this role has had to make in practice. -->
+- `docs/SDD.md`'s "Coding Standards" section (namespaces/project
+  layout, naming, dependency direction) is authoritative — see its
+  Component Architecture diagram for the intended project-reference
+  graph (`Core` depends on neither `Network` nor `Drivers`).
+
+## Git / tooling gotchas
+
+- [Shallow-clone false "unrelated histories"](gotcha_shallow_clone_merge.md) — unshallow-fetch before assuming trunk was reset when a merge is refused.
