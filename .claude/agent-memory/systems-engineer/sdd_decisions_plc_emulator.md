@@ -27,19 +27,40 @@ Engineer/Test Engineer questions on `[RTVM-014]`-style issues:
   drains at the start of its own scan. This keeps the scan loop
   single-threaded and avoids a second source of shared mutable state
   beyond the controller-isolation point above.
-- **DELIV-900 vs. NFR-501 are verified on different schedules,
+- **REVISED 2026-08-16 (issue #5, client decision):** NFR-501 and
+  DELIV-900 are now verified together, once, as a single late-stage
+  consolidation pass — NOT per-feature. The original plan below (kept
+  for context) had NFR-501 gating every feature via a `ubuntu-latest` +
+  `windows-latest` CI matrix; the client overrode this because the
+  recurring cost of a second execution environment's setup/permission
+  questions on every feature issue (proven out empirically by issue
+  #5's own `workflows`-scope push rejection) outweighs the low
+  Ubuntu/Windows divergence risk for this app. `docs/ci/*.yml` stay
+  staged/undeployed in `docs/ci/`, not `.github/workflows/`, until the
+  final consolidation issue. If a future `[RTVM-014]` issue asks "do I
+  need to verify on Windows," the answer is **no** — that's a
+  consolidation-issue concern, not a per-feature one.
+- ~~DELIV-900 vs. NFR-501 are verified on different schedules,
   deliberately (see SDD's "Target-platform verification strategy"
-  section):** NFR-501 (Windows/Linux behavioral parity) gates *every*
+  section): NFR-501 (Windows/Linux behavioral parity) gates *every*
   feature via a CI matrix (`ubuntu-latest` + `windows-latest`) because
   both runners are natively available at near-zero marginal cost.
   DELIV-900 (opens/builds cleanly as a Visual Studio solution) is a
   one-time late-stage consolidation task instead, because SDK-style
   `.csproj`/`.sln` (chosen from day one) is already VS-compatible, and
   actually opening the IDE is a human-facing check with no useful
-  per-feature signal.
+  per-feature signal.~~ (superseded, see above)
 - **Dependency policy (NFR-502):** `System.Text.Json` (SDK-included)
   is not a third-party dependency and is the project's JSON library
   for both config files and the wire protocol.
+- **`IDriver` interface lives in `PlcEmulator.Core`** (namespace
+  `PlcEmulator.Core.Drivers`), not `PlcEmulator.Drivers` — confirmed
+  2026-08-16 (issue #5). `PlcEmulator.Drivers` holds only concrete
+  implementations. Reason: `PlcController`/`TagTable` (in `Core`) are
+  what drivers bind against, so the interface has to live with its
+  consumer or `Core`↔`Drivers` would be a circular project reference.
+  Standard dependency inversion; CORE-209 still holds since adding a
+  driver only touches `PlcEmulator.Drivers`.
 
 **Why:** these are exactly the kind of decisions that are expensive to
 change once Software Engineer starts building against them (wire

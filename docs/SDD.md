@@ -137,10 +137,21 @@ implementation surfaces real questions — flag anything that doesn't
 fit cleanly.
 
 - **Namespaces / project layout:** `PlcEmulator.Host`,
-  `PlcEmulator.Config`, `PlcEmulator.Core` (TagTable, ScanEngine,
-  instructions), `PlcEmulator.Drivers` (`IDriver` + built-in drivers),
-  `PlcEmulator.Network` (TCP/JSON server, message schema). One project
-  per namespace root, referenced from a top-level `PlcEmulator.sln`.
+  `PlcEmulator.Config`, `PlcEmulator.Core` (`TagTable`, `ScanEngine`,
+  instructions, **and the `IDriver` interface itself** —
+  `PlcEmulator.Core.Drivers.IDriver` — since `PlcController`/`TagTable`
+  in `Core` are what drivers bind against; declaring the interface in
+  `Drivers` instead would make `Core` and `Drivers` depend on each
+  other, which .NET project references can't express), `PlcEmulator.Drivers`
+  (built-in `IDriver` implementations only — `DiscreteSensorDriver`,
+  `RelayDriver`, etc.), `PlcEmulator.Network` (TCP/JSON server, message
+  schema). One project per namespace root, referenced from a top-level
+  `PlcEmulator.sln`. **Confirmed 2026-08-16 (issue #5):** this
+  standard dependency-inversion placement (interface next to its
+  consumer, implementations in the leaf project) is correct and
+  doesn't weaken CORE-209 — "add a driver without touching the Scan
+  Engine or instruction classes" still holds, since adding a driver
+  only ever touches `PlcEmulator.Drivers`.
 - **Naming:** standard .NET conventions — `PascalCase` for
   types/public members/methods, `camelCase` for locals/parameters,
   `_camelCase` for private instance fields. Ladder-logic domain names
@@ -205,37 +216,48 @@ fit cleanly.
   keeps DELIV-900 cheap precisely because the toolchain decision above
   avoided a format mismatch to begin with. Development occurs entirely within the Github/Anthropic agentic pipeline's native environment (Ubuntu/.NET). Refactoring into a Visual Studio project is a final deliverable step, performed once, after v1.0 is functionally complete and tested — not verified continuously during development. No parallel Windows/MSVC verification pipeline runs per-feature.
 
-### Target-platform verification strategy (explicit decision)
+### Target-platform verification strategy (explicit decision — revised 2026-08-16)
 
 The agent pipeline executes on Ubuntu; the deliverable targets both
 Windows and Linux (NFR-501) and, separately, must open in the Windows
-Visual Studio IDE (DELIV-900) AFTER the final codebase for v1.0 is tested and verified. These are two different platform
-concerns and are verified on two different schedules, deliberately:
+Visual Studio IDE (DELIV-900) AFTER the final codebase for v1.0 is
+tested and verified. **Client decision (2026-08-16, issue #5):**
+development happens entirely in-pipeline (Ubuntu/.NET) throughout
+v1.0. Both NFR-501 and DELIV-900 are verified together, once, as a
+single late-stage consolidation pass — not per-feature. This
+supersedes the earlier "NFR-501 gates every feature" split recorded
+below in this section's original text; that split is kept struck
+through for traceability rather than deleted, since it explains why
+`docs/ci/windows-verification.yml` / `docs/ci/build-and-test.yml`
+already exist as inert, undeployed files (see issue #5).
 
-- **NFR-501 (Windows/Linux behavioral parity) gates every feature.**
-  GitHub Actions provides `windows-latest` and `ubuntu-latest` runners
-  natively — no extra environment setup or permissions beyond what CI
-  already has. Because that cost is already low, CI runs `dotnet
-  build` + `dotnet test` on **both** runners for every
-  `[RTVM-014]`-style feature, per the RTVM's test procedures (e.g.
-  TP-501). Deferring this to a one-time consolidation step would risk
-  an OS-specific assumption (path separators, line endings, file
-  locking) accumulating silently across many features and surfacing
-  as one large, hard-to-bisect failure at the end — not worth it when
-  the second runner is nearly free to add per-feature.
-- **DELIV-900 (opens/builds as a Visual Studio solution) is a
-  one-time, late-stage consolidation task, not a per-feature gate.**
-  `windows-latest` runners already carry MSBuild/the .NET SDK, so
-  `dotnet build` on that runner is a reasonable continuous proxy for
-  "this still compiles under a VS-compatible toolchain" — but actually
-  opening the solution in the Visual Studio *IDE* and confirming a
-  clean project load is a manual, human-facing check with no
-  meaningful per-feature signal (it either works because the project
-  format is sound, or it doesn't for reasons unrelated to any single
-  feature). Gating every feature on it would add a second execution
-  environment's setup/permission questions to every feature for a
-  check that only actually needs to happen once, right before
-  delivery. Therefor, only focus on the single verification step, and leave all windows-verification until the very last issue.
+- **NFR-501 (Windows/Linux behavioral parity) and DELIV-900 (opens as
+  a Visual Studio solution) are both one-time, late-stage
+  consolidation tasks, not per-feature gates.** All `[RTVM-014]`-style
+  feature work builds/tests only on `ubuntu-latest` throughout
+  development. Once v1.0 is functionally complete and tested, a single
+  consolidation issue runs `dotnet build` + `dotnet test` on
+  `windows-latest` (NFR-501) and confirms the `.sln` opens/builds
+  cleanly under Visual Studio (DELIV-900) in the same pass, fixing
+  anything that surfaces (path separators, line endings, file locking,
+  missing project references). `docs/ci/windows-verification.yml` and
+  `docs/ci/build-and-test.yml` stay staged in `docs/ci/` — not copied
+  into `.github/workflows/` — until that consolidation issue.
+- **Why revised from a per-feature CI matrix:** the original reasoning
+  (both runners are "nearly free" per feature on GitHub Actions) is
+  true in isolation, but undercounts the recurring cost of a second
+  execution environment's own setup/permission questions on *every*
+  feature issue (e.g. issue #5's `workflows`-scope push rejection) —
+  multiplying a one-time integration cost by the number of RTVM
+  features, per the SDD's own platform-verification guidance. Ubuntu
+  and Windows are also not expected to diverge much for this app (no
+  native interop, `System.Text.Json` + framework-only path/IO code),
+  so the risk of an OS-specific bug surfacing late and being
+  hard-to-bisect is low relative to that recurring cost. Client
+  confirmed this tradeoff explicitly on 2026-08-16.
+- ~~NFR-501 gates every feature via a `ubuntu-latest` +
+  `windows-latest` CI matrix; DELIV-900 is a one-time consolidation
+  task~~ (superseded — see above).
 
 ## Data Architecture
 
