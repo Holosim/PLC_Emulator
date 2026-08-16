@@ -12,8 +12,15 @@ breakdown) and creating all downstream work. Issue-number map, in case
 a later feature issue references "the timers issue" or similar without
 the number:
 
-- #5 Generate Code Base (no deps, `agent:software-engineer` directly —
-  also stands up the Windows+Linux CI matrix NFR-501 relies on)
+- #5 Generate Code Base (no deps, `agent:software-engineer` directly).
+  Closed 2026-08-16. `docs/ci/windows-verification.yml` and
+  `docs/ci/build-and-test.yml` were staged in `docs/ci/` but the
+  client decided (on this issue's thread) that Windows/VS
+  verification is a one-time final consolidation step, not a
+  per-feature CI matrix — see REVISED note under
+  [[sdd-decisions-plc-emulator]]. Those files stay undeployed
+  (never copied to `.github/workflows/`) for the whole dev phase;
+  only `ubuntu-latest` CI runs per feature until #24/#27.
 - #6 DATA-IN-100/101 (tag data model + rung/instruction schema)
 - #7 DATA-IN-102 (NETWORK schema)
 - #8 DATA-IN-103 (cross-file validation)
@@ -31,9 +38,14 @@ the number:
 - #20 OUT-400 (TCP listener/single-client) — FS on #19 and #16
 - #21 OUT-401 (tag write), #22 OUT-402 (disconnect) — both FS on #20
 - #23 NFR-500 (isolation verification) — FS on #15, #18
-- #24 NFR-501 (cross-platform consolidated sign-off) — FS on #22;
-  framed explicitly as a sign-off, not new work, since CI already
-  gates every feature above it on both runners per `docs/SDD.md`
+- #24 NFR-501 (cross-platform consolidated sign-off) — FS on #22.
+  CORRECTED 2026-08-16 (superseding the original framing below): this
+  is real, first-time work, not a sign-off — every feature issue
+  #6-#23 builds/tests on `ubuntu-latest` only during development, per
+  the client's explicit decision on issue #5. #24 is where
+  `docs/ci/build-and-test.yml`'s ubuntu+windows matrix actually gets
+  promoted to `.github/workflows/` and run against the accumulated
+  codebase for the first time.
 - #25 NFR-502 (dependency policy review) — FS on #15
 - #26 NFR-503 (no-persistence verification) — FS on #21
 - #27 DELIV-900 (VS solution consolidation) — FS on #23, #24, #25, #26
