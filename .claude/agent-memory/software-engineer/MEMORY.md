@@ -7,6 +7,7 @@
 - [PLC_Emulator scaffold](project_plc_emulator_scaffold.md) — PlcEmulator.sln layout, project reference graph, IDriver placement decision (issue #5)
 - [CONTROL_LOGIC parsing pattern](pattern_control_logic_parsing.md) — Config-generic/Core-specific DTO split; reuse for NETWORK schema (issue #6)
 - [Scan engine rung power-flow](pattern_scan_engine_rung_power_flow.md) — IInstruction.Evaluate(tags, rungState) contract for #10-#14's instruction semantics; flagged to SE for SDD.md update (issue #9)
+- [NETWORK JSON schema](schema_network_json.md) — wire shape + DTO/domain-model split for DATA-IN-102 (issue #7); reuse for CONTROL_LOGIC and DATA-IN-103
 
 ## Platform-specific notes
 
@@ -35,3 +36,4 @@
 
 - [Shallow-clone false "unrelated histories"](gotcha_shallow_clone_merge.md) — unshallow-fetch before assuming trunk was reset when a merge is refused.
 - [Trunk lags a closed dependency](gotcha_trunk_lag_behind_dependency.md) — a closed dependency issue's code may not actually be on `main` yet (CI/CD merge never triggered); check before branching from `main` blind (issue #6).
+- [Base branch is issue-5, not main (temporary)](gotcha_base_branch_not_main.md) — main doesn't have the scaffolding merged yet as of issue #7; branch off origin/issue-5 until CI/CD merges it.

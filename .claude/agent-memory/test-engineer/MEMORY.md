@@ -5,7 +5,7 @@
 <!-- Simulation frameworks, hardware-in-the-loop rigs, and how to run
      each product line's test suite locally vs. in this pipeline. -->
 
-- [PlcEmulator .NET scaffolding: build/test verification + SDD reference-graph checklist](harness_dotnet_scaffolding.md) — how to verify issue #5-style scaffolding and later feature branches
+- [PlcEmulator .NET scaffolding: build/test verification + SDD reference-graph checklist](harness_dotnet_scaffolding.md) — how to verify issue #5-style scaffolding and later feature branches; baseline test count updated through issue #7 (11/11)
 
 ## Platform-specific test considerations
 

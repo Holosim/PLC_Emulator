@@ -18,7 +18,11 @@ dotnet test PlcEmulator.sln
 ```
 Expect 0 warnings/0 errors on build; test count grows as features land
 (was 1/1 — a scaffolding smoke test — as of issue #5; 11/11 as of issue
-#6, DATA-IN-100/101).
+#6, DATA-IN-100/101; 27/27 once issue #6 and issue #7's
+`ConfigLoaderNetworkTests` — 10 new NETWORK JSON parsing tests — landed
+together on `main`, CI/CD merge 2026-08-16). Use the last recorded total
+as the regression baseline: if it drops on a later run, that's a signal
+even if the new feature's own tests pass.
 
 **SDD dependency direction to check on every scaffolding-adjacent
 issue** (grep `ProjectReference` in each `src/*/*.csproj`): `Config` is

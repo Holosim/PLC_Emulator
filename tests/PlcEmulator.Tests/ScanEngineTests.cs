@@ -205,7 +205,7 @@ public sealed class ScanEngineTests
             },
         };
 
-        var controller = new PlcController(controlLogic, new NetworkDef());
+        var controller = new PlcController(controlLogic, new NetworkDef { Components = Array.Empty<NetworkComponentConfig>() });
 
         // XIC/OTE evaluation itself is CORE-201/202 (issue #10) and still
         // throws — this only confirms RunScan() reaches the Scan Engine
