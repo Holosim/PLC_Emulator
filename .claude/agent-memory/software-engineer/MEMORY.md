@@ -8,6 +8,7 @@
 - [CONTROL_LOGIC parsing pattern](pattern_control_logic_parsing.md) — Config-generic/Core-specific DTO split; reuse for NETWORK schema (issue #6)
 - [Scan engine rung power-flow](pattern_scan_engine_rung_power_flow.md) — IInstruction.Evaluate(tags, rungState) contract for #10-#14's instruction semantics; flagged to SE for SDD.md update (issue #9)
 - [NETWORK JSON schema](schema_network_json.md) — wire shape + DTO/domain-model split for DATA-IN-102 (issue #7); reuse for CONTROL_LOGIC and DATA-IN-103
+- [CompareInstruction numeric matching](pattern_compare_instruction_numeric_matching.md) — CORE-207 template-method design + unconfirmed "matching numeric type" interpretation call (issue #13); reuse/confirm for CORE-208 math instructions
 
 ## Platform-specific notes
 
