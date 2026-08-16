@@ -1,0 +1,64 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{EC9E5533-45B6-4D77-8292-F459E67B7DA2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcEmulator.Host", "src\PlcEmulator.Host\PlcEmulator.Host.csproj", "{56B9F376-788A-4388-A267-1915A574C5DE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcEmulator.Config", "src\PlcEmulator.Config\PlcEmulator.Config.csproj", "{A8DF3666-2A6A-4F07-8B76-6D90769E4ACE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcEmulator.Core", "src\PlcEmulator.Core\PlcEmulator.Core.csproj", "{F81407C1-3F06-4A60-8D10-0103AC0D5E4F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcEmulator.Drivers", "src\PlcEmulator.Drivers\PlcEmulator.Drivers.csproj", "{BE68B28B-FE53-4987-9B1D-A6207E35293C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcEmulator.Network", "src\PlcEmulator.Network\PlcEmulator.Network.csproj", "{C255E315-14BB-4223-98EC-C9DA355345BD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{2E6AEF1B-CD5F-482C-9C68-1DCDB5AE5BD1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlcEmulator.Tests", "tests\PlcEmulator.Tests\PlcEmulator.Tests.csproj", "{208A62B0-608B-4A52-AA04-6EB5CEF54C99}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{56B9F376-788A-4388-A267-1915A574C5DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56B9F376-788A-4388-A267-1915A574C5DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56B9F376-788A-4388-A267-1915A574C5DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56B9F376-788A-4388-A267-1915A574C5DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8DF3666-2A6A-4F07-8B76-6D90769E4ACE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8DF3666-2A6A-4F07-8B76-6D90769E4ACE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8DF3666-2A6A-4F07-8B76-6D90769E4ACE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8DF3666-2A6A-4F07-8B76-6D90769E4ACE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F81407C1-3F06-4A60-8D10-0103AC0D5E4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F81407C1-3F06-4A60-8D10-0103AC0D5E4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F81407C1-3F06-4A60-8D10-0103AC0D5E4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F81407C1-3F06-4A60-8D10-0103AC0D5E4F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE68B28B-FE53-4987-9B1D-A6207E35293C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE68B28B-FE53-4987-9B1D-A6207E35293C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE68B28B-FE53-4987-9B1D-A6207E35293C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE68B28B-FE53-4987-9B1D-A6207E35293C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C255E315-14BB-4223-98EC-C9DA355345BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C255E315-14BB-4223-98EC-C9DA355345BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C255E315-14BB-4223-98EC-C9DA355345BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C255E315-14BB-4223-98EC-C9DA355345BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{208A62B0-608B-4A52-AA04-6EB5CEF54C99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{208A62B0-608B-4A52-AA04-6EB5CEF54C99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{208A62B0-608B-4A52-AA04-6EB5CEF54C99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{208A62B0-608B-4A52-AA04-6EB5CEF54C99}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{56B9F376-788A-4388-A267-1915A574C5DE} = {EC9E5533-45B6-4D77-8292-F459E67B7DA2}
+		{A8DF3666-2A6A-4F07-8B76-6D90769E4ACE} = {EC9E5533-45B6-4D77-8292-F459E67B7DA2}
+		{F81407C1-3F06-4A60-8D10-0103AC0D5E4F} = {EC9E5533-45B6-4D77-8292-F459E67B7DA2}
+		{BE68B28B-FE53-4987-9B1D-A6207E35293C} = {EC9E5533-45B6-4D77-8292-F459E67B7DA2}
+		{C255E315-14BB-4223-98EC-C9DA355345BD} = {EC9E5533-45B6-4D77-8292-F459E67B7DA2}
+		{208A62B0-608B-4A52-AA04-6EB5CEF54C99} = {2E6AEF1B-CD5F-482C-9C68-1DCDB5AE5BD1}
+	EndGlobalSection
+EndGlobal
