@@ -62,3 +62,14 @@ not just issue #5 itself. For all issues, start test verification by
 grepping `tests/PlcEmulator.Tests/` for the TP-NNN number(s) named in
 the requirement's RTVM row, then confirm build/test clean from a fresh
 `bin`/`obj` wipe.
+
+**Also doubles as the post-merge regression checklist:** when CI/CD
+hands back a trunk-merge regression request (issue #6, 2026-08-16), the
+same steps apply against `main` instead of the feature branch: fresh
+`bin`/`obj` wipe + build/test, re-check `NFR-502` (no `PackageReference`
+in `src/*/*.csproj`) and the `ProjectReference` graph, confirm
+`docs/RTVM.md`'s `Verified` row(s) carry the real merge commit SHA, and
+confirm no stray SDD lock markers / dirty `git status` were left behind
+by the merge. No separate regression-specific procedure exists — RTVM
+TP-1xx + this checklist is the whole regression suite at this project
+stage.
