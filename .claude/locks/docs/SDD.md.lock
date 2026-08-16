@@ -1,0 +1,7 @@
+{
+  "path": "docs/SDD.md",
+  "holder": "systems-engineer",
+  "issue": 3,
+  "acquired_at": "2026-08-16T19:52:55Z",
+  "reason": "Populate SDD architecture, coding standards, build/toolchain, data architecture"
+}
