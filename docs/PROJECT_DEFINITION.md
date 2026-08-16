@@ -11,11 +11,11 @@ has actually responded, before handing off to the Systems Engineer.
 ## Mission Statement
 
 [CONFIRMED] Provide a server-based, extensible PLC emulator that
-mimics an Allen-Bradley GuardLogix-family safety PLC and its control
-network, so that theme-park attraction and training-simulator designs
-(built in engines such as Unreal Engine or Unity) can be driven by
-realistic control logic — enabling design validation and failure-state
-prediction before any physical hardware exists.
+mimics the Allen-Bradley GuardLogix 1756 family of safety PLC and PLC 
+components in a control network, so that theme-park attraction and 
+training-simulator designs (built in engines such as Unreal Engine or Unity) 
+can be driven by realistic control logic — enabling design validation 
+and failure-state prediction before any physical hardware exists.
 
 ## Value
 
@@ -42,11 +42,14 @@ prediction before any physical hardware exists.
 
 ## MVP Definition
 
-- **Target platform:** [PROPOSED] Cross-platform command-line server
+- **Target platform:** [CONFIRMED] Cross-platform command-line server
   (Windows + Linux), no GUI in v1.
-- **Language / stack:** [PROPOSED] Not yet selected — candidates and
+- **Language / stack:** [CONFIRMED] Core programming in C#, using JSON 
+  or other structured data transmission formats for persistent messaging 
+  (messages continue to be available between connection points in the network 
+  in case continuous power/connection is unavailable) — candidates and
   trade-offs raised for client input in the kickoff questions below.
-- **Output format and delivery:** [PROPOSED] A CLI server process that
+- **Output format and delivery:** [CONFIRMED] A CLI server process that
   loads a human-readable structured ladder-logic/network definition
   file at startup, then exposes a defined interface over which an
   external simulation engine (Unreal/Unity) exchanges I/O state in
@@ -56,16 +59,18 @@ prediction before any physical hardware exists.
 
 ### In scope for MVP
 
-[PROPOSED — pending confirmation]
-- CLI server application emulating a single GuardLogix-family PLC
-  instance.
+[CONFIRMED]
+- CLI server application emulating Allen-Bradley GuardLogix 1756 family of safety PLC and PLC 
+  components.
 - A human-readable, structured file format (e.g. JSON) for defining
-  ladder logic and the network of connected control components.
+  ladder logic and structured text scripting to "program" the central PLC.
+- A human-readable, structured file format (e.g. JSON) for defining
+  the network of connected control components.
 - Extensible "driver" architecture so new control-network component
   types (relays, sensors, etc.) can be added without modifying core
   PLC logic.
 - A defined interface for an external simulation engine (Unreal/Unity)
-  to read/write I/O state in real time.
+  to read/write I/O state in real time. 
 - A baseline instruction/logic feature set sufficient for representative
   ride-control scenarios (exact subset TBD — see kickoff questions).
 
@@ -75,11 +80,12 @@ prediction before any physical hardware exists.
 - Graphical interface for authoring ladder logic or the network
   definition — deferred to a future version. v1 is CLI-only.
 
-[PROPOSED — pending confirmation]
+[CONFIRMED]
 - Full parity with GuardLogix's complete instruction set, including
   advanced/dual-channel safety-rated instructions and motion control.
-- Multi-instance / multi-tenant operation (more than one simulated
-  attraction per running server).
+- Multi-instance / Multi-tenant operation (TBD). Unless the server 
+  can handle multiple different control networks simultaneously, 
+  simulated attractions will each have their own running server instance.
 - Persistence of runtime tag/controller state across server restarts.
 
 ## Deliverable Requirements
@@ -96,3 +102,11 @@ conventions (e.g. whether an IDE-ready project/solution is required)
 are still open — see kickoff questions below. Flagged for Systems
 Engineer follow-up as a build-tooling/documentation decision once
 confirmed.
+
+1. Build tooling can be whatever development environment is available in 
+  the Github VM.  However, the final v1.0 deliverable must be refactored 
+  to compile successfully in Microsoft Visual Studio as a final step.
+2. Preferred programming language is C#. Preferred data transmission format is JSON. 
+3. Prefer to avoid 3rd party dependencies. However, if introducing a free industry standard 
+  3rd party library will save a significant amount of time and tokens, 
+  then we can use it via interfaces that will simplify replacement later.
