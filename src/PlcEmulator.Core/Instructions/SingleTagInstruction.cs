@@ -23,8 +23,22 @@ public abstract class SingleTagInstruction : IInstruction
 
     public abstract string Mnemonic { get; }
 
-    public bool Evaluate(TagTable tags, bool rungState) =>
+    /// <summary>
+    /// Default stub for mnemonics whose evaluation semantics haven't
+    /// landed yet — overridden per-mnemonic (e.g. <see cref="Ton"/>,
+    /// <see cref="Tof"/>) as each one's CORE item is implemented.
+    /// </summary>
+    public virtual bool Evaluate(TagTable tags, bool rungState, TimeSpan elapsed) =>
         throw new NotImplementedException($"{Mnemonic}.Evaluate lands with {_coreItem}.");
 
     public override string ToString() => $"{Mnemonic}:{TagName}";
+
+    /// <summary>
+    /// Resolves <see cref="TagName"/>'s TIMER sub-state, for <see cref="Ton"/>/<see cref="Tof"/> (CORE-203/204).
+    /// </summary>
+    /// <exception cref="InvalidOperationException"><see cref="TagName"/> is not a TIMER-typed tag.</exception>
+    protected TimerState RequireTimer(TagTable tags) =>
+        tags.Get(TagName).Timer
+        ?? throw new InvalidOperationException(
+            $"Tag '{TagName}' is not a TIMER tag — {Mnemonic} requires a TIMER-typed operand (DATA-IN-100/101).");
 }
