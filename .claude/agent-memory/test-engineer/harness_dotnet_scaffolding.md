@@ -101,6 +101,27 @@ deferral is intentional and tracked, not silently skipped) — that's a
 pass, not a partial/blocked result. Don't require the full TP wording
 to be satisfiable before the dependent issue lands.
 
+**Regression baseline updated (issue #9, 2026-08-16):** 27/27 still —
+CORE-200's scan-engine work landed on a branch cut before issue #7's
+merge, so its 6 new `ScanEngineTests` (not 7 as first reported
+mid-development; final file has 6 `[TestMethod]`s) replaced into the
+same 27 total once `main` had both #7 and #9 merged
+(1 scaffolding + 10 `ControlLogicSchemaTests` + 10
+`ConfigLoaderNetworkTests` + 6 `ScanEngineTests` = 27). Don't be
+alarmed if a PR's own branch reports a different total than the
+post-merge `main` total — always recount from `grep -c
+"\[TestMethod\]" tests/PlcEmulator.Tests/*.cs` against the *current*
+`main`, not the number quoted in an earlier branch-only comment.
+
+**Shallow clone can make `main` look like it's missing a merge that's
+actually there (issue #9, 2026-08-16):** a plain `git checkout main &&
+git pull` on the default shallow clone showed `main` at only 2
+commits, with the CORE-200 merge commit (`49d5150`) reported as "not a
+valid object" — looked like the merge had vanished. Running `git fetch
+--unshallow origin` first fixed it; `49d5150` was a real ancestor of
+`main` all along. Always unshallow before concluding a merge is
+missing or a commit reference in an RTVM/issue comment is wrong.
+
 **Software Engineer flagging an SDD-documented signature as
 stale/needing sign-off is not a build/test failure** — note it in the
 pass comment and hand off normally; it's the Systems Engineer's doc to
