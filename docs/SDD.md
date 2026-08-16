@@ -203,13 +203,13 @@ fit cleanly.
   missing project references or CLI-only assumptions (e.g. hardcoded
   `/`-only paths — see NFR-501), and fix anything that surfaces. This
   keeps DELIV-900 cheap precisely because the toolchain decision above
-  avoided a format mismatch to begin with.
+  avoided a format mismatch to begin with. Development occurs entirely within the Github/Anthropic agentic pipeline's native environment (Ubuntu/.NET). Refactoring into a Visual Studio project is a final deliverable step, performed once, after v1.0 is functionally complete and tested — not verified continuously during development. No parallel Windows/MSVC verification pipeline runs per-feature.
 
 ### Target-platform verification strategy (explicit decision)
 
 The agent pipeline executes on Ubuntu; the deliverable targets both
 Windows and Linux (NFR-501) and, separately, must open in the Windows
-Visual Studio IDE (DELIV-900). These are two different platform
+Visual Studio IDE (DELIV-900) AFTER the final codebase for v1.0 is tested and verified. These are two different platform
 concerns and are verified on two different schedules, deliberately:
 
 - **NFR-501 (Windows/Linux behavioral parity) gates every feature.**
@@ -235,7 +235,7 @@ concerns and are verified on two different schedules, deliberately:
   feature). Gating every feature on it would add a second execution
   environment's setup/permission questions to every feature for a
   check that only actually needs to happen once, right before
-  delivery.
+  delivery. Therefor, only focus on the single verification step, and leave all windows-verification until the very last issue.
 
 ## Data Architecture
 
