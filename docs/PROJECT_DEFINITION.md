@@ -122,7 +122,7 @@ feature to build or test.
 
 ### Roadmap (context, not v1.0 scope)
 
-[CONFIRMED] Sequencing the client has stated for versions after v1.0,
+[CONFIRMED] The client has outlined sequencing for versions after v1.0,
 recorded here so later scope decisions stay consistent with it:
 - **v2.0** — basic safety I/O (E-stop/interlock) and true
   safety-rated logic, immediately following v1.0.
