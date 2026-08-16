@@ -122,6 +122,24 @@ valid object" — looked like the merge had vanished. Running `git fetch
 `main` all along. Always unshallow before concluding a merge is
 missing or a commit reference in an RTVM/issue comment is wrong.
 
+**Regression baseline updated (issue #13, CORE-207, 2026-08-16):** 37/37 —
+27 prior baseline + 10 new `CompareInstructionTests` (EQU/NEQ/GRT/LES/
+GEQ/LEQ) landed cleanly on `issue-13`, no other files touched besides
+the six instruction classes + `CompareInstruction.cs` base + the new
+test file. TP-207's own test (`Tp207_Grt_TagVsLiteral_...`) matched the
+RTVM row's expected-result text exactly.
+
+**Open interpretation question worth watching for CORE-208 too (issue
+#13, 2026-08-16):** Software Engineer read CORE-207's "matching numeric
+type" as "both operands numeric" (DINT vs REAL tag comparisons allowed,
+implicit promotion to `double`), not "identical declared tag types."
+Passed as correct/consistent Rockwell-standard behavior, but flagged in
+my pass comment for Systems Engineer's explicit confirmation since
+CORE-208 (math instructions) has the identical tag-or-literal operand
+shape and will raise the same question — check whether Systems Engineer
+confirmed or corrected this before assuming it's settled on CORE-208's
+test procedure.
+
 **Software Engineer flagging an SDD-documented signature as
 stale/needing sign-off is not a build/test failure** — note it in the
 pass comment and hand off normally; it's the Systems Engineer's doc to
