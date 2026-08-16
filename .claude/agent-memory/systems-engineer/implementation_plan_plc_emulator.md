@@ -67,3 +67,16 @@ rather than starting a separate one — see
 [[implementation-plan-plc-emulator]] self-reference avoided;
 cross-reference [[sdd-decisions-plc-emulator]] for the architecture
 those dependencies rely on.
+
+**Gotcha found on #6 (2026-08-16):** issue #5 closed/signed-off but
+was never actually merged to `main` by CI/CD — the hand-off chain
+ended without a final relabel to `agent:cicd`, so `main` still lacks
+the scaffold while `dependency-check.yml` (which only checks
+issue-closed state, not trunk content) released #6 anyway. Software
+Engineer correctly branched `issue-6` from `origin/issue-5` instead of
+`main` and flagged it; flagged again to `agent:cicd` when handing off
+#6. **Lesson:** when a downstream issue's branch report says "based on
+origin/issue-N, not main" for a dependency that's marked closed, don't
+treat that as resolved by silence — explicitly re-flag it in the
+hand-off to whichever role can actually do the merge (`agent:cicd`),
+every time, until it's confirmed landed.
