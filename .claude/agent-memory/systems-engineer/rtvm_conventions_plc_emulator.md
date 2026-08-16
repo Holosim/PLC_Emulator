@@ -34,6 +34,19 @@ systems-engineer.md) — a passing test run isn't the same as a merged
 commit, and the status vocabulary's `In Test` step exists to cover
 exactly that gap.
 
+**Test Engineer doesn't always attach `status:ready-for-rtvm-update`
+even when the substance is a pass (2026-08-16, issue #9):** here Test
+Engineer's PASS comment routed with plain `**Next:** agent:systems-
+engineer` (no fast-path label) because it bundled two things: the
+ordinary RTVM status update *and* a flagged architecture-decision doc
+drift (`IInstruction.Evaluate` signature) that needed real SDD editing
+before sign-off, not just a status flip. Applied the same status
+mapping as the fast path anyway (`Approved` → `In Test`, blank
+Commit(s), see above) since the underlying logic is identical — the
+label is a routing shortcut, not a different rule. Don't assume "no
+`status:ready-for-rtvm-update` label" means "not a test-pass update";
+read the comment body.
+
 **Post-merge regression confirmation is the true terminal step, not a
 second RTVM update (2026-08-16, issue #6):** when CI/CD flags a trunk
 merge as needing regression testing, Test Engineer runs it and hands
