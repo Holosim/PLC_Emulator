@@ -24,6 +24,34 @@ each feature. Not mandatory; use it when the framework has enough
 moving parts to benefit from seeing the whole shape before committing
 to any one piece.
 
+## Deploying Windows verification
+
+One decision to make once, during the Generate Code Base issue, and
+not revisit afterward without a real reason: does `docs/SDD.md` name
+Windows or MSVC as a target platform this project actually needs
+verified?
+
+- **If yes:** copy `docs/ci/windows-verification.yml` to
+  `.github/workflows/windows-verification.yml`, then customize the two
+  things its own header comment names — the `paths:` filter (match
+  this project's actual language, not whatever it was copied with) and
+  `env: SOLUTION:` (this project's actual `.sln` filename, which
+  doesn't exist yet at the very start of this issue — set it once the
+  scaffolding creates it, before this issue closes). Mention in your
+  hand-off comment that you deployed it and why.
+- **If no:** leave `docs/ci/windows-verification.yml` exactly where it
+  sits — don't copy it anywhere. A project with no Windows-specific
+  verification need shouldn't have a Windows workflow running on every
+  push for no reason; that's wasted runner time triggered by nothing
+  the project actually requires. Note in your hand-off comment that
+  you considered this and it doesn't apply, so nobody downstream
+  wonders whether it was overlooked.
+
+If a later phase of the same project introduces a genuine Windows/MSVC
+requirement that wasn't there at Generate Code Base time, this
+decision can be revisited then — it's not permanently closed, just not
+something to default to without a stated reason.
+
 ## Branching
 
 Given multiple features can be in flight at once, always work on your
