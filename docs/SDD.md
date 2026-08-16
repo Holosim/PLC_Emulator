@@ -289,6 +289,64 @@ TCP/JSON interface (OUT-400/401/402, DATA-OUT-300/301).
   process and are discarded on exit. There is no database, cache, or
   on-disk runtime state to reason about.
 
+## CONTROL_LOGIC JSON Schema (DATA-IN-100/101)
+
+The client's own engineers author CONTROL_LOGIC files by hand (SN-1,
+SN-3), so it's specified here rather than left implicit in
+`PlcEmulator.Config.ConfigLoader` (which is the normative
+implementation — this section documents the shape it accepts,
+introduced with DATA-IN-100/101; see `src/PlcEmulator.Config/ConfigLoader.cs`'s
+XML doc for the same reference alongside the parsing code).
+
+```json
+{
+  "tags": [
+    { "name": "Start_PB", "type": "BOOL", "initialValue": false },
+    { "name": "Preset_Count", "type": "DINT", "initialValue": 0 },
+    { "name": "MyTimer", "type": "TIMER", "preset": 3000 }
+  ],
+  "rungs": [
+    { "instructions": [
+        { "op": "XIC", "operands": ["Start_PB"] },
+        { "op": "OTE", "operands": ["Motor_Run"] }
+    ] }
+  ]
+}
+```
+
+- **`tags`** — an array of tag definitions (DATA-IN-100). `type` is one
+  of `BOOL`/`DINT`/`REAL` (scalar — requires `initialValue`: JSON
+  `bool`/`number`/`number` respectively) or `TIMER`/`COUNTER`
+  (structured — uses `preset` (a JSON number, → `.PRE`) instead;
+  `.ACC`/`.DN`/`.EN` always start at their zero/false defaults, never
+  independently configurable). Tag names must be unique within the
+  file.
+- **`rungs`** — an ordered array of rungs (DATA-IN-101), each an
+  ordered array of `instructions`. Each instruction is `{"op":
+  "<MNEMONIC>", "operands": [...]}`, mnemonic drawn from the MVP
+  instruction set (contacts `XIC`/`XIO`, coil `OTE`, timers
+  `TON`/`TOF`, counters `CTU`/`CTD`/`RES`, compare
+  `EQU`/`NEQ`/`GRT`/`LES`/`GEQ`/`LEQ`, math `ADD`/`SUB`/`MUL`/`DIV`).
+  `operands` is a uniform array where a JSON string is a tag reference
+  and a JSON number is a literal — chosen over per-mnemonic field
+  names (e.g. a `tag` field for contacts vs. a `dest` field for math)
+  because it keeps the loader's parsing generic; exact arity per
+  mnemonic (one tag for contacts/coil/timers/counters/`RES`, two
+  tag-or-literal operands for compare, two tag-or-literal operands
+  plus a destination tag for math) is enforced when the operand list
+  is turned into a concrete instruction
+  (`PlcEmulator.Core.Instructions.InstructionFactory`), not by the
+  loader itself.
+- **Validation:** `ConfigLoader.LoadControlLogic` rejects malformed
+  JSON, an unrecognized `type`, a missing `initialValue`/type
+  mismatch, and a duplicate tag name, each with a `ConfigValidationException`
+  identifying the file and the problem (UI-003). Mnemonic legality and
+  operand-arity errors surface slightly later, when
+  `PlcEmulator.Core.ControlLogicBuilder` turns a loaded
+  `ControlLogicDef` into a runtime `TagTable`/`Rung` program — still
+  before a scan ever runs, so the effect (fail fast, descriptive
+  error, no partial state) is the same either way.
+
 ## Interface Control Document (ICD): TCP/JSON Protocol
 
 External simulation engines (Unreal/Unity) build against this
