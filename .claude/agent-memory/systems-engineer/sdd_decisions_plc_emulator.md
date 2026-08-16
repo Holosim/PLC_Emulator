@@ -76,6 +76,16 @@ Engineer/Test Engineer questions on `[RTVM-014]`-style issues:
   NFR-500 reuse-across-controllers property above). Confirmed/signed
   off in `docs/SDD.md` Architecture + Coding Standards sections.
 
+- **NETWORK JSON wire shape (DATA-IN-102) — confirmed 2026-08-16 (issue
+  #7):** top-level `{"components":[{"name","driver","tag"|"tags"},...]}`
+  object, not a bare array. Accepts both singular `"tag"` (string) and
+  plural `"tags"` (array), merged into one ordered list — both are
+  valid, not just the singular form the RTVM's own TP-102 example
+  happens to use. Signed off as proposed by Software Engineer; recorded
+  in `docs/RTVM.md`'s Assumptions section too. Reuse this shape for
+  CONTROL_LOGIC's wire format (issue #6) for consistency rather than
+  inventing a different wrapper convention there.
+
 **Why:** these are exactly the kind of decisions that are expensive to
 change once Software Engineer starts building against them (wire
 format, threading model, class boundaries) — recorded here so a future
