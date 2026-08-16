@@ -33,3 +33,14 @@ when CI/CD hands the issue back confirming the actual merge (see
 systems-engineer.md) — a passing test run isn't the same as a merged
 commit, and the status vocabulary's `In Test` step exists to cover
 exactly that gap.
+
+**Post-merge regression confirmation is the true terminal step, not a
+second RTVM update (2026-08-16, issue #6):** when CI/CD flags a trunk
+merge as needing regression testing, Test Engineer runs it and hands
+back to Systems Engineer with `status:ready-for-rtvm-update` again —
+but the RTVM item is *already* `Verified` with its commit SHA from the
+earlier commit-confirmation step. Don't re-edit the table; just
+comment confirming the regression pass and close the issue. This is
+the actual end of a feature issue's chain (Implement → Test → Merge →
+Regression-confirm → Close), not a loop back into "new requirement"
+handling.
