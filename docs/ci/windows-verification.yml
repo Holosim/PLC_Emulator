@@ -14,6 +14,17 @@
 # Design decisions W-1…W-8 and their reasons: docs/RTVM.md §9.1.3.
 # Policy this serves (V-1…V-7): docs/PROJECT_DEFINITION.md §7.1.
 #
+# ---------------------------------------------------------------------------
+# TWO THINGS TO CUSTOMIZE FOR THIS PROJECT BEFORE THIS FILE WILL WORK:
+# 1. The `paths:` filter below lists C++/C#-flavored extensions. Adjust it
+#    to match whatever this project's language actually is, or the trigger
+#    will silently never fire.
+# 2. `env: SOLUTION:` further down is hardcoded to a specific .sln filename
+#    from whichever project this was copied from. Update it to this
+#    project's actual solution file, or every run will fail at the first
+#    MSBuild step with "Project file does not exist" regardless of trigger.
+# ---------------------------------------------------------------------------
+#
 # W-2 is the one to keep in mind when editing: this workflow PRODUCES
 # EVIDENCE. It never issues a verdict, never sets a status:* or agent:*
 # label, and never marks anything Verified. The Test Engineer reads its
@@ -26,6 +37,15 @@ on:
     branches:
       - main
       - "issue-*"
+    paths:
+      - "**/*.sln"
+      - "**/*.vcxproj"
+      - "**/*.csproj"
+      - "**/*.cpp"
+      - "**/*.cs"
+      - "**/*.h"
+      - "**/*.hpp"
+      - "tests/windows/**"
   workflow_dispatch: {}
 
 # Read-only. This workflow must never relabel an issue or push a commit.
