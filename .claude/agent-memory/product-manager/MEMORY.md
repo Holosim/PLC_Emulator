@@ -19,12 +19,9 @@ entry, keep it terse, and fold near-duplicates together.
 
 ## Open questions log
 
-- 2026-08-16 (issue #1, kickoff): protocol fidelity to real Allen-Bradley
-  EtherNet/IP CIP vs. simpler custom protocol for v1; ladder-logic definition
-  format (custom JSON vs. Rockwell `.L5X`); MVP instruction/safety-logic
-  scope; concurrency (single vs. multi-instance); state persistence; language/
-  stack choice; deliverable form (IDE-ready project vs. buildable-from-source).
-  Answers pending from client as of this date.
+- (none open) — all 7 kickoff questions from issue #1 answered by client
+  2026-08-16 in a single reply; see decisions below and
+  [PLC Emulator kickoff](project_plc_emulator_kickoff.md) for the full list.
 
 ## Decisions made
 
@@ -34,3 +31,8 @@ entry, keep it terse, and fold near-duplicates together.
   as a Deliverable Requirement (not a feature) — driven by client's stated
   training-tool and extensibility goals. Scope not yet fully confirmed;
   issue #1 still open, waiting on client reply.
+- 2026-08-16 — Client answered all 7 open questions in one reply; finalized
+  `docs/PROJECT_DEFINITION.md` (all items flipped to [CONFIRMED], added
+  Concurrency and Roadmap subsections). v1.0 scope now fully locked — see
+  [PLC Emulator kickoff](project_plc_emulator_kickoff.md) for the details.
+  Closed issue #1, opened "RTVM" issue labeled `agent:systems-engineer`.

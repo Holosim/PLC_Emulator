@@ -44,16 +44,22 @@ and failure-state prediction before any physical hardware exists.
 
 - **Target platform:** [CONFIRMED] Cross-platform command-line server
   (Windows + Linux), no GUI in v1.
-- **Language / stack:** [CONFIRMED] Core programming in C#, using JSON 
-  or other structured data transmission formats for persistent messaging 
-  (messages continue to be available between connection points in the network 
-  in case continuous power/connection is unavailable) — candidates and
-  trade-offs raised for client input in the kickoff questions below.
+- **Language / stack:** [CONFIRMED] C#/.NET, chosen for strong Unity
+  interop and fast structured-data/networking development. JSON is
+  the preferred data transmission format for both the definition
+  files and the runtime I/O interface. Third-party dependencies
+  should be avoided by default; a free, industry-standard library may
+  be used where it saves significant development time/tokens, but
+  only behind an interface so it can be swapped out later without
+  touching core logic.
 - **Output format and delivery:** [CONFIRMED] A CLI server process that
-  loads a human-readable structured ladder-logic/network definition
-  file at startup, then exposes a defined interface over which an
-  external simulation engine (Unreal/Unity) exchanges I/O state in
-  real time.
+  loads a human-readable, custom-JSON ladder-logic/structured-text
+  (CONTROL_LOGIC) definition and a separate custom-JSON NETWORK
+  definition at startup, then exposes a custom TCP/JSON interface over
+  which an external simulation engine (Unreal/Unity) exchanges I/O
+  state in real time. This is not a real Rockwell EtherNet/IP CIP
+  implementation, and definitions are not Rockwell Studio 5000 `.L5X`
+  files — both are deliberate v1 simplifications (see Roadmap below).
 
 ## Scope
 
@@ -62,31 +68,67 @@ and failure-state prediction before any physical hardware exists.
 [CONFIRMED]
 - CLI server application emulating Allen-Bradley GuardLogix 1756 family of safety PLC and PLC 
   components.
-- A human-readable, structured file format (e.g. JSON) for defining
-  ladder logic and structured text scripting to "program" the central PLC.
-- A human-readable, structured file format (e.g. JSON) for defining
-  the network of connected control components.
+- CONTROL_LOGIC definition: a custom JSON schema for defining ladder
+  logic and structured text scripting to "program" the central PLC.
+- NETWORK definition: a separate custom JSON schema for defining the
+  network of connected control components.
 - Extensible "driver" architecture so new control-network component
   types (relays, sensors, etc.) can be added without modifying core
   PLC logic.
-- A defined interface for an external simulation engine (Unreal/Unity)
-  to read/write I/O state in real time. 
-- A baseline instruction/logic feature set sufficient for representative
-  ride-control scenarios (exact subset TBD — see kickoff questions).
+- A custom TCP/JSON interface (not real EtherNet/IP CIP) for an
+  external simulation engine (Unreal/Unity) to read/write I/O state
+  in real time.
+- MVP instruction/logic feature set: discrete I/O, basic ladder rungs
+  (contacts/coils), timers (TON/TOF), counters (CTU/CTD), basic
+  compare/math instructions, and a tag-based data model.
+- Architecture that *supports* loading and holding multiple distinct
+  NETWORK/CONTROL_LOGIC configurations at once, even though only one
+  is exercised end-to-end at a time in v1.0 (see Concurrency below).
 
 ### Explicitly out of scope
 
 [CONFIRMED]
 - Graphical interface for authoring ladder logic or the network
-  definition — deferred to a future version. v1 is CLI-only.
+  definition — deferred to a future version (proposed v3.0). v1 is
+  CLI-only.
+- Real Rockwell EtherNet/IP CIP protocol compatibility, and Rockwell
+  Studio 5000 `.L5X` import/compatibility for either CONTROL_LOGIC or
+  NETWORK definitions — both deferred to a later version (proposed
+  v4.0+, after the GUI). v1 uses the custom JSON schemas and TCP/JSON
+  interface instead.
+- Dual-channel safety-rated instructions, motion control, and other
+  advanced GuardLogix-specific instructions. Basic safety I/O (e.g.
+  simple E-stop/interlock logic) and true safety-rated logic are
+  planned for v2.0, immediately following v1.0 — not excluded from
+  the product, just sequenced after the MVP.
+- Concurrently *running* multiple simulated attractions/controllers
+  at once — v1.0 runs and is tested against exactly one connected
+  simulation client at a time. (The architecture itself should not
+  preclude this later; see Concurrency below.)
+- Persistence of runtime tag/controller state across server restarts
+  — v1.0 loads its program fresh each launch and runs in-memory only.
 
-[CONFIRMED]
-- Full parity with GuardLogix's complete instruction set, including
-  advanced/dual-channel safety-rated instructions and motion control.
-- Multi-instance / Multi-tenant operation (TBD). Unless the server 
-  can handle multiple different control networks simultaneously, 
-  simulated attractions will each have their own running server instance.
-- Persistence of runtime tag/controller state across server restarts.
+### Concurrency
+
+[CONFIRMED] v1.0 drives one PLC emulator instance and one connected
+simulation client at a time — this is the only configuration that
+will be built and tested in v1.0. However, the server should be
+architected so it *could* hold multiple distinct NETWORK/CONTROL_LOGIC
+configurations simultaneously without a fundamental redesign; actually
+exercising multiple concurrent simulated attractions/controllers is
+deferred to a later version. Flagged for the Systems Engineer/Solutions
+Architect as an architectural constraint to design around, not a v1.0
+feature to build or test.
+
+### Roadmap (context, not v1.0 scope)
+
+[CONFIRMED] Sequencing the client has stated for versions after v1.0,
+recorded here so later scope decisions stay consistent with it:
+- **v2.0** — basic safety I/O (E-stop/interlock) and true
+  safety-rated logic, immediately following v1.0.
+- **v3.0** — GUI for authoring CONTROL_LOGIC/NETWORK definitions.
+- **v4.0+** — real Rockwell EtherNet/IP CIP protocol compatibility and
+  Rockwell Studio 5000 `.L5X` import/compatibility.
 
 ## Deliverable Requirements
 
@@ -97,45 +139,22 @@ and ultimately architected so a real PLC could stand in for the
 emulator with minimal change elsewhere. This implies the delivered
 codebase itself — not just its runtime behavior — is a client
 deliverable: it must be maintainable and extensible by the client's
-own engineering team. Exact build-tooling and documentation
-conventions (e.g. whether an IDE-ready project/solution is required)
-are still open — see kickoff questions below. Flagged for Systems
-Engineer follow-up as a build-tooling/documentation decision once
-confirmed.
+own engineering team.
 
+Build-tooling/documentation decision (confirmed): development itself
+may use whatever environment is available in the GitHub Actions VM —
+no specific IDE is required during the build process. As a final step
+before the v1.0 deliverable ships, the codebase must be refactored as
+needed so that it compiles successfully as a Microsoft Visual Studio
+project/solution, since the client's own engineers will open and
+extend it in Visual Studio going forward. Flagged for Systems Engineer
+follow-up: this is a build-tooling/documentation decision to schedule
+as an explicit late-stage v1.0 task (e.g. an implementation-plan item
+near the end of the sequence), not something to defer indefinitely or
+let fall out of scope.
 
-## Questions from Issue #1 Project Kickoff: PLC Emulator
-Open questions that need answering to lock the MVP:
+## Status
 
-1. Engine communication protocol — The emulator does not need to speak to a real Rockwell industrial protocol (EtherNet/IP CIP) in version 1. Protocol-compatiblilty with real PLC hardware/tooling can be added in a later version, perhaps v4.0 or later since v3.0 would more likely be the integration of a GUI interface. It is acceptable for v1 to use a simpler custom TCP/JSON interface between the emulator and Unreal/Unity, with real-protocol compatibility deferred to a later version once the core logic engine is proven.
-
-2.  A. CONTROL_LOGIC definition: Ladder logic and structured text scripting can be defined using a custom JSON schema, not an import of real Rockwell Studio 5000 .L5X project files. Later versions can introduce a shift to working with Rockwell Studio 5000 .L5X project files, such as the previously mentioned Engine communication protocol upgrade proposed for version 4.0 or later.
-    B. NETWORK definition: Network definition can be defined using another custom JSON schema, not an import of real Rockwell Studio 5000 .L5X project files.
-
-
-3.  A. PLC feature scope for MVP v1.0 — 
-    - discrete I/O
-    - basic ladder rungs (contacts/coils)
-    - timers (TON/TOF)
-    - counters (CTU/CTD)
-    - basic compare/math instructions
-    - tag-based data model. 
-
-    B. Explicitly excluding from MVP v1.0: 
-    - Dual-channel safety-rated instructions, motion control, and other advanced GuardLogix-specific instructions. 
-    - Given "safety PLC" is central to the value proposition — it will be crucial to add basic safety I/O behavior (e.g., simple E-stop/interlock logic) and true safety-rated logic in version 2.0 immediately after confirmation of v1.0 is completed.
-
-4. Concurrency:
-  - One PLC emulator instance driving one connected simulation client at a time is sufficient for v1.0 .
-  - Having said that, let's try to architect the server to handle multiple different configurations simultaneously based on the NETWORK definition and CONTROL_LOGIC definition. We can defer testing multiple simulated attractions/controllers running concurrently in a later version. For now we will only define and handle one simulation at a time.
-
-5. State persistence — The emulator does not need to save/restore runtime tag state across restarts for MVP v1.0. It is sufficient to "load program fresh each launch, run in-memory".
-
-6. Language / stack — 
-    - The core programming language is C#/.NET for its strong Unity interop and fast structured-data/networking development
-    - Preferred data transmission format is JSON.
-    - Prefer to avoid 3rd party dependencies. However, if introducing a free industry standard 3rd party library will save a significant amount of time and tokens, then we can use it via interfaces that will simplify replacement later.
-
-7. Deliverable form:
-    - Build tooling can be whatever development environment is available in the Github VM. No specific IDE required for development.
-    - However, the final v1.0 deliverable must be refactored to compile successfully in Microsoft Visual Studio as a final step. Since this is also meant to be extended by my team and used as a teaching tool, the codebase itself is a deliverable, not just a runnable binary.
+All open questions from the Issue #1 kickoff have been answered by the
+client (see issue #1 comments for the full exchange) and are now
+folded into the sections above. Scope for v1.0 is fully defined.
