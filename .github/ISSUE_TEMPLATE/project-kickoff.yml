@@ -1,16 +1,16 @@
 name: Project Kickoff
-description: Start a new project. Submitting this automatically hands it to the Solutions Architect.
+description: Start a new project. Submitting this automatically hands it to the Product Manager.
 title: "Project Kickoff: "
-labels: ["agent:solutions-architect"]
+labels: ["agent:product-manager"]
 body:
   - type: markdown
     attributes:
       value: |
-        A short brief is enough — the Solutions Architect will interview
+        A short brief is enough — the Product Manager will interview
         you for everything else through its own process. You don't need
-        to explain what the Solutions Architect should do; that's
-        already defined in its role file and happens automatically once
-        this issue is submitted.
+        to explain what it should do; that's already defined in its
+        role file and happens automatically once this issue is
+        submitted.
   - type: textarea
     id: brief
     attributes:
