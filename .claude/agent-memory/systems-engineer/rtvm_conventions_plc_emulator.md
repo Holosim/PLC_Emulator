@@ -47,6 +47,14 @@ label is a routing shortcut, not a different rule. Don't assume "no
 `status:ready-for-rtvm-update` label" means "not a test-pass update";
 read the comment body.
 
+**Label hygiene when handing to Test Engineer for regression (2026-08-16,
+issue #9):** the commit-confirmation handoff from CI/CD often arrives
+with a stale `status:ready-for-commit` label still attached (leftover
+from before the merge). When routing to `agent:test-engineer` for the
+regression pass, swap it for `status:ready-for-test` rather than
+leaving the stale label in place — it no longer describes the issue's
+actual state and could mislead a later sweep/read of the thread.
+
 **Post-merge regression confirmation is the true terminal step, not a
 second RTVM update (2026-08-16, issue #6):** when CI/CD flags a trunk
 merge as needing regression testing, Test Engineer runs it and hands
