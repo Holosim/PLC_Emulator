@@ -23,8 +23,21 @@ public abstract class SingleTagInstruction : IInstruction
 
     public abstract string Mnemonic { get; }
 
-    public bool Evaluate(TagTable tags, bool rungState) =>
+    /// <summary>
+    /// Default is an unimplemented stub — overridden per-mnemonic as
+    /// each one's owning CORE item lands (see <see cref="Ctu"/>,
+    /// <see cref="Ctd"/>, <see cref="Res"/> for CORE-205/206).
+    /// </summary>
+    public virtual bool Evaluate(TagTable tags, bool rungState) =>
         throw new NotImplementedException($"{Mnemonic}.Evaluate lands with {_coreItem}.");
+
+    /// <summary>Looks up this instruction's tag and requires it to carry <see cref="CounterState"/> (i.e. be a <see cref="TagType.Counter"/> tag) — used by <see cref="Ctu"/>/<see cref="Ctd"/>/<see cref="Res"/>.</summary>
+    protected CounterState RequireCounter(TagTable tags)
+    {
+        var tag = tags.Get(TagName);
+        return tag.Counter ?? throw new InvalidOperationException(
+            $"{Mnemonic}('{TagName}') requires a COUNTER-typed tag, but '{TagName}' is {tag.Type}.");
+    }
 
     public override string ToString() => $"{Mnemonic}:{TagName}";
 }

@@ -58,7 +58,7 @@ public static class ControlLogicBuilder
                 tag.Timer = new TimerState { Pre = def.Preset ?? 0, Acc = 0, Dn = false, En = false };
                 break;
             case TagType.Counter:
-                tag.Counter = new CounterState { Pre = def.Preset ?? 0, Acc = 0, Dn = false };
+                tag.Counter = new CounterState { Pre = def.Preset ?? 0, Acc = 0, Dn = false, Cu = false, Cd = false };
                 break;
             default:
                 tag.Value = def.InitialValue;
