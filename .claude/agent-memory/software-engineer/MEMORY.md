@@ -4,6 +4,7 @@
 
 <!-- Module layout, naming conventions, and data-schema decisions that
      should stay consistent across new work. -->
+- [PLC_Emulator scaffold](project_plc_emulator_scaffold.md) — PlcEmulator.sln layout, project reference graph, IDriver placement decision (issue #5)
 
 ## Platform-specific notes
 
@@ -12,6 +13,7 @@
      - VR HMD gaming interaction
      - Gesture-tracking gloves (embedded audio)
      - Video jukebox player / controller -->
+- [.github/workflows/ push rejected](workflows_permission_blocker.md) — stage new/changed CI workflow YAML under docs/ci/ instead, confirmed empirically
 
 ## Reusable solutions
 
