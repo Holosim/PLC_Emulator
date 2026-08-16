@@ -68,15 +68,26 @@ the requirement's RTVM row, then confirm build/test clean from a fresh
 `bin`/`obj` wipe.
 
 **Also doubles as the post-merge regression checklist:** when CI/CD
-hands back a trunk-merge regression request (issue #6, 2026-08-16), the
-same steps apply against `main` instead of the feature branch: fresh
-`bin`/`obj` wipe + build/test, re-check `NFR-502` (no `PackageReference`
-in `src/*/*.csproj`) and the `ProjectReference` graph, confirm
-`docs/RTVM.md`'s `Verified` row(s) carry the real merge commit SHA, and
-confirm no stray SDD lock markers / dirty `git status` were left behind
-by the merge. No separate regression-specific procedure exists — RTVM
-TP-1xx + this checklist is the whole regression suite at this project
-stage.
+hands back a trunk-merge regression request (issue #6, 2026-08-16; issue
+#7, 2026-08-16), the same steps apply against `main` instead of the
+feature branch: fresh `bin`/`obj` wipe + build/test, re-check `NFR-502`
+(no `PackageReference` in `src/*/*.csproj`) and the `ProjectReference`
+graph, confirm `docs/RTVM.md`'s `Verified` row(s) carry the real merge
+commit SHA, and confirm no stray SDD lock markers / dirty `git status`
+were left behind by the merge. No separate regression-specific
+procedure exists — RTVM TP-1xx + this checklist is the whole regression
+suite at this project stage.
+
+**Regression pass hand-off convention (confirmed twice, issue #6 and
+#7):** when RTVM already shows the requirement as `Verified` with a
+commit SHA *before* you start the regression run (Systems Engineer
+already recorded it off CI/CD's merge-confirmation comment), your
+regression PASS doesn't need a fresh RTVM edit — say so explicitly and
+hand off to `agent:systems-engineer` with `status:ready-for-rtvm-update`
+anyway (per the standard two-step pass handoff); Systems Engineer's
+follow-up comment just confirms "no further change needed" and closes
+the issue out. Don't skip the handoff step just because the RTVM looks
+already-current.
 
 **Partial/deferred TP verification is a legitimate pass, if scoped that
 way in the issue itself** (issue #9, CORE-200, 2026-08-16): the issue
