@@ -130,3 +130,17 @@ fix, not grounds to withhold a pass. Example: issue #9 extended
 rungState)` for rung power-flow threading; `docs/SDD.md` line ~168
 still shows the old signature as of 2026-08-16 and needs updating by
 Systems Engineer.
+
+**Regression baseline updated (issue #10, CORE-201/202, 2026-08-16):**
+36/36 on branch `issue-10` (commit 98b4418) — 27 baseline + 9 new test
+cases from `XicXioOteTests.cs` (6 `[TestMethod]`s, 3 of them
+`[DataRow]`-parameterized ×2). Real `Xic`/`Xio`/`Ote` classes
+(`SingleTagInstruction.Evaluate` now `virtual`, default still throws
+`NotImplementedException` for the still-unimplemented `TON`/`TOF`/
+`CTU`/`CTD`/`RES`) checked line-by-line against TP-201/TP-202 wording
+in `docs/RTVM.md` (lines 129-130) — exact match, no drift. Straightforward
+fill-in against the rung-state contract issue #9 established; when a
+requirement is this cleanly scoped against a prior issue's interface,
+reading the instruction classes directly (not just trusting the SE's
+comment) took only a few minutes and is worth doing every time rather
+than rubber-stamping the reported test count.
