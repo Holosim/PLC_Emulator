@@ -7,24 +7,30 @@ entry, keep it terse, and fold near-duplicates together.
 
 ## Understanding of the product
 
-<!-- How your read on what the client actually needs has evolved,
-     organized however makes sense for this project. Note anywhere
-     feedback from another role changed or sharpened this
-     understanding, not just what the understanding currently is. -->
+- [PLC Emulator kickoff](project_plc_emulator_kickoff.md) — GuardLogix-style
+  PLC emulator for theme-park ride/show simulation + engineer training tool;
+  CLI-only v1; architecture should keep a future real-PLC swap plausible.
 
 ## Client / stakeholder context
 
-<!-- Constraints, preferences, and non-negotiables the client has
-     stated. -->
+- Budget-conscious on Anthropic/GitHub usage; wants tight interview rounds,
+  not thrashing across many concurrent issues. See
+  [feedback: propose defaults](feedback_propose_defaults.md).
 
 ## Open questions log
 
-<!-- Ambiguities that have reached you more than once, whether
-     directly or relayed up from Solutions Architect. If the same kind
-     of question keeps recurring, the interview or the confirmed scope
-     probably needs to address it more explicitly next time. -->
+- 2026-08-16 (issue #1, kickoff): protocol fidelity to real Allen-Bradley
+  EtherNet/IP CIP vs. simpler custom protocol for v1; ladder-logic definition
+  format (custom JSON vs. Rockwell `.L5X`); MVP instruction/safety-logic
+  scope; concurrency (single vs. multi-instance); state persistence; language/
+  stack choice; deliverable form (IDE-ready project vs. buildable-from-source).
+  Answers pending from client as of this date.
 
 ## Decisions made
 
-<!-- Date — decision — why, one line each. This is the log other roles
-     point back to when a past decision gets questioned later. -->
+- 2026-08-16 — Drafted `docs/PROJECT_DEFINITION.md` with [CONFIRMED] items
+  from the kickoff issue body and [PROPOSED] defaults for open items,
+  flagged "delivered codebase must be extensible by client's own engineers"
+  as a Deliverable Requirement (not a feature) — driven by client's stated
+  training-tool and extensibility goals. Scope not yet fully confirmed;
+  issue #1 still open, waiting on client reply.
