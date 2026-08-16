@@ -1,3 +1,14 @@
+# THIS FILE IS NOT ACTIVE WHERE IT SITS. Copy it to
+#   .github/workflows/build-and-test.yml
+# It lives under docs/ci/ for the same reason docs/ci/windows-verification.yml
+# does: the relay GitHub App installation lacks the `workflows` permission, so
+# no agent in this pipeline can push a file under .github/workflows/ — this
+# was attempted and rejected on issue #5 ("refusing to allow a GitHub App to
+# create or update workflow ... without `workflows` permission"). Either
+# grant that permission, after which CI/CD maintains this file directly, or
+# copy it across once by hand. Nothing below this point needs further
+# customization — it's ready to copy as-is.
+
 name: build-and-test
 
 # Build/test gate for NFR-501 (Windows/Linux behavioral parity): runs

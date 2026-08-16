@@ -23,6 +23,20 @@
 #    from whichever project this was copied from. Update it to this
 #    project's actual solution file, or every run will fail at the first
 #    MSBuild step with "Project file does not exist" regardless of trigger.
+# Both customized below (2026-08-16, issue #5, PlcEmulator.sln — C#/.NET 8,
+# no C++): `paths:` trimmed to .sln/.csproj/.cs/tests/windows, `SOLUTION`
+# set to `PlcEmulator.sln`. NOTE: the steps below this point (MSBuild,
+# vstest.console.exe discovery, dumpbin import-table check, the
+# `SudokuSolver.exe`/`SudokuSolver.Tests.dll` filenames in "Locate build
+# outputs") still assume a native C++/MSBuild Visual Studio toolchain and
+# were NOT rewritten here — that's beyond the two customization points
+# this header names, and this project's actual build outputs are
+# PlcEmulator.Host.dll / PlcEmulator.Tests.dll (framework-dependent .NET
+# assemblies, not a standalone .exe with a PE import table for dumpbin to
+# inspect). Flagged to Systems Engineer/CI-CD in issue #5's hand-off —
+# this file likely needs a C#/.NET-flavored revision (dotnet build/publish,
+# dotnet vstest, no dumpbin clause) before a run of it produces meaningful
+# evidence for this project.
 # ---------------------------------------------------------------------------
 #
 # W-2 is the one to keep in mind when editing: this workflow PRODUCES
@@ -39,12 +53,8 @@ on:
       - "issue-*"
     paths:
       - "**/*.sln"
-      - "**/*.vcxproj"
       - "**/*.csproj"
-      - "**/*.cpp"
       - "**/*.cs"
-      - "**/*.h"
-      - "**/*.hpp"
       - "tests/windows/**"
   workflow_dispatch: {}
 
@@ -62,7 +72,7 @@ jobs:
     timeout-minutes: 45
 
     env:
-      SOLUTION: SudokuSolver.sln
+      SOLUTION: PlcEmulator.sln
 
     steps:
       - name: Check out repo
