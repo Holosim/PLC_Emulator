@@ -13,6 +13,7 @@
 ## Release & versioning
 
 - [Which versioning scheme is authoritative](release_versioning_scheme.md) — resolves cicd.md's two conflicting sections; v1.0.1 was PLC_Emulator's first tag.
+- [Same-day BUILD-number tag collision](release_versioning_tag_collision_same_day.md) — don't force-move an existing tag; verify ancestry and skip re-tagging if the day hasn't advanced.
 
 ## Known issues
 
