@@ -412,3 +412,16 @@ current regression baseline. Landed concurrently with the issue #12
 regression pass recorded just above — both regression requests (#12 and
 #15) were in flight at the same time and both correctly recounted from
 `main` independently rather than trusting a stale quoted total.
+
+**Regression pass confirmed a tenth time (issue #16, UI-001/UI-003,
+CI/CD-requested trunk regression, 2026-08-17):** same checklist against
+`main`@`fb14402` (post `issue-16` merge `fa26c47`, plus RTVM-SHA-only
+and memory-only follow-up commits) — 97/97 (matches the baseline, no
+drop), 0/0 build warnings/errors, NFR-502 clean, `ProjectReference`
+graph unchanged, `git status` clean, RTVM already showed
+`Verified`/`fa26c47` for both UI-001 and UI-003 before the run started.
+First regression pass covering a Host/CLI-wiring issue (no new tests
+expected, and none added) rather than a new instruction/driver
+component — still the same checklist applies unchanged. Ten-for-ten now
+on "RTVM already current → still route through the two-step handoff."
+97 remains the current regression baseline.
