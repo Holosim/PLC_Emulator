@@ -50,7 +50,18 @@ the number:
 - #26 NFR-503 (no-persistence verification) — FS on #21
 - #27 DELIV-900 (VS solution consolidation) — FS on #23, #24, #25, #26
   (deliberately last, per the late-stage instruction in issue #4 and
-  `docs/SDD.md`'s Build & Toolchain Conventions)
+  `docs/SDD.md`'s Build & Toolchain Conventions). Closed 2026-08-17
+  after a post-release field-defect round-trip (see
+  [[issue-closeout-log-plc-emulator]]); shipped as `v1.0.339`.
+- #29 DELIV-901 (user quick-start guide, `docs/USER_GUIDE.md`) — added
+  2026-08-17 outside the original Implementation Plan sequence (client
+  request via issue #28, after #27 was already done and shipped). FS
+  on #27 only. Created directly with `status:on-hold` (not
+  `agent:software-engineer`) even though #27 was already closed at
+  creation time — let `dependency-check.yml`'s sweep confirm and
+  release it rather than hand-verifying and skipping the on-hold step;
+  keeps the mechanism consistent and avoids a manual judgment call
+  that isn't actually necessary.
 
 **Why:** grouping RTVM items into ~22 issues (rather than one per
 single RTVM ID) kept issue count manageable while still giving each
