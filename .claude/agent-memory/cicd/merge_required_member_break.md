@@ -55,3 +55,18 @@ lesson:** it's not just `required` members — *any* interface/method
 signature change landed by a sibling branch that merged first can
 silently break a same-side-only file with no conflict markers at all.
 Always build+test the *whole* merge, not just the files git flagged.
+
+**2026-08-17, issue #14 (CORE-208) merge to `main` — third occurrence,
+same `elapsed` signature:** `issue-14` was also cut before issue #11's
+3-arg `IInstruction.Evaluate` landed, so it hit the *actual* conflict
+this time (`MathInstruction.cs`'s own `Evaluate` override, textually
+overlapping via `<<<<<<<`/`>>>>>>>` markers) plus the same no-conflict
+trap in `MathInstructionTests.cs` (9 call sites using the old 2-arg
+form, zero markers, would not compile). Fixed the same way: adopt the
+3-arg signature (`elapsed` unused, math isn't time-driven), add
+`elapsed: TimeSpan.Zero` to every test call site, then full rebuild+
+retest (61/61, 0 warnings). With several more sibling instruction-set
+issues still open (#12/#13/#15/#18 etc., all cut from before #11
+merged), expect this exact shape to recur on their merges too — check
+`IInstruction.Evaluate`'s call sites first thing whenever merging any
+of them.
