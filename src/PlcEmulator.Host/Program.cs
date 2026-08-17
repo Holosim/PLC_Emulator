@@ -74,9 +74,7 @@ public static class Program
             ConfigLoader.Validate(controlLogic, network);
             controller = new PlcController(controlLogic, network, DriverFactory.Create);
 
-            Console.WriteLine(
-                $"plcemu: loaded {controlLogic.Tags.Count} tag(s) from '{controlLogicPath}' and " +
-                $"{network.Components.Count} network component(s) from '{networkPath}'.");
+            PrintStartupDiagnostics(controlLogic, network, controlLogicPath, networkPath);
         }
         catch (ConfigValidationException ex)
         {
@@ -108,6 +106,49 @@ public static class Program
         Thread.Sleep(Timeout.Infinite);
         return 0;
     }
+
+    /// <summary>
+    /// Prints structured startup diagnostics (UI-002) once CONTROL_LOGIC
+    /// and NETWORK have both loaded and cross-validated successfully:
+    /// the loaded-count summary line for each file, followed by a
+    /// per-tag (name/type) and per-component (name/driver) listing —
+    /// this is the "loaded model visible" teaching-tool view called out
+    /// in SN-2 / docs/SDD.md's Host responsibilities. Only ever called
+    /// from the success path in <see cref="Main"/>; a load/validation
+    /// failure reports its own error instead (UI-003) and never reaches
+    /// here.
+    /// </summary>
+    /// <remarks>
+    /// TP-003 checks for the literal substrings <c>"3 tags loaded"</c>
+    /// and <c>"2 components loaded"</c>, so the count lines always use
+    /// the plural noun regardless of count (i.e. `"1 tags loaded"`, not
+    /// `"1 tag loaded"`) — matching the requirement text verbatim
+    /// rather than adding singular/plural grammar the RTVM doesn't ask
+    /// for.
+    /// </remarks>
+    private static void PrintStartupDiagnostics(
+        ControlLogicDef controlLogic, NetworkDef network, string controlLogicPath, string networkPath)
+    {
+        Console.WriteLine($"plcemu: {controlLogic.Tags.Count} tags loaded from '{controlLogicPath}':");
+        foreach (var tag in controlLogic.Tags)
+        {
+            Console.WriteLine($"plcemu:   {tag.Name} ({FormatTagType(tag.Type)})");
+        }
+
+        Console.WriteLine($"plcemu: {network.Components.Count} components loaded from '{networkPath}':");
+        foreach (var component in network.Components)
+        {
+            Console.WriteLine($"plcemu:   {component.Name} ({component.DriverType})");
+        }
+    }
+
+    /// <summary>
+    /// Renders a <see cref="TagTypeDef"/> the same way it's written in
+    /// CONTROL_LOGIC JSON (e.g. <c>BOOL</c>, <c>DINT</c>) rather than
+    /// its .NET enum-member casing, so the diagnostics line matches the
+    /// source file an engineer-in-training is reading alongside it.
+    /// </summary>
+    private static string FormatTagType(TagTypeDef type) => type.ToString().ToUpperInvariant();
 
     /// <summary>
     /// Parses <c>--key value</c> pairs from the raw command line. Every
