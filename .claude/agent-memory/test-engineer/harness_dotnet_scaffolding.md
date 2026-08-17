@@ -129,4 +129,28 @@ fix, not grounds to withhold a pass. Example: issue #9 extended
 `IInstruction.Evaluate(TagTable tags)` to `Evaluate(TagTable tags, bool
 rungState)` for rung power-flow threading; `docs/SDD.md` line ~168
 still shows the old signature as of 2026-08-16 and needs updating by
-Systems Engineer.
+Systems Engineer. Same pattern recurred on issue #12 (CORE-205/206,
+2026-08-17): Software Engineer added undocumented `Cu`/`Cd` fields to
+`CounterState` (edge-detection memory for `CTU`/`CTD`, beyond
+DATA-IN-100's documented 3-field `{Pre, Acc, Dn}`) and flagged it
+in-code + in the handoff comment for SE sign-off — verified it was a
+narrow, well-justified addition (diff-scoped, doesn't touch
+CONTROL_LOGIC JSON shape) and passed anyway.
+
+**Regression baseline updated (issue #12, 2026-08-17):** 38/38 on
+`issue-12` branch (27 baseline + 11 new `CounterInstructionTests` for
+CORE-205/206 CTU/CTD/RES). Confirmed via `git diff <prev>..<head>
+--stat` that only counter-related files + the new test file changed;
+`Xic`/`Xio`/`Ote`/`Ton`/`Tof` still correctly fall through to the base
+`NotImplementedException` stub in `SingleTagInstruction.Evaluate`
+(made `virtual` this issue, but default behavior for
+not-yet-implemented mnemonics is unchanged) — worth explicitly
+re-checking whenever a base class's Evaluate stub is touched, since
+that's a plausible place for a silent regression across untouched
+instruction types. `InstructionFactory` already has switch cases wired
+for `EQU`/`NEQ`/`GRT`/`LES`/`GEQ`/`LEQ`/`ADD`/`SUB`/`MUL`/`DIV` even
+though those aren't yet in scope on this branch's own diff — that's
+pre-existing scaffolding from an earlier issue, not something this
+issue touched; don't mistake a factory `switch` case existing for a
+mnemonic as evidence that issue is "in scope" for the current PR
+without checking the diff.
