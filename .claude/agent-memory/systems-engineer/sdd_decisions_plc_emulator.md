@@ -103,6 +103,16 @@ Engineer/Test Engineer questions on `[RTVM-014]`-style issues:
   (systems-engineer sign-off pass on issue #11, requested by Test
   Engineer — reviewed, no changes needed, already correct and
   consistent with the issue #9 pattern).
+- **`CounterState { Pre, Acc, Dn, Cu, Cd }`** — revised 2026-08-17 (issue
+  #12, CORE-205/206) from the originally-documented `{ Pre, Acc, Dn }`.
+  `Cu`/`Cd` are runtime-only rising-edge-memory bits (was the enable
+  input true last scan) needed so `CTU`/`CTD` can detect a rising edge
+  without instructions themselves holding state (they're documented
+  stateless per-call). Two bits, not one, because a `CTU` and a `CTD`
+  can legally target the same counter tag. Not exposed in CONTROL_LOGIC
+  JSON — DATA-IN-100's authored schema (`.PRE`/`.ACC`/`.DN`) is
+  unaffected, so no RTVM item needed updating, only the SDD Tag data
+  model line.
 
 **Why:** these are exactly the kind of decisions that are expensive to
 change once Software Engineer starts building against them (wire

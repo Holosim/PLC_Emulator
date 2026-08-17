@@ -163,7 +163,31 @@ fix, not grounds to withhold a pass. Example: issue #9 extended
 `IInstruction.Evaluate(TagTable tags)` to `Evaluate(TagTable tags, bool
 rungState)` for rung power-flow threading; `docs/SDD.md` line ~168
 still shows the old signature as of 2026-08-16 and needs updating by
-Systems Engineer.
+Systems Engineer. Same pattern recurred on issue #12 (CORE-205/206,
+2026-08-17): Software Engineer added undocumented `Cu`/`Cd` fields to
+`CounterState` (edge-detection memory for `CTU`/`CTD`, beyond
+DATA-IN-100's documented 3-field `{Pre, Acc, Dn}`) and flagged it
+in-code + in the handoff comment for SE sign-off — verified it was a
+narrow, well-justified addition (diff-scoped, doesn't touch
+CONTROL_LOGIC JSON shape) and passed anyway.
+
+**Regression baseline updated (issue #12, 2026-08-17):** 38/38 on
+`issue-12` branch (27 baseline + 11 new `CounterInstructionTests` for
+CORE-205/206 CTU/CTD/RES). Confirmed via `git diff <prev>..<head>
+--stat` that only counter-related files + the new test file changed;
+`Xic`/`Xio`/`Ote`/`Ton`/`Tof` still correctly fall through to the base
+`NotImplementedException` stub in `SingleTagInstruction.Evaluate`
+(made `virtual` this issue, but default behavior for
+not-yet-implemented mnemonics is unchanged) — worth explicitly
+re-checking whenever a base class's Evaluate stub is touched, since
+that's a plausible place for a silent regression across untouched
+instruction types. `InstructionFactory` already has switch cases wired
+for `EQU`/`NEQ`/`GRT`/`LES`/`GEQ`/`LEQ`/`ADD`/`SUB`/`MUL`/`DIV` even
+though those aren't yet in scope on this branch's own diff — that's
+pre-existing scaffolding from an earlier issue, not something this
+issue touched; don't mistake a factory `switch` case existing for a
+mnemonic as evidence that issue is "in scope" for the current PR
+without checking the diff.
 
 **Regression baseline updated (issue #11, CORE-203/204 `TON`/`TOF`,
 2026-08-17):** 39/39 on branch `issue-11` (27 baseline + 12 new
@@ -271,6 +295,18 @@ post-merge baseline once two feature branches with diverging "prior count"
 assumptions both land — always recount straight from the current `main`
 tip.
 
+**Regression pass confirmed a sixth time (issue #14, CORE-208,
+CI/CD-requested trunk regression, 2026-08-17):** same checklist against
+`main`@`bb42d0f` (post CORE-208 merge `10c9dad`, cumulative with
+fast-forward `7e1738e`, plus RTVM-SHA-only and memory-only follow-up
+commits) — 61/61 (matches the combined baseline recorded just above,
+no drop), 0/0 build warnings/errors, NFR-502 clean, `ProjectReference`
+graph unchanged, RTVM already showed `Verified`/`10c9dad`, `git status`
+clean. Six-for-six now (issues #6, #7, #11, #8, #10, #14) on "RTVM
+already current → still route through the two-step handoff" — this
+pattern is fully settled, stop re-confirming it explicitly unless it
+actually breaks. 61 remains the current regression baseline.
+
 **CORE-209 (issue #15, 2026-08-17) — driver architecture, PASS, 42/42
 (27 baseline + 10 `DriverFactoryTests` + 5 `PlcControllerDriverTests`,
 on a branch cut before #8/#10/#11/#14 had merged, so its own "27
@@ -292,6 +328,15 @@ implementation" pattern (first seen issue #9) is the right way to
 prove an architectural/wiring requirement (TP-200-class, TP-209)
 independent of whichever concrete feature isn't the point of that
 specific test. Merged into `main` on issue-15's own trunk merge,
-2026-08-17 — full-suite post-merge count is **76/76** (61/61 from the
-#10+#14 concurrent merge, +15 new: 10 `DriverFactoryTests` + 5
-`PlcControllerDriverTests`).
+2026-08-17 — CI/CD's merge hit three further concurrent-push
+rejections mid-merge (issue #14's, issue #13's, and issue #12's
+independent trunk merges each landing in between fetch/push cycles)
+requiring three additional fetch+merge+rebuild+retest rounds before
+the push succeeded; full-suite post-merge count settled at **97/97**
+(61/61 pre-existing baseline +15 new driver-architecture tests +10
+`CompareInstructionTests` from issue #13 +11 `CounterInstructionTests`
+from issue #12, both absorbed via concurrent merges). Reconfirms
+[[concurrent-cicd-runs-same-day]]'s pattern can chain more than once —
+even three times — in a single merge attempt on a busy day; keep
+re-fetching/re-merging/re-testing until the push actually succeeds,
+don't assume one retry is enough.
