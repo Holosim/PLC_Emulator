@@ -96,7 +96,6 @@ gh issue list --state open --limit 200 --repo "$REPO" \
       POSITION_LABELS=$(grep -E "$POSITION_RE" <<< "$LABELS" || true)
       HAS_IN_PROGRESS=$(grep -x 'status:in-progress' <<< "$LABELS" || true)
 
-      # Nothing agent-related on this issue at all -- not ours to touch.
       if [[ -z "$AGENT_LABELS" && -z "$POSITION_LABELS" && -z "$HAS_IN_PROGRESS" ]]; then
         continue
       fi
@@ -108,9 +107,6 @@ gh issue list --state open --limit 200 --repo "$REPO" \
         continue
       fi
 
-      # Staleness check. An issue only counts as stalled if nothing has
-      # happened on it recently -- otherwise a run may be legitimately
-      # mid-flight right now.
       LAST_TIME=$(gh issue view "$NUMBER" --repo "$REPO" --json comments \
         -q '.comments | if length > 0 then .[-1].createdAt else null end' 2>/dev/null)
       if [[ -z "$LAST_TIME" || "$LAST_TIME" == "null" ]]; then
@@ -130,118 +126,122 @@ gh issue list --state open --limit 200 --repo "$REPO" \
       echo "  idle $(( AGE / 60 ))m | agents: ${AGENT_LABELS//$'\n'/, } | positions: ${POSITION_LABELS//$'\n'/, }" >> "$REPORT"
       echo "--- #$NUMBER: idle $(( AGE / 60 ))m"
 
-      REMOVE=()
       NOTES=()
       CONFLICT=false
 
-      # Rule 2: mutually exclusive position labels. Progress only moves
-      # forward, so the furthest-along label is the live one and anything
-      # behind it is a leftover from a hand-off that didn't finish cleaning
-      # up. Keep the highest rank, drop the rest -- but flag it, because a
-      # partial hand-off means the work itself may also be half-done.
+      # The last comment's "**Next:**" line is the strongest signal there is:
+      # the agent explicitly declared where this goes. If it's present, it
+      # outranks whatever the labels say.
+      LAST_BODY=$(gh issue view "$NUMBER" --repo "$REPO" --json comments \
+        -q '.comments | if length > 0 then .[-1].body else "" end' 2>/dev/null)
+      NEXT_LINE=$(grep -i '^\*\*Next:\*\*' <<< "$LAST_BODY" | tail -1 || true)
+      DECLARED=$(grep -oE '`agent:[a-z-]+`' <<< "$NEXT_LINE" | tr -d '`' | head -1 || true)
+
+      # Deliberately waiting on a human -- not stalled. Clear only the false
+      # in-progress flag, leave ownership untouched, don't retrigger.
+      if grep -qi 'waiting on human reply' <<< "$NEXT_LINE"; then
+        if [[ -n "$HAS_IN_PROGRESS" ]]; then
+          run gh issue edit "$NUMBER" --repo "$REPO" --remove-label "status:in-progress"
+        fi
+        echo "  -> waiting on human reply; cleared stale flags only, no retrigger" >> "$REPORT"
+        continue
+      fi
+
+      # --- Choose ONE position label, and choose it together with the
+      # owner rather than independently. Precedence:
+      #   1. the position whose owner matches an explicit Next: declaration
+      #   2. the position whose owner matches the current agent label
+      #      (agreement between two independent signals is strong)
+      #   3. the EARLIEST position present -- deliberately conservative.
+      #      Redoing a completed step costs one cheap run; skipping an
+      #      unfinished one commits or verifies work that never happened.
       KEEP_POSITION=""
+      if (( POSITION_COUNT > 0 )); then
+        if [[ -n "$DECLARED" ]]; then
+          while read -r p; do
+            [[ -z "$p" ]] && continue
+            [[ "$(owner_for_position "$p")" == "$DECLARED" ]] && KEEP_POSITION="$p" && break
+          done <<< "$POSITION_LABELS"
+        fi
+        if [[ -z "$KEEP_POSITION" && $AGENT_COUNT -eq 1 ]]; then
+          while read -r p; do
+            [[ -z "$p" ]] && continue
+            [[ "$(owner_for_position "$p")" == "$AGENT_LABELS" ]] && KEEP_POSITION="$p" && break
+          done <<< "$POSITION_LABELS"
+        fi
+        if [[ -z "$KEEP_POSITION" ]]; then
+          BEST_RANK=99
+          while read -r p; do
+            [[ -z "$p" ]] && continue
+            r=$(position_rank "$p")
+            if (( r < BEST_RANK )); then BEST_RANK=$r; KEEP_POSITION="$p"; fi
+          done <<< "$POSITION_LABELS"
+        fi
+      fi
+
       if (( POSITION_COUNT > 1 )); then
         CONFLICT=true
-        BEST_RANK=0
-        while read -r p; do
-          [[ -z "$p" ]] && continue
-          r=$(position_rank "$p")
-          if (( r > BEST_RANK )); then BEST_RANK=$r; KEEP_POSITION="$p"; fi
-        done <<< "$POSITION_LABELS"
-        while read -r p; do
-          [[ -z "$p" || "$p" == "$KEEP_POSITION" ]] && continue
-          REMOVE+=("$p")
-        done <<< "$POSITION_LABELS"
-        NOTES+=("Found mutually exclusive status labels (${POSITION_LABELS//$'\n'/, }). Kept \`$KEEP_POSITION\` as the furthest along and cleared the rest.")
-      elif (( POSITION_COUNT == 1 )); then
-        KEEP_POSITION="$POSITION_LABELS"
+        NOTES+=("Found mutually exclusive status labels (${POSITION_LABELS//$'\n'/, }) -- these describe different points in the pipeline and can't both be true. Kept \`$KEEP_POSITION\` and cleared the rest.")
       fi
 
-      # Rule 3: status:in-progress on an issue this stale is by definition
-      # false -- the run it referred to is long gone. Always clear it; it's
-      # what blocks a clean retrigger.
-      if [[ -n "$HAS_IN_PROGRESS" ]]; then
-        REMOVE+=("status:in-progress")
-      fi
-
-      # Rule 4: decide who should act next.
+      # --- Choose the owner, consistently with the position just chosen.
       TARGET=""
-      if (( AGENT_COUNT > 1 )); then
-        # Genuinely ambiguous. If exactly one of them matches the owner the
-        # position label implies, that's strong enough to act on. Otherwise
-        # don't guess -- hand it to a human.
-        CONFLICT=true
-        EXPECTED=$(owner_for_position "$KEEP_POSITION")
-        if [[ -n "$EXPECTED" ]] && grep -qx "$EXPECTED" <<< "$AGENT_LABELS"; then
-          TARGET="$EXPECTED"
-          while read -r a; do
-            [[ -z "$a" || "$a" == "$TARGET" ]] && continue
-            REMOVE+=("$a")
-          done <<< "$AGENT_LABELS"
-          NOTES+=("Found more than one \`agent:*\` label (${AGENT_LABELS//$'\n'/, }). Kept \`$TARGET\`, which is the owner \`$KEEP_POSITION\` implies.")
-        else
-          NOTES+=("Found more than one \`agent:*\` label (${AGENT_LABELS//$'\n'/, }) and no way to tell which is live from the status labels. Not guessing -- flagging for a human.")
-          if ! $DRY_RUN; then
-            gh issue comment "$NUMBER" --repo "$REPO" --body "Label reconciliation: ${NOTES[*]}"
-          fi
-          run gh issue edit "$NUMBER" --repo "$REPO" --add-label "status:needs-human"
-          echo "  -> flagged status:needs-human (ambiguous agent labels)" >> "$REPORT"
-          continue
+      EXPECTED_OWNER=$(owner_for_position "$KEEP_POSITION")
+
+      if [[ -n "$DECLARED" ]]; then
+        TARGET="$DECLARED"
+        if (( AGENT_COUNT == 1 )) && [[ "$DECLARED" != "$AGENT_LABELS" ]]; then
+          CONFLICT=true
+          NOTES+=("The last comment declared a hand-off to \`$DECLARED\` that never took effect -- the label stayed on \`$AGENT_LABELS\`. Routing to \`$DECLARED\`.")
+        fi
+      elif [[ -n "$EXPECTED_OWNER" ]]; then
+        TARGET="$EXPECTED_OWNER"
+        if (( AGENT_COUNT >= 1 )) && ! grep -qx "$EXPECTED_OWNER" <<< "$AGENT_LABELS"; then
+          CONFLICT=true
+          NOTES+=("The \`agent:*\` label (${AGENT_LABELS//$'\n'/, }) disagreed with \`$KEEP_POSITION\`, which \`$EXPECTED_OWNER\` owns. Went with the status label, since redoing a step is safer than skipping one.")
+        elif (( AGENT_COUNT == 0 )); then
+          CONFLICT=true
+          NOTES+=("This issue had no \`agent:*\` label at all. Inferred \`$TARGET\` from \`$KEEP_POSITION\`.")
         fi
       elif (( AGENT_COUNT == 1 )); then
-        # A "**Next:**" line naming a different role means the hand-off was
-        # declared but the relabel never landed. Trust the declaration.
-        LAST_BODY=$(gh issue view "$NUMBER" --repo "$REPO" --json comments \
-          -q '.comments | if length > 0 then .[-1].body else "" end' 2>/dev/null)
-        NEXT_LINE=$(grep -i '^\*\*Next:\*\*' <<< "$LAST_BODY" | tail -1 || true)
-        DECLARED=$(grep -oE '`agent:[a-z-]+`' <<< "$NEXT_LINE" | tr -d '`' | head -1 || true)
-
-        if grep -qi 'waiting on human reply' <<< "$NEXT_LINE"; then
-          # Not stalled -- deliberately waiting on you. Clear the false
-          # in-progress flag and leave everything else untouched.
-          if (( ${#REMOVE[@]} > 0 )); then
-            ARGS=(); for l in "${REMOVE[@]}"; do ARGS+=(--remove-label "$l"); done
-            run gh issue edit "$NUMBER" --repo "$REPO" "${ARGS[@]}"
-          fi
-          echo "  -> waiting on human reply; cleared stale flags only, no retrigger" >> "$REPORT"
-          continue
-        fi
-
-        if [[ -n "$DECLARED" && "$DECLARED" != "$AGENT_LABELS" ]]; then
-          TARGET="$DECLARED"
-          REMOVE+=("$AGENT_LABELS")
-          NOTES+=("The last comment declared a hand-off to \`$DECLARED\` that never took effect. Routing there.")
-        else
-          TARGET="$AGENT_LABELS"
-        fi
+        TARGET="$AGENT_LABELS"
       else
-        # Rule 5: no agent label at all, but the issue is clearly parked at
-        # a pipeline position. Infer the owner from the position.
-        TARGET=$(owner_for_position "$KEEP_POSITION")
-        if [[ -z "$TARGET" ]]; then
-          echo "  -> no agent label and no inferable owner; skipped" >> "$REPORT"
-          continue
-        fi
         CONFLICT=true
-        NOTES+=("This issue had no \`agent:*\` label at all. Inferred \`$TARGET\` from \`$KEEP_POSITION\`.")
+        NOTES+=("Found ${AGENT_COUNT} \`agent:*\` labels and no status label to resolve them against. Not guessing.")
+        if ! $DRY_RUN; then
+          gh issue comment "$NUMBER" --repo "$REPO" --body "Label reconciliation: ${NOTES[*]}" >/dev/null || true
+        fi
+        run gh issue edit "$NUMBER" --repo "$REPO" --add-label "status:needs-human"
+        echo "  -> flagged status:needs-human (ambiguous, unresolvable)" >> "$REPORT"
+        continue
       fi
 
-      # Apply removals.
+      # --- Build the removal set: every label that isn't the chosen pair.
+      REMOVE=()
+      [[ -n "$HAS_IN_PROGRESS" ]] && REMOVE+=("status:in-progress")
+      while read -r p; do
+        [[ -z "$p" || "$p" == "$KEEP_POSITION" ]] && continue
+        REMOVE+=("$p")
+      done <<< "$POSITION_LABELS"
+      while read -r a; do
+        [[ -z "$a" || "$a" == "$TARGET" ]] && continue
+        REMOVE+=("$a")
+      done <<< "$AGENT_LABELS"
+
       if (( ${#REMOVE[@]} > 0 )); then
         ARGS=(); for l in "${REMOVE[@]}"; do ARGS+=(--remove-label "$l"); done
         run gh issue edit "$NUMBER" --repo "$REPO" "${ARGS[@]}"
       fi
 
-      # Rule 6: when anything was reconciled rather than simply retriggered,
-      # say so on the issue and ask the acting agent to confirm real state
-      # before trusting the labels. A partial hand-off can mean partial
-      # work, and the label alone won't reveal that.
+      # Anything reconciled rather than simply retriggered gets a note on the
+      # issue: a hand-off that left labels inconsistent may have left the
+      # work itself partial, and the labels alone won't reveal that.
       if $CONFLICT; then
-        BODY="Label reconciliation on this issue found an inconsistent state and corrected it:
+        BODY="Label reconciliation found an inconsistent state on this issue and corrected it:
 
 $(printf -- '- %s\n' "${NOTES[@]}")
 
-\`$TARGET\`: before continuing, verify the issue's real state against the branch and the comment history rather than trusting the labels. These labels were left inconsistent by a hand-off that didn't complete, so the work it described may also be partial. If what you find doesn't match \`$KEEP_POSITION\`, say so and correct it rather than proceeding on the assumption it's accurate."
+\`$TARGET\`: verify this issue's real state against the branch and the comment history before continuing -- don't assume the labels are accurate. They were left inconsistent by a hand-off that didn't finish, so the work it described may be partial too. If what you find doesn't match \`$KEEP_POSITION\`, say so and correct it rather than proceeding as if it does. If the step was in fact already completed, just hand off to the next role instead of redoing it."
         if $DRY_RUN; then
           echo "      would comment: (reconciliation notice + verify request)"
         else
@@ -249,10 +249,13 @@ $(printf -- '- %s\n' "${NOTES[@]}")
         fi
       fi
 
-      # Retrigger: remove then re-add, which is what actually fires the relay.
       run gh issue edit "$NUMBER" --repo "$REPO" --remove-label "$TARGET"
       run gh issue edit "$NUMBER" --repo "$REPO" --add-label "$TARGET"
-      echo "  -> retriggered $TARGET$($CONFLICT && echo ' (after reconciliation)')" >> "$REPORT"
+      if $CONFLICT; then
+        echo "  -> reconciled to $TARGET / $KEEP_POSITION, retriggered" >> "$REPORT"
+      else
+        echo "  -> retriggered $TARGET" >> "$REPORT"
+      fi
     done
 
 echo
