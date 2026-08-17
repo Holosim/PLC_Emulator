@@ -20,7 +20,8 @@ public sealed class Res : SingleTagInstruction
 
     public override string Mnemonic => "RES";
 
-    public override bool Evaluate(TagTable tags, bool rungState)
+    /// <summary>Ignores <paramref name="elapsed"/> — not time-driven.</summary>
+    public override bool Evaluate(TagTable tags, bool rungState, TimeSpan elapsed)
     {
         if (rungState)
         {

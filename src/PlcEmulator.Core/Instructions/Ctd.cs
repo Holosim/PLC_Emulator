@@ -14,7 +14,8 @@ public sealed class Ctd : SingleTagInstruction
 
     public override string Mnemonic => "CTD";
 
-    public override bool Evaluate(TagTable tags, bool rungState)
+    /// <summary>Ignores <paramref name="elapsed"/> — not time-driven (edge-triggered on <paramref name="rungState"/> instead, see CORE-206).</summary>
+    public override bool Evaluate(TagTable tags, bool rungState, TimeSpan elapsed)
     {
         var counter = RequireCounter(tags);
 

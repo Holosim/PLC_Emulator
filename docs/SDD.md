@@ -51,6 +51,17 @@ one.
   `true` (energized from the left power rail) at the start of every
   rung by the Scan Engine and not carried across rungs; still fully
   stateless per-call, so the reuse property above is unaffected.
+  **Confirmed 2026-08-16 (issue #11):** each instruction also receives
+  the real (wall-clock) time elapsed since the previous scan, for
+  time-driven instructions (`TON`/`TOF`, CORE-203/204) to accumulate
+  `.ACC` against — v1.0 does not define a fixed scan period, so the
+  Scan Engine measures actual elapsed time itself (a `Stopwatch` field
+  on `ScanEngine`, restarted every call) rather than assuming an
+  idealized one; `TimeSpan.Zero` on a controller's first scan, since
+  there is no previous scan to measure from. This is state on
+  `ScanEngine` itself (already documented above as owned by, not
+  shared across, a `PlcController`), not on any instruction, so
+  instruction classes remain fully stateless per-call.
 - **Driver layer.** NETWORK-defined components are instantiated
   through a common `IDriver` interface (CORE-209) and bound to their
   owning controller's `TagTable` at construction — never to a global
@@ -182,7 +193,7 @@ fit cleanly.
   is unchanged.
 - **Instruction classes:** one class per mnemonic under
   `PlcEmulator.Core.Instructions`, each implementing a shared
-  `IInstruction.Evaluate(TagTable tags, bool rungState)` — stateless,
+  `IInstruction.Evaluate(TagTable tags, bool rungState, TimeSpan elapsed)` — stateless,
   operating only on the tag table and rung state it's given (see
   Architecture above — this is what keeps instruction logic reusable
   across isolated controller instances). **Confirmed 2026-08-16
@@ -196,7 +207,13 @@ fit cleanly.
   output instruction like `OTE` would have no way to know whether the
   contacts preceding it in the same rung were true. `ScanEngine` seeds
   `rungState = true` (energized from the left power rail) at the start
-  of every rung.
+  of every rung. **Confirmed 2026-08-16 (issue #11), adding a third
+  parameter to the signature above:** `elapsed` carries the real
+  (wall-clock) time since the previous scan (`TimeSpan.Zero` on a
+  controller's first scan) — used only by time-driven instructions
+  (`TON`/`TOF`, CORE-203/204) to accumulate `.ACC`; every other
+  instruction ignores it. See Architecture above for why `ScanEngine`
+  measures this itself rather than v1.0 defining a fixed scan period.
 - **Driver interface:** `IDriver.Bind(TagTable tags, NetworkComponentConfig config)`
   at construction, `IDriver.OnScanComplete()` called once per scan
   after tag values settle, for drivers that need to react to state

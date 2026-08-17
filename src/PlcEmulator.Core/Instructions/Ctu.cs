@@ -14,7 +14,8 @@ public sealed class Ctu : SingleTagInstruction
 
     public override string Mnemonic => "CTU";
 
-    public override bool Evaluate(TagTable tags, bool rungState)
+    /// <summary>Ignores <paramref name="elapsed"/> — not time-driven (edge-triggered on <paramref name="rungState"/> instead, see CORE-205).</summary>
+    public override bool Evaluate(TagTable tags, bool rungState, TimeSpan elapsed)
     {
         var counter = RequireCounter(tags);
 

@@ -86,6 +86,23 @@ Engineer/Test Engineer questions on `[RTVM-014]`-style issues:
   CONTROL_LOGIC's wire format (issue #6) for consistency rather than
   inventing a different wrapper convention there.
 
+- **`IInstruction.Evaluate(TagTable tags, bool rungState, TimeSpan elapsed)`**
+  — revised 2026-08-16 (issue #11) from the two-parameter signature
+  above, adding a third `elapsed` parameter. Software Engineer flagged
+  that `TON`/`TOF` (CORE-203/204) need real elapsed time to accumulate
+  `.ACC` against, and v1.0 never defined a fixed scan period. Rather
+  than invent an unrequested fixed-scan-rate config, `elapsed` is real
+  wall-clock time since the previous scan, measured by `ScanEngine`
+  itself via a private `Stopwatch` (`TimeSpan.Zero` on a controller's
+  first scan) — this is state on `ScanEngine` (already owned-by/not
+  shared-across a `PlcController`), not on any instruction, so
+  instructions remain fully stateless per-call and NFR-500's
+  reuse-across-controllers property is unaffected. Only `TON`/`TOF`
+  consume it; every other instruction ignores the parameter. Signed
+  off in `docs/SDD.md` Architecture + Coding Standards sections
+  (systems-engineer sign-off pass on issue #11, requested by Test
+  Engineer — reviewed, no changes needed, already correct and
+  consistent with the issue #9 pattern).
 - **`CounterState { Pre, Acc, Dn, Cu, Cd }`** — revised 2026-08-17 (issue
   #12, CORE-205/206) from the originally-documented `{ Pre, Acc, Dn }`.
   `Cu`/`Cd` are runtime-only rising-edge-memory bits (was the enable

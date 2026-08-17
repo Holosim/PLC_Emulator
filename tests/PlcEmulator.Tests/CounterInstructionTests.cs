@@ -36,22 +36,22 @@ public sealed class CounterInstructionTests
         var ctu = new Ctu("Ctr");
 
         // Edge 1: false -> true.
-        ctu.Evaluate(tags, false);
-        ctu.Evaluate(tags, true);
+        ctu.Evaluate(tags, false, TimeSpan.Zero);
+        ctu.Evaluate(tags, true, TimeSpan.Zero);
         // Edge 2.
-        ctu.Evaluate(tags, false);
-        ctu.Evaluate(tags, true);
+        ctu.Evaluate(tags, false, TimeSpan.Zero);
+        ctu.Evaluate(tags, true, TimeSpan.Zero);
         // Edge 3.
-        ctu.Evaluate(tags, false);
-        ctu.Evaluate(tags, true);
+        ctu.Evaluate(tags, false, TimeSpan.Zero);
+        ctu.Evaluate(tags, true, TimeSpan.Zero);
 
         var counter = tags.Get("Ctr").Counter!;
         Assert.AreEqual(3, counter.Acc);
         Assert.IsTrue(counter.Dn);
 
         // 4th edge: keeps counting past preset, DN remains true.
-        ctu.Evaluate(tags, false);
-        ctu.Evaluate(tags, true);
+        ctu.Evaluate(tags, false, TimeSpan.Zero);
+        ctu.Evaluate(tags, true, TimeSpan.Zero);
 
         Assert.AreEqual(4, counter.Acc);
         Assert.IsTrue(counter.Dn);
@@ -64,9 +64,9 @@ public sealed class CounterInstructionTests
         var tags = BuildCounterTagTable("Ctr", preset: 3);
         var ctu = new Ctu("Ctr");
 
-        ctu.Evaluate(tags, true);
-        ctu.Evaluate(tags, true);
-        ctu.Evaluate(tags, true);
+        ctu.Evaluate(tags, true, TimeSpan.Zero);
+        ctu.Evaluate(tags, true, TimeSpan.Zero);
+        ctu.Evaluate(tags, true, TimeSpan.Zero);
 
         Assert.AreEqual(1, tags.Get("Ctr").Counter!.Acc);
     }
@@ -78,9 +78,9 @@ public sealed class CounterInstructionTests
         var tags = BuildCounterTagTable("Ctr", preset: 3);
         var ctu = new Ctu("Ctr");
 
-        ctu.Evaluate(tags, true);
-        ctu.Evaluate(tags, false);
-        ctu.Evaluate(tags, true);
+        ctu.Evaluate(tags, true, TimeSpan.Zero);
+        ctu.Evaluate(tags, false, TimeSpan.Zero);
+        ctu.Evaluate(tags, true, TimeSpan.Zero);
 
         Assert.AreEqual(2, tags.Get("Ctr").Counter!.Acc);
     }
@@ -92,8 +92,8 @@ public sealed class CounterInstructionTests
         var tags = BuildCounterTagTable("Ctr", preset: 3);
         var ctu = new Ctu("Ctr");
 
-        Assert.IsTrue(ctu.Evaluate(tags, true));
-        Assert.IsFalse(ctu.Evaluate(tags, false));
+        Assert.IsTrue(ctu.Evaluate(tags, true, TimeSpan.Zero));
+        Assert.IsFalse(ctu.Evaluate(tags, false, TimeSpan.Zero));
     }
 
     // ---- CTD (TP-206) -----------------------------------------------
@@ -107,18 +107,18 @@ public sealed class CounterInstructionTests
         var ctd = new Ctd("Ctr");
         var res = new Res("Ctr");
 
-        ctd.Evaluate(tags, false);
-        ctd.Evaluate(tags, true);
-        ctd.Evaluate(tags, false);
-        ctd.Evaluate(tags, true);
-        ctd.Evaluate(tags, false);
-        ctd.Evaluate(tags, true);
+        ctd.Evaluate(tags, false, TimeSpan.Zero);
+        ctd.Evaluate(tags, true, TimeSpan.Zero);
+        ctd.Evaluate(tags, false, TimeSpan.Zero);
+        ctd.Evaluate(tags, true, TimeSpan.Zero);
+        ctd.Evaluate(tags, false, TimeSpan.Zero);
+        ctd.Evaluate(tags, true, TimeSpan.Zero);
 
         var counter = tags.Get("Ctr").Counter!;
         Assert.AreEqual(0, counter.Acc, "after 3 edges, .ACC should be 0");
         Assert.IsTrue(counter.Dn, "after 3 edges, .DN should be true");
 
-        res.Evaluate(tags, true);
+        res.Evaluate(tags, true, TimeSpan.Zero);
 
         Assert.AreEqual(0, counter.Acc, "after RES, .ACC should stay 0");
         Assert.IsFalse(counter.Dn, "after RES, .DN should be false");
@@ -132,10 +132,10 @@ public sealed class CounterInstructionTests
         tags.Get("Ctr").Counter!.Acc = 1;
         var ctd = new Ctd("Ctr");
 
-        ctd.Evaluate(tags, false);
-        ctd.Evaluate(tags, true); // Acc 1 -> 0, DN true
-        ctd.Evaluate(tags, false);
-        ctd.Evaluate(tags, true); // Acc 0 -> -1, DN remains true
+        ctd.Evaluate(tags, false, TimeSpan.Zero);
+        ctd.Evaluate(tags, true, TimeSpan.Zero); // Acc 1 -> 0, DN true
+        ctd.Evaluate(tags, false, TimeSpan.Zero);
+        ctd.Evaluate(tags, true, TimeSpan.Zero); // Acc 0 -> -1, DN remains true
 
         var counter = tags.Get("Ctr").Counter!;
         Assert.AreEqual(-1, counter.Acc);
@@ -150,9 +150,9 @@ public sealed class CounterInstructionTests
         tags.Get("Ctr").Counter!.Acc = 3;
         var ctd = new Ctd("Ctr");
 
-        ctd.Evaluate(tags, true);
-        ctd.Evaluate(tags, true);
-        ctd.Evaluate(tags, true);
+        ctd.Evaluate(tags, true, TimeSpan.Zero);
+        ctd.Evaluate(tags, true, TimeSpan.Zero);
+        ctd.Evaluate(tags, true, TimeSpan.Zero);
 
         Assert.AreEqual(2, tags.Get("Ctr").Counter!.Acc);
     }
@@ -167,16 +167,16 @@ public sealed class CounterInstructionTests
         var ctu = new Ctu("Ctr");
         var res = new Res("Ctr");
 
-        ctu.Evaluate(tags, true);
+        ctu.Evaluate(tags, true, TimeSpan.Zero);
         Assert.AreEqual(1, tags.Get("Ctr").Counter!.Acc);
 
-        res.Evaluate(tags, true);
+        res.Evaluate(tags, true, TimeSpan.Zero);
         Assert.AreEqual(0, tags.Get("Ctr").Counter!.Acc);
 
         // While RES's rung stays true, the counter can't accumulate even if CTU also fires this scan.
-        ctu.Evaluate(tags, false);
-        ctu.Evaluate(tags, true);
-        res.Evaluate(tags, true);
+        ctu.Evaluate(tags, false, TimeSpan.Zero);
+        ctu.Evaluate(tags, true, TimeSpan.Zero);
+        res.Evaluate(tags, true, TimeSpan.Zero);
         Assert.AreEqual(0, tags.Get("Ctr").Counter!.Acc);
     }
 
@@ -188,8 +188,8 @@ public sealed class CounterInstructionTests
         var ctu = new Ctu("Ctr");
         var res = new Res("Ctr");
 
-        ctu.Evaluate(tags, true);
-        res.Evaluate(tags, false);
+        ctu.Evaluate(tags, true, TimeSpan.Zero);
+        res.Evaluate(tags, false, TimeSpan.Zero);
 
         Assert.AreEqual(1, tags.Get("Ctr").Counter!.Acc);
     }
@@ -201,8 +201,8 @@ public sealed class CounterInstructionTests
         var tags = BuildCounterTagTable("Ctr", preset: 3);
         var res = new Res("Ctr");
 
-        Assert.IsTrue(res.Evaluate(tags, true));
-        Assert.IsFalse(res.Evaluate(tags, false));
+        Assert.IsTrue(res.Evaluate(tags, true, TimeSpan.Zero));
+        Assert.IsFalse(res.Evaluate(tags, false, TimeSpan.Zero));
     }
 
     /// <summary>A counter instruction targeting a non-COUNTER tag fails clearly rather than silently misbehaving.</summary>
@@ -217,6 +217,6 @@ public sealed class CounterInstructionTests
         var tags = ControlLogicBuilder.BuildTagTable(controlLogic);
         var ctu = new Ctu("NotACounter");
 
-        Assert.ThrowsException<InvalidOperationException>(() => ctu.Evaluate(tags, true));
+        Assert.ThrowsException<InvalidOperationException>(() => ctu.Evaluate(tags, true, TimeSpan.Zero));
     }
 }
