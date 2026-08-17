@@ -211,12 +211,21 @@ public sealed class TcpJsonServer
     /// until it disconnects, dispatching each through
     /// <see cref="OnClientMessage"/>. Releases the single-client slot
     /// on the way out either way, so a later connection attempt can
-    /// succeed — logging that disconnect event (per UI-002) is
-    /// OUT-402's job (issue #22); this only handles the OUT-400-level
-    /// bookkeeping needed to keep accepting new connections at all.
+    /// succeed, and logs the disconnect (OUT-402, per UI-002's
+    /// diagnostics style: a plain <c>plcemu:</c>-prefixed line to
+    /// stdout, not stderr — a client disconnecting is a normal runtime
+    /// event, not an error) before returning control to
+    /// <see cref="AcceptLoop"/>, which keeps running scans and
+    /// accepting new connections regardless (docs/SDD.md's
+    /// connection-lifecycle diagram: <c>Connected -&gt; Listening</c>).
     /// </summary>
     private void HandleClient(TcpClient client)
     {
+        // Captured up front: once the client disconnects, the socket
+        // may already be torn down by the time the log line is
+        // written, and RemoteEndPoint throws on a disposed socket.
+        var remote = TryDescribeRemoteEndPoint(client);
+
         try
         {
             using var reader = new StreamReader(client.GetStream(), Encoding.UTF8);
@@ -252,6 +261,26 @@ public sealed class TcpJsonServer
             }
 
             client.Close();
+
+            Console.WriteLine($"plcemu: client disconnected ({remote}); listening for a new connection.");
+        }
+    }
+
+    /// <summary>
+    /// Best-effort description of a client's remote endpoint for the
+    /// OUT-402 disconnect log line. Falls back to a placeholder rather
+    /// than letting a diagnostics-only lookup throw and mask the real
+    /// disconnect handling.
+    /// </summary>
+    private static string TryDescribeRemoteEndPoint(TcpClient client)
+    {
+        try
+        {
+            return client.Client.RemoteEndPoint?.ToString() ?? "unknown endpoint";
+        }
+        catch (Exception)
+        {
+            return "unknown endpoint";
         }
     }
 
