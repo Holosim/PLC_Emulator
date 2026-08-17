@@ -16,6 +16,7 @@
 - [Driver resolution across Core/Drivers boundary](pattern_driver_resolution.md) — DriverResolver delegate in Core, DriverFactory impl in Drivers, Host wires them (CORE-209, issue #15)
 - [Counter edge-detection gap](pattern_counter_edge_detection.md) — CTU/CTD rising-edge state needed CounterState.Cu/Cd fields beyond the documented 3-field schema; flagged for SE sign-off (issue #12)
 - [Host CLI startup wiring](pattern_host_cli_startup.md) — Program.cs UI-001/003 implementation, default `--port 5000` assumption, and the known TcpJsonServer.Start (OUT-400/#20) stub gap that keeps TP-001 from fully passing yet (issue #16)
+- [tag_update JSON serialization](pattern_tag_update_serialization.md) — DATA-OUT-301 (issue #19): serialize-vs-transmit scope split from OUT-400/#20, and the camelCase JsonSerializerOptions needed for PascalCase DTOs to emit lowercase wire keys
 
 ## Platform-specific notes
 
