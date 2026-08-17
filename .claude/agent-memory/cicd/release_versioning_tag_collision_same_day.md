@@ -147,3 +147,15 @@ hand-off. No open-issue-count release trigger either (several
 shallowness before trusting `git log --reverse` for the BUILD-number
 date — a shallow clone's "first" visible commit is not the repo's
 actual first commit and will silently under- or over-count days.**
+
+**Tenth occurrence (issue #20/OUT-400, 2026-08-17, merge `40fa920`):**
+same result — `v1.0.2` ancestor-confirmed (`git merge-base
+--is-ancestor v1.0.2 origin/main`), skipped re-tag, cited merge SHA in
+hand-off. Notably clean this time: single `git push origin main`
+succeeded on the first try (no concurrent-CI/CD push rejections), no
+merge conflicts at all (clean `--no-ff` merge of a branch that only
+touched `TcpJsonServer.cs` plus memory files), one clean rebuild/retest
+round sufficed. Confirms the steady-state loop isn't *always*
+multi-round — worth remembering not to over-anticipate churn on every
+merge. `type:requirement` issues #21, #22, #24, #26, #27 still open
+(all on-hold) — no release trigger.
