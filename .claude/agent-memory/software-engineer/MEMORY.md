@@ -23,6 +23,7 @@
 - [TCP listener single-client constraint](pattern_tcp_listener_single_client.md) — OUT-400 (issue #20): accept-then-close for the 2nd+ connection, `_clientLock`-guarded Broadcast/OnClientMessage, tag_write deliberately left throwing for OUT-401/#21, `socket.makefile()` FIN gotcha when manually testing
 - [Disconnect logging](pattern_disconnect_logging.md) — OUT-402 (issue #22): plcemu:-prefixed stdout line in TcpJsonServer.HandleClient's finally, remote endpoint captured before the socket can be disposed; closed the exact gap #20 flagged, TP-402 manually verified end-to-end
 - [Tag-write queue / GetTagType conversion split](pattern_tag_write_queue.md) — OUT-401 (issue #21): QueueWrite validation, Network-owns-JSON-conversion/Core-stays-JSON-free split, socket-test ordering-barrier trick, and the "no free-running scan loop anywhere in Host" gap flagged to Test Engineer
+- [NFR-501 consolidation review](pattern_nfr501_consolidation_review.md) — issue #24: clean OS-abstraction code review; workflows-permission wall (see below) blocks the Windows CI matrix; final routing corrected to `status:needs-human` (see gotcha below) after an initial wrong `ready-for-test` call
 
 ## Platform-specific notes
 
@@ -53,3 +54,4 @@
 - [Trunk lags a closed dependency](gotcha_trunk_lag_behind_dependency.md) — a closed dependency issue's code may not actually be on `main` yet (CI/CD merge never triggered); check before branching from `main` blind (issue #6).
 - [Base branch is issue-5, not main (temporary)](gotcha_base_branch_not_main.md) — main doesn't have the scaffolding merged yet as of issue #7; branch off origin/issue-5 until CI/CD merges it.
 - [Concurrent instruction-group issues](gotcha_concurrent_instruction_issues.md) — issues #10-#14 run as parallel SE hand-offs sharing `Instructions/`; stay strictly scoped to your own issue's files (issue #14).
+- ["Missing permission" is a named needs-human carve-out, not just a run-failure one](pattern_nfr501_consolidation_review.md) — `AGENT_LABELS.md`'s escalation-ladder exception list names "a missing permission" explicitly alongside budget/API-key failures; it applies even when the run itself completed fine and only one git write (e.g. pushing to `.github/workflows/`) was rejected. Route straight to `status:needs-human`, no `agent:*` label — don't climb the ladder rung-by-rung first, and don't rationalize it as "not really a needs-human case" just because most of the run succeeded (issue #24, corrected on second pass).
