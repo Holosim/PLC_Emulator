@@ -82,6 +82,11 @@ the number:
   `agent:test-engineer` (`status:ready-for-test`) for the post-merge
   regression pass rather than closing outright. #29 (DELIV-901) is now
   unblocked to proceed once its own dependency check clears.
+  **Closed 2026-08-17:** post-merge regression pass PASSed (120/120
+  unit tests, 3 independent live-process TP-403/TP-400 repro cycles on
+  `main` at ancestor-confirmed `a32f132`) — no regressions. RTVM already
+  `Verified`, no further doc change; issue closed, no PM notification
+  (no release cut on this merge). #29 fully unblocked.
 
 **Why:** grouping RTVM items into ~22 issues (rather than one per
 single RTVM ID) kept issue count manageable while still giving each
