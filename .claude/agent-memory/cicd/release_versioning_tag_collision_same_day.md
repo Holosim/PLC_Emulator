@@ -103,6 +103,18 @@ shallow; unshallowed first per [[build-toolchain-shallow-clone]].
 `type:requirement` issues #17, #19-24, #26, #27 all still open
 (on-hold/in-progress mix) — no release trigger.
 
+**Eighth occurrence (issue #19/DATA-OUT-301, 2026-08-17, merge
+`00f44ee`, final pushed tip `c13addc` after two push-rejection
+rounds):** same result — `v1.0.2` ancestor-confirmed
+(`git merge-base --is-ancestor v1.0.2 HEAD`), skipped re-tag, cited
+both the substantive merge SHA and final pushed SHA in the hand-off
+comment. `type:requirement` issues #20-27 (several `status:on-hold`)
+plus #17/#23 still open, so no release trigger. Nothing new
+mechanically — the shallow-clone unshallow, the two rejected pushes
+(fetch+merge+rebuild+retest+push loop), and the RTVM/memory
+union-merge conflict resolution are all exactly the established
+patterns; recorded here only to keep the occurrence count honest.
+
 **Sixth occurrence (issue #16/UI-001/UI-003, 2026-08-17, merge
 `fa26c47`):** same result — session started from a **shallow clone**
 (`git rev-parse --is-shallow-repository` → `true`, only 7 commits
