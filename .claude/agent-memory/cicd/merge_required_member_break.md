@@ -35,3 +35,23 @@ silent behavior change slipped in.
 Related: [[feedback-git-merge-fast-forward]],
 [[build-toolchain-shallow-clone]] — other merge-mechanics gotchas on
 this project.
+
+**2026-08-17, issue #10 (CORE-201/202) merge to `main` — same shape,
+via an interface signature change instead of a `required` member:**
+issue #11 (CORE-203/204, merged to `main` first) added a `TimeSpan
+elapsed` third parameter to `IInstruction.Evaluate` after issue-10's
+branch had already been cut with the old 2-arg signature. This time
+git *did* flag a real conflict in `SingleTagInstruction.cs` (the
+virtual base method both sides touched) — resolved by keeping the
+newer 3-arg signature and updating `Xic`/`Xio`/`Ote` to match
+(`elapsed` unused/ignored, not time-driven). But `XicXioOteTests.cs`
+(new file, only on the `issue-10` side, so no textual overlap at all)
+called the old 2-arg `.Evaluate(tags, rungState: ...)` directly on
+instrument instances — auto-merged with zero conflict markers, and
+would have failed to compile if I'd trusted "no `<<<<<<<` markers left
+= done." Caught only by actually running the build after the conflict
+markers were gone, per this memory's core rule. **Generalizes the
+lesson:** it's not just `required` members — *any* interface/method
+signature change landed by a sibling branch that merged first can
+silently break a same-side-only file with no conflict markers at all.
+Always build+test the *whole* merge, not just the files git flagged.
