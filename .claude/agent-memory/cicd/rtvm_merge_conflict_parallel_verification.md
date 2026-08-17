@@ -32,3 +32,14 @@ Also reconfirms [[release-versioning-scheme]]'s trigger: many sibling
 still open in parallel at merge time, so this stayed a plain build-
 number bump (`v1.0.2`, no collision with `v1.0.1` since the day
 advanced 2026-08-16 → 2026-08-17), not a release.
+
+**Extends beyond `docs/RTVM.md`:** merging `issue-8` (2026-08-17,
+commit `15267cb`) hit the identical shape of conflict in
+`.claude/agent-memory/software-engineer/MEMORY.md` — two sibling
+branches (`issue-8` and whatever landed CORE-203/204's timer-elapsed
+memory entry) each appended a distinct bullet to the same "Architecture
+patterns" list. Same resolution: union, keep both bullets, don't pick
+a side. Any agent's `MEMORY.md` index file is exactly this
+same shape (an append-mostly list) and should be treated the same way
+on conflict — see [[release-versioning-tag-collision-same-day]] for
+the paired tag-collision note from this same merge.
