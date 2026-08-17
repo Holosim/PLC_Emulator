@@ -476,3 +476,20 @@ too (102 vs. actual 105) — same `[DataRow]`-parameterization gap noted
 for `XicXioOteTests.cs` on earlier issues; always trust `dotnet test`'s
 own summary line over the grep count. 105 is now the current
 regression baseline.
+
+**NFR-502 (issue #25, dependency-policy review, 2026-08-17) — first
+pure design-review/Inspection TP with zero source diff.** SE's branch
+`issue-25` had no code changes at all (just an SE-memory note about
+the "inspection-only issue" pattern) — verified the claim independently
+rather than rubber-stamping: `grep -rn PackageReference src/*/*.csproj`
+empty, only `tests/*.csproj` has `PackageReference`, `System.Text.Json`
+usage confined to `PlcEmulator.Config` (SDK-bundled, sanctioned
+exception per SDD line ~246), `ProjectReference` graph unchanged from
+[[harness-dotnet-scaffolding]]'s documented shape. Still ran the full
+build/test regression (101/101, matches baseline, 0/0 warnings) even
+though the issue itself has no source diff — treat "no code changed"
+requirements the same as any other for regression-check purposes,
+don't skip the build/test step just because the SE said nothing
+changed. PASS, handed off to Systems Engineer per the standard
+two-step convention (twelfth confirmation of that pattern, now fully
+routine). 101 remains the current regression baseline.

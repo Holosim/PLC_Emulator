@@ -79,6 +79,14 @@ requiring a second fetch+merge+rebuild+retest+push pass — see
 [[concurrent-cicd-runs-same-day]]. `type:requirement` issues #17,
 #19-27 all still open, so still nowhere near a release trigger.
 
+**Eighth occurrence (issue #25/NFR-502, 2026-08-17, merge `d312747`,
+docs-only inspection review):** same result — `v1.0.2` ancestor-
+confirmed (`git merge-base --is-ancestor v1.0.2 HEAD`), skipped
+re-tag, cited merge SHA in hand-off comment. Session again started
+shallow; unshallowed first per [[build-toolchain-shallow-clone]].
+`type:requirement` issues #17, #19-24, #26, #27 all still open
+(on-hold/in-progress mix) — no release trigger.
+
 **Sixth occurrence (issue #16/UI-001/UI-003, 2026-08-17, merge
 `fa26c47`):** same result — session started from a **shallow clone**
 (`git rev-parse --is-shallow-repository` → `true`, only 7 commits
