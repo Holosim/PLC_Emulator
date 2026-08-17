@@ -10,6 +10,7 @@
 - [NETWORK JSON schema](schema_network_json.md) — wire shape + DTO/domain-model split for DATA-IN-102 (issue #7); reuse for CONTROL_LOGIC and DATA-IN-103
 - [Timer elapsed-time pattern](pattern_timer_elapsed_time.md) — IInstruction.Evaluate gained `TimeSpan elapsed`, measured by ScanEngine's own Stopwatch (not per-instruction state), for TON/TOF (issue #11); reuse for any future controller-owned clock state
 - [ConfigLoader.Validate cross-file check](pattern_config_loader_validate.md) — DATA-IN-103 (issue #8): per-tag-per-component check against ControlLogicDef.Tags; driver-type resolution deliberately deferred to Core
+- [CompareInstruction numeric matching](pattern_compare_instruction_numeric_matching.md) — CORE-207 template-method design + confirmed "matching numeric type" interpretation call (issue #13); reused/confirmed for CORE-208 math instructions
 - [Fault-flag mechanism](pattern_fault_flag.md) — `Tag.Fault` (nullable string), set/cleared by the instruction owning the destination tag, for CORE-208-class "defined runtime error, not a crash" requirements (issue #14)
 - [Counter edge-detection gap](pattern_counter_edge_detection.md) — CTU/CTD rising-edge state needed CounterState.Cu/Cd fields beyond the documented 3-field schema; flagged for SE sign-off (issue #12)
 

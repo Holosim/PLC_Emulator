@@ -136,6 +136,26 @@ RTVM test procedures assume Host/CLI wiring that lands in a later,
 separate issue — always check whether a TP row cross-references a
 UI-00x item before treating an end-to-end gap as a failure.
 
+**Regression baseline updated (issue #13, CORE-207, 2026-08-16):** 37/37 —
+27 prior baseline + 10 new `CompareInstructionTests` (EQU/NEQ/GRT/LES/
+GEQ/LEQ) landed cleanly on `issue-13`, no other files touched besides
+the six instruction classes + `CompareInstruction.cs` base + the new
+test file. TP-207's own test (`Tp207_Grt_TagVsLiteral_...`) matched the
+RTVM row's expected-result text exactly.
+
+**Open interpretation question worth watching for CORE-208 too (issue
+#13, 2026-08-16):** Software Engineer read CORE-207's "matching numeric
+type" as "both operands numeric" (DINT vs REAL tag comparisons allowed,
+implicit promotion to `double`), not "identical declared tag types."
+Passed as correct/consistent Rockwell-standard behavior, but flagged in
+my pass comment for Systems Engineer's explicit confirmation since
+CORE-208 (math instructions) has the identical tag-or-literal operand
+shape and will raise the same question — check whether Systems Engineer
+confirmed or corrected this before assuming it's settled on CORE-208's
+test procedure. Confirmed correct by Systems Engineer on the same issue
+before merge, with RTVM.md's CORE-207/CORE-208 wording updated to
+pre-empt the same question resurfacing.
+
 **Software Engineer flagging an SDD-documented signature as
 stale/needing sign-off is not a build/test failure** — note it in the
 pass comment and hand off normally; it's the Systems Engineer's doc to
@@ -230,13 +250,47 @@ current number as of this file's last edit.)
 
 **Regression baseline updated (issue #14, CORE-208, 2026-08-16):**
 36/36 — Math instructions (`ADD`/`SUB`/`MUL`/`DIV`) landed with 9 new
-tests in `MathInstructionTests.cs` (27 prior + 9 = 36). Fault-flag
-pattern for defined runtime errors (DIV-by-zero) confirmed working
-exactly as SDD's "Error handling" standard describes: new `Tag.Fault`
-(nullable string) is set instead of throwing, destination's last good
-`Value` is preserved, `Evaluate` returns `rungState` unchanged so a
-faulted rung doesn't break power flow or crash the scan. This is the
-first RTVM item to actually exercise that fault-flag mechanism
-end-to-end — worth checking for consistent fault-flag usage (same
-clear-on-next-success semantics) if/when other instructions that can
-have defined runtime errors land later.
+tests in `MathInstructionTests.cs` (27 prior + 9 = 36, on a branch cut
+before #10/#8/#11 had merged, so its own "prior" was the older 27
+baseline, not 43). Fault-flag pattern for defined runtime errors
+(DIV-by-zero) confirmed working exactly as SDD's "Error handling"
+standard describes: new `Tag.Fault` (nullable string) is set instead
+of throwing, destination's last good `Value` is preserved, `Evaluate`
+returns `rungState` unchanged so a faulted rung doesn't break power
+flow or crash the scan. This is the first RTVM item to actually
+exercise that fault-flag mechanism end-to-end — worth checking for
+consistent fault-flag usage (same clear-on-next-success semantics) if/
+when other instructions that can have defined runtime errors land
+later.
+
+**Regression pass confirmed a fifth time (issue #10, CORE-201/202,
+CI/CD-requested trunk regression, 2026-08-17):** same checklist against
+`main`@`ce09b4d` (post `issue-10` merge `12d6457`, plus one memory-only
+follow-up commit, no source changes in between) — **52/52** passing, 0/0
+build warnings/errors, RTVM already showed `Verified`/`12d6457` for both
+rows before the run started. This merge needed real conflict resolution
+(interface signature drift from concurrently-landed issue #11's 3-arg
+`Evaluate`), which is exactly the kind of merge where a regression pass is
+most worth doing carefully — don't treat "RTVM already current" as a signal
+to rubber-stamp when CI/CD's own merge comment flagged non-trivial conflict
+resolution. Five-for-five now on the "still route through the two-step
+handoff even when RTVM looks current" pattern (issues #6, #7, #11, #8, #10)
+— hand off with `agent:systems-engineer` + `status:ready-for-rtvm-update`
+label explicitly, not just the addressee line in the comment; the label is
+what tooling reads, the comment wording alone doesn't drive routing.
+52 is now the current regression baseline (was 43 through issue #8, now 52
+after issue #10 merged with issue #11's signature change absorbed).
+
+**Two sibling branches (#10 and #14) landed concurrently, each reporting
+a different, individually-correct-at-the-time baseline (2026-08-17):**
+#10's branch total was 52/52 (cut after #8/#11 had merged); #14's branch
+total was 36/36 (cut earlier, before #8/#11 had merged, so only 27+9). When
+both hit `main` and CI/CD resolved the merge, the real combined total —
+confirmed directly by building/testing a fresh checkout of `origin/main`
+after both merges (commit `4feda66`) — is **61/61** (58 `[TestMethod]`
+attributes across all test files, +3 more actual test cases from
+`[DataRow]` parameterization in `XicXioOteTests.cs`). Same lesson as the
+issue #9 shallow-clone note: never trust a branch-reported total as the
+post-merge baseline once two feature branches with diverging "prior count"
+assumptions both land — always recount straight from the current `main`
+tip.
