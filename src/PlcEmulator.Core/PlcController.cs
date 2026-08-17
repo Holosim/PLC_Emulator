@@ -82,10 +82,28 @@ public sealed class PlcController
         }
     }
 
-    /// <summary>Returns a point-in-time snapshot of current tag values (DATA-OUT-300/301).</summary>
+    /// <summary>
+    /// Returns a point-in-time snapshot of current tag values
+    /// (DATA-OUT-300), queryable by the rest of the system (e.g. the
+    /// TCP/JSON server, DATA-OUT-301). Only scalar
+    /// (<see cref="TagType.Bool"/>/<see cref="TagType.Dint"/>/
+    /// <see cref="TagType.Real"/>) tag values are included, per
+    /// <see cref="TagSnapshot"/>'s ICD note — structured timer/counter
+    /// sub-elements stay in this controller's own <see cref="TagTable"/>.
+    /// </summary>
     public TagSnapshot GetSnapshot()
     {
-        throw new NotImplementedException("PlcController.GetSnapshot is scaffolding only.");
+        var values = new Dictionary<string, object>(StringComparer.Ordinal);
+
+        foreach (var tag in _tags.AllTags)
+        {
+            if (tag.Value is not null)
+            {
+                values[tag.Name] = tag.Value;
+            }
+        }
+
+        return new TagSnapshot(values);
     }
 
     /// <summary>
