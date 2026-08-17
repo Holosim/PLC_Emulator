@@ -130,3 +130,21 @@ fix, not grounds to withhold a pass. Example: issue #9 extended
 rungState)` for rung power-flow threading; `docs/SDD.md` line ~168
 still shows the old signature as of 2026-08-16 and needs updating by
 Systems Engineer.
+
+**Regression baseline updated (issue #11, CORE-203/204 `TON`/`TOF`,
+2026-08-17):** 39/39 on branch `issue-11` (27 baseline + 12 new
+`TimerInstructionTests`). Pattern to expect going forward: when a
+feature needs real elapsed wall-clock time (timers), the SE threads it
+in as an explicit `TimeSpan elapsed` parameter on `IInstruction.Evaluate`
+(now 3-arg: `tags, rungState, elapsed`) measured once by `ScanEngine`
+via its own `Stopwatch`, rather than instructions tracking their own
+state — keeps instruction classes stateless per SDD Coding Standards.
+Good unit tests drive `.Evaluate` directly with controlled `TimeSpan`
+values (exact math, no real sleeps, non-flaky); only a single
+loosely-bounded real-`Thread.Sleep` integration test should exist per
+feature, just to prove the engine's `Stopwatch` plumbing itself works
+— don't flag more real-sleep-based tests than that as a flakiness
+concern, and don't require *fewer* either (need at least one to prove
+the plumbing, not just the math). Confirmed the TP-203/TP-204 RTVM row
+wording matches the test assertions line-by-line, same verification
+style as issue #6's `Tp100_`/`Tp101_` check.
