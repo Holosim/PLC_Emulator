@@ -630,3 +630,17 @@ logging code. Reused the CONTROL_LOGIC/NETWORK fixture field names from
 `ConfigValidationException` on the first attempt, worth checking
 `DriverFactory.cs`'s actual constants before guessing driver names).
 108 remains the current regression baseline.
+
+**Regression pass confirmed a sixteenth time (issue #22, OUT-402,
+CI/CD-requested trunk regression, 2026-08-17):** same checklist against
+`main`@`748fdd7` (post `issue-22`/OUT-402 merge `e200537`, plus
+RTVM-SHA-only/memory-only follow-ups) — 108/108 (matches baseline, no
+drop), 0/0 build warnings/errors, NFR-502 clean, `ProjectReference`
+graph unchanged, `git status` clean. `main` had also concurrently
+absorbed sibling issue #21/OUT-401's merge (`0242894`) by the time this
+ran — both OUT-401 and OUT-402 rows already showed `Verified` with
+correct commit SHAs before the run started, no RTVM edit needed.
+Neither issue added new automated tests (both process-level/manual-
+verification requirements). Sixteenth confirmation of "RTVM already
+current → still route through the two-step handoff" — fully settled.
+108 remains the current regression baseline.
