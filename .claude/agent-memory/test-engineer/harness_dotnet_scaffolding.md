@@ -568,6 +568,29 @@ the two-step handoff" — fully settled. 108 is now the current
 regression baseline; supersedes both 105 and 104 quoted in isolation
 above.
 
+**OUT-400 (issue #20, TCP listener & single-client constraint,
+2026-08-17) — PASS, 108/108 (baseline held, no new automated tests
+added on this branch).** First TP-400-class requirement that's genuinely
+socket/threading-based rather than a pure unit-testable method — verified
+by launching the real `plcemu` process and driving it with a hand-written
+Python TCP client (see `/tmp/tp400/client_test*.py` pattern, not checked
+into the repo) through every TP-400 clause plus extra edge cases: initial
+`tag_update` on connect, `read_request` reply, second-concurrent-client
+reject (accepted at TCP layer then closed immediately — read returns
+EOF), malformed-line survives without crashing the process, slot release
+on clean disconnect (a third client can connect after the first
+disconnects), and `tag_write` correctly still throwing
+`NotImplementedException` (deferred to OUT-401/#21, not a bug here).
+Python gotcha confirmed from the SE's own note: `socket.makefile()` dups
+the fd, so you must close both the file object and the raw socket or the
+peer never sees FIN. No automated `TcpJsonServerTests` exist yet for this
+component — flagged as a non-blocking observation in the pass comment
+(SE added `Stop()`/`Port` "for test ergonomics", suggesting it's
+anticipated but not yet written); worth checking whether a future issue
+adds real automated socket tests before assuming this pattern (manual
+process-level-only verification) is fine indefinitely for this class of
+requirement. 108 remains the current regression baseline.
+
 **Regression pass confirmed a fifteenth time (issue #17, UI-002,
 CI/CD-requested trunk regression, 2026-08-17, arriving separately from
 and slightly after the combined #19/#23 regression above):** same
