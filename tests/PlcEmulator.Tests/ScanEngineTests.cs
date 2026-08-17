@@ -207,10 +207,12 @@ public sealed class ScanEngineTests
 
         var controller = new PlcController(controlLogic, new NetworkDef { Components = Array.Empty<NetworkComponentConfig>() });
 
-        // XIC/OTE evaluation itself is CORE-201/202 (issue #10) and still
-        // throws — this only confirms RunScan() reaches the Scan Engine
-        // and attempts to evaluate every configured rung, not that XIC/OTE
-        // produce a result yet.
-        Assert.ThrowsException<NotImplementedException>(controller.RunScan);
+        // XIC/OTE evaluation semantics are CORE-201/202 (issue #10) and no
+        // longer throw — this confirms RunScan() reaches the Scan Engine
+        // and evaluates every configured rung end to end without error.
+        // Tag-level assertions on XIC/OTE's actual result live in
+        // XicXioOteTests (GetSnapshot()/DATA-OUT-300 is still a stub, so
+        // this test can't inspect B's value through PlcController itself).
+        controller.RunScan();
     }
 }

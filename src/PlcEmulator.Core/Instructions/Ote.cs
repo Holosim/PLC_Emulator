@@ -1,6 +1,6 @@
 namespace PlcEmulator.Core.Instructions;
 
-/// <summary>Output-energize coil: sets <see cref="SingleTagInstruction.TagName"/>'s BOOL value to the rung's evaluated logic each scan (non-latching). Evaluation semantics land with CORE-202.</summary>
+/// <summary>Output-energize coil: sets <see cref="SingleTagInstruction.TagName"/>'s BOOL value to the rung's evaluated logic each scan (non-latching, CORE-202).</summary>
 public sealed class Ote : SingleTagInstruction
 {
     public Ote(string tagName) : base(tagName, "CORE-202")
@@ -8,4 +8,11 @@ public sealed class Ote : SingleTagInstruction
     }
 
     public override string Mnemonic => "OTE";
+
+    /// <summary>Action-type: writes the incoming rung state to the tag and returns it unchanged, so power flow continues past this coil (CORE-202). Ignores <paramref name="elapsed"/> — not time-driven.</summary>
+    public override bool Evaluate(TagTable tags, bool rungState, TimeSpan elapsed)
+    {
+        WriteBoolTag(tags, rungState);
+        return rungState;
+    }
 }

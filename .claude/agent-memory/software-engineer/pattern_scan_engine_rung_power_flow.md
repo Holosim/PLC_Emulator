@@ -1,6 +1,6 @@
 ---
 name: pattern-scan-engine-rung-power-flow
-description: ScanEngine.Evaluate's rung-condition-in/out threading through IInstruction.Evaluate(tags, rungState) — why the extra bool param exists and how future instruction issues (#10-#14) must use it
+description: ScanEngine.Evaluate's rung-condition-in/out threading through IInstruction.Evaluate(tags, rungState) contract for #10-#14's instruction semantics; XIC/XIO/OTE (CORE-201/202) landed on this contract in issue #10
 metadata:
   type: project
 ---
@@ -21,7 +21,7 @@ this with "rung-condition-in / rung-condition-out" power-flow
 threading: each instruction receives the accumulated state and returns
 the state to hand to the next instruction.
 
-**The contract, for anyone implementing CORE-201/202/203/204/205/206/207/208 (issues #10-#14):**
+**The contract, for anyone implementing CORE-203/204/205/206/207/208 (issues #11-#14):**
 - `ScanEngine.Evaluate` seeds `rungState = true` (energized, left power
   rail) at the *start of every rung* — it does not carry over between
   rungs (see `Evaluate_RungState_DoesNotLeakAcrossRungs` in
@@ -40,18 +40,47 @@ the state to hand to the next instruction.
   through every instruction in program order: `rungState =
   instruction.Evaluate(tags, rungState)`.
 
-**What's still a stub:** `SingleTagInstruction`, `CompareInstruction`,
-`MathInstruction` all still `throw NotImplementedException` — only
-their `Evaluate` signature changed to match the new interface, per
-[[pattern-control-logic-parsing]]'s established pattern of
-structural-only changes outside an issue's real scope.
+**Issue #10 (CORE-201/202, branch `issue-10`) landed the first real
+instructions on this contract — the reference implementation for
+everyone doing #11-#14:**
+- `Xic.Evaluate` → `rungState && ReadBoolTag(tags)`.
+- `Xio.Evaluate` → `rungState && !ReadBoolTag(tags)`.
+- `Ote.Evaluate` → writes `rungState` to its tag via `WriteBoolTag`,
+  returns `rungState` unchanged.
+- `SingleTagInstruction.Evaluate` (the shared base for `XIC`/`XIO`/`OTE`/
+  `TON`/`TOF`/`CTU`/`CTD`/`RES`) changed from one shared throwing method
+  to **`virtual`**, default body unchanged (still throws
+  `NotImplementedException($"{Mnemonic}.Evaluate lands with {_coreItem}.")`).
+  Only the three mnemonics whose semantics landed override it — `TON`/
+  `TOF`/`CTU`/`CTD`/`RES` files were **not touched**, they still inherit
+  the throwing default. Do the same for #11-#13: override in the
+  subclass, don't touch the base default or sibling stub files.
+- Added two `protected` helpers on `SingleTagInstruction` for reuse by
+  future BOOL-tag mnemonics: `ReadBoolTag(tags)` (throws
+  `InvalidOperationException` if the tag isn't actually BOOL-typed —
+  there's no earlier load-time validation catching an instruction/tag
+  type mismatch yet, so this is the first line of defense) and
+  `WriteBoolTag(tags, value)`.
+- `PlcController.GetSnapshot()` (DATA-OUT-300) is still a stub — can't
+  assert on a controller's resulting tag value through the public
+  `PlcController` API yet. Tests needing a real tag-value assertion go
+  through `ControlLogicBuilder.BuildTagTable` + `ScanEngine.Evaluate`
+  directly (see `XicXioOteTests.cs`), same pattern `ScanEngineTests.cs`
+  already used.
+
+**Known gap, not blocking, flagged for awareness only:** no CONTROL_LOGIC
+load-time validation cross-checks an instruction's tag operand against
+that tag's declared type (e.g. nothing stops `XIC` referencing a DINT
+tag) — `ReadBoolTag` throws at scan time instead of load time in that
+case. Existing precedent (`ControlLogicBuilder`/`ConfigLoader`) doesn't
+validate this either, so it wasn't invented for #10; raise it if a
+future issue's scope brushes against it.
 
 **Loop mechanics were tested with local test-only `IInstruction` stubs**
 (`ScanEngineTests.cs`, not touching the real `Xic`/`Ote` classes) —
 issue #9 explicitly permitted this since real `XIC`/`OTE` semantics
-land with #10. Full TP-200 (docs/RTVM.md) can't verify end-to-end until
-then; only the loop-mechanics subset (program order, per-rung reset,
-tag values updated once per scan) is verifiable now.
+landed with #10. TP-200 (docs/RTVM.md) is now verifiable end-to-end
+with the real classes via `XicXioOteTests.cs`'s series-AND rung test.
 
 **Also landed in #9 (small, in-scope side effects):** `WriteQueue`
 got a minimal thread-safe `Enqueue`/`DrainAll` (locked list-swap) since
