@@ -46,3 +46,18 @@ still shallow — `git fetch --unshallow origin` fixed it before I
 concluded anything was actually wrong. Check
 `git rev-parse --is-shallow-repository` first if an ancestry check
 gives a surprising answer, rather than trusting the negative result.
+
+**Reconfirmed on issue #15 (2026-08-17), even worse contention:** `git
+push origin main` was rejected **four times in a row** merging
+`issue-15` (CORE-209) — issues #14, #13, and #12 each landed on `main`
+independently mid-loop, plus one more docs/memory-only push. Same
+fetch→merge→resolve→rebuild→retest→push loop, just run four times
+instead of three; nothing new mechanically, but worth noting the
+rejection count keeps climbing as more sibling `type:requirement`
+issues (#16-27) queue up behind #10-15 — don't be surprised if it hits
+5+ on a future merge. `docs/RTVM.md` conflicts resolved by union each
+time (per [[rtvm-merge-conflict-parallel-verification]]); non-RTVM
+`MEMORY.md`/memory-file conflicts (software-engineer, systems-engineer,
+test-engineer) also resolved by straight union (append both sides'
+bullets/paragraphs) every time — this is now a fully settled pattern
+for this project, not something to re-derive.
