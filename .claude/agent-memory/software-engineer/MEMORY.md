@@ -16,6 +16,7 @@
 - [Driver resolution across Core/Drivers boundary](pattern_driver_resolution.md) — DriverResolver delegate in Core, DriverFactory impl in Drivers, Host wires them (CORE-209, issue #15)
 - [Counter edge-detection gap](pattern_counter_edge_detection.md) — CTU/CTD rising-edge state needed CounterState.Cu/Cd fields beyond the documented 3-field schema; flagged for SE sign-off (issue #12)
 - [Host CLI startup wiring](pattern_host_cli_startup.md) — Program.cs UI-001/003 implementation, default `--port 5000` assumption, and the known TcpJsonServer.Start (OUT-400/#20) stub gap that keeps TP-001 from fully passing yet (issue #16)
+- [Startup diagnostics text](pattern_startup_diagnostics.md) — UI-002 (issue #17): literal "N tags loaded"/"N components loaded" text match for TP-003, per-tag/per-component listing, same OUT-400/#20 stub gap resurfacing
 
 ## Platform-specific notes
 
