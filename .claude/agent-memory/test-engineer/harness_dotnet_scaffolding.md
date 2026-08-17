@@ -122,6 +122,21 @@ valid object" — looked like the merge had vanished. Running `git fetch
 `main` all along. Always unshallow before concluding a merge is
 missing or a commit reference in an RTVM/issue comment is wrong.
 
+**Regression baseline updated (issue #18, 2026-08-16):** 31/31 —
+DATA-OUT-300's `PlcControllerSnapshotTests.cs` added 4 new tests on top
+of the 27 baseline (10 ConfigLoaderNetworkTests + 6 ScanEngineTests +
+10 ControlLogicSchemaTests + 1 ScaffoldingSmokeTests + 4
+PlcControllerSnapshotTests). Same scoped-deferral pass pattern as
+CORE-200 (issue #9): `PlcController.GetSnapshot()`/`TagSnapshot` — the
+thing DATA-OUT-300 is actually about — is fully implemented and
+tested, but the tests seed `TagTable` values directly instead of
+driving them through a real `XIC`/`OTE` rung, since CORE-201/202
+(issue #10) is still scaffolding-only. That's a legitimate pass, not a
+partial — TP-300 gets re-run end-to-end once #10 lands. Also
+reconfirmed the timer/counter sub-element exclusion from `TagSnapshot`
+is a pre-existing ICD decision (docs/SDD.md ~lines 404-410 from issue
+#5/#6), not something to flag as new scope creep.
+
 **Regression baseline updated (issue #8, DATA-IN-103, 2026-08-16):** 31/31
 on branch `issue-8` (27 prior baseline + 4 new `ConfigLoaderValidateTests`
 for `ConfigLoader.Validate`, TP-005/TP-103 cross-file tag-reference
