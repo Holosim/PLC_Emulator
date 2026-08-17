@@ -57,3 +57,14 @@ in hand-off comment. Also hit a same-day *push* rejection mid-merge
 (second CI/CD run landed issue #10's RTVM-SHA follow-up between my
 fetch and push) — see [[concurrent-cicd-runs-same-day]], same
 fetch+merge+retest+push-again resolution, no new pattern.
+
+**Fifth occurrence (issue #13, 2026-08-17, merge `6dfb295`, final
+pushed tip `d6b67f9` after two rounds of catching up to `origin/main`):**
+same result again — `v1.0.2` still ancestor-confirmed, skipped re-tag,
+cited both the substantive merge SHA and the final pushed SHA in the
+hand-off comment. Two separate push rejections in this one merge (see
+[[concurrent-cicd-runs-same-day]]) — issue #14 and its RTVM-SHA/memory
+follow-ups both landed on `origin/main` while this merge was in
+progress. Confirms this is now the steady-state shape for any day with
+several sibling `type:requirement` branches landing — not worth
+re-deriving each time.

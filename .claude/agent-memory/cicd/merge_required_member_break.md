@@ -70,3 +70,20 @@ issues still open (#12/#13/#15/#18 etc., all cut from before #11
 merged), expect this exact shape to recur on their merges too — check
 `IInstruction.Evaluate`'s call sites first thing whenever merging any
 of them.
+
+**2026-08-17, issue #13 (CORE-207) merge to `main` — fourth occurrence,
+same `elapsed` signature, hit alongside a genuine sibling-branch
+concurrency chain:** `issue-13` was also cut before issue #11's 3-arg
+`IInstruction.Evaluate` landed — real textual conflict in
+`CompareInstruction.cs`'s own `Evaluate` override (fixed the same way:
+3-arg signature, `elapsed` unused) plus the no-marker trap in
+`CompareInstructionTests.cs` (16 call sites using the old 2-arg form).
+This merge also stacked two more rounds of `origin/main` catching up
+mid-merge (issue #14/CORE-208 landed concurrently, unioned RTVM.md's
+CORE-207/CORE-208 rows and `software-engineer/MEMORY.md`'s index by
+content rather than picking a side — see
+[[rtvm-merge-conflict-parallel-verification]] pattern), each requiring
+its own rebuild+retest before pushing (62/62, then 71/71 clean). Bears
+out the #14 note's prediction: check `IInstruction.Evaluate`'s call
+sites first thing on every remaining pre-#11-cut instruction-set
+branch (#12/#15/#18 etc.).
