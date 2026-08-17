@@ -475,3 +475,17 @@ don't skip the build/test step just because the SE said nothing
 changed. PASS, handed off to Systems Engineer per the standard
 two-step convention (twelfth confirmation of that pattern, now fully
 routine). 101 remains the current regression baseline.
+
+**Post-merge trunk regression for NFR-502 (issue #25, CI/CD-requested,
+2026-08-17):** same checklist against `main`@`c308708` (post NFR-502
+merge `d312747`, plus RTVM-SHA-only and memory-only follow-up commits) —
+101/101 (matches baseline, no drop), 0/0 build warnings/errors,
+`git status` clean, RTVM already showed `Verified`/`d312747` for
+NFR-502 before the run started. Needed `git fetch --unshallow` again
+(shallow clone hid `d312747` as "not a valid object" even though it
+was a real ancestor) — this happens on essentially every fresh
+checkout in this environment, not just occasionally; always unshallow
+first as a matter of course rather than only when a merge "looks"
+missing. Thirteenth confirmation of "RTVM already current → still
+route through the two-step handoff" — fully settled, no need to keep
+counting.
