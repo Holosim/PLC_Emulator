@@ -20,6 +20,7 @@
 - [Inspection-only RTVM issue handling](pattern_inspection_only_issue.md) — NFR-502 dependency review (issue #25): full-compliance finding, no code change, still branch+push+hand off to test-engineer like a normal feature
 - [Multi-controller isolation review](pattern_multi_controller_isolation_review.md) — NFR-500/TP-500 (issue #23): no static/singleton state found on review; same-name-collision test shape for "prove no shared state"; also corrects a wrong claim about Windows CI deployment status — see that file's "deferred-promotion decision" section
 - [Startup diagnostics text](pattern_startup_diagnostics.md) — UI-002 (issue #17): literal "N tags loaded"/"N components loaded" text match for TP-003, per-tag/per-component listing, same OUT-400/#20 stub gap resurfacing
+- [TCP listener single-client constraint](pattern_tcp_listener_single_client.md) — OUT-400 (issue #20): accept-then-close for the 2nd+ connection, `_clientLock`-guarded Broadcast/OnClientMessage, tag_write deliberately left throwing for OUT-401/#21, `socket.makefile()` FIN gotcha when manually testing
 
 ## Platform-specific notes
 
