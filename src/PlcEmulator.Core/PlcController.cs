@@ -18,18 +18,49 @@ public sealed class PlcController
     private readonly ScanEngine _scanEngine = new();
     private readonly WriteQueue _pendingWrites = new();
     private readonly IReadOnlyList<Rung> _rungs;
-    private IReadOnlyList<IDriver> _drivers = Array.Empty<IDriver>();
+    private readonly IReadOnlyList<IDriver> _drivers;
 
     /// <summary>
     /// Constructs a controller from a validated CONTROL_LOGIC/NETWORK
     /// definition pair, per the Config Loader/Validator step (DATA-IN-103).
+    /// Instantiates one driver per NETWORK component via
+    /// <paramref name="driverFactory"/> (CORE-209) and binds each to this
+    /// controller's own <see cref="TagTable"/> — never a global registry
+    /// — so driver instances are as isolated per-controller as the tag
+    /// table itself (NFR-500).
     /// </summary>
-    public PlcController(ControlLogicDef controlLogic, NetworkDef network)
+    /// <param name="controlLogic">Parsed CONTROL_LOGIC definition (DATA-IN-100/101).</param>
+    /// <param name="network">Parsed NETWORK definition (DATA-IN-102).</param>
+    /// <param name="driverFactory">
+    /// Resolves each component's <see cref="NetworkComponentConfig.DriverType"/>
+    /// to a concrete <see cref="IDriver"/> instance — supplied by the Host,
+    /// which is the only layer that knows about built-in driver
+    /// implementations (see <see cref="DriverResolver"/>'s remarks).
+    /// </param>
+    public PlcController(ControlLogicDef controlLogic, NetworkDef network, DriverResolver driverFactory)
     {
         _tags = ControlLogicBuilder.BuildTagTable(controlLogic);
         _rungs = ControlLogicBuilder.BuildRungs(controlLogic);
+        _drivers = BuildDrivers(network, driverFactory, _tags);
+    }
 
-        // TODO: build the driver set from `network` (DATA-IN-102, CORE-209).
+    private static IReadOnlyList<IDriver> BuildDrivers(NetworkDef network, DriverResolver driverFactory, TagTable tags)
+    {
+        if (network.Components.Count == 0)
+        {
+            return Array.Empty<IDriver>();
+        }
+
+        var drivers = new List<IDriver>(network.Components.Count);
+
+        foreach (var component in network.Components)
+        {
+            var driver = driverFactory(component.DriverType);
+            driver.Bind(tags, component);
+            drivers.Add(driver);
+        }
+
+        return drivers;
     }
 
     /// <summary>

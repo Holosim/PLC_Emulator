@@ -205,7 +205,10 @@ public sealed class ScanEngineTests
             },
         };
 
-        var controller = new PlcController(controlLogic, new NetworkDef { Components = Array.Empty<NetworkComponentConfig>() });
+        var controller = new PlcController(
+            controlLogic,
+            new NetworkDef { Components = Array.Empty<NetworkComponentConfig>() },
+            static driverType => throw new InvalidOperationException($"no NETWORK components in this test; unexpected driver type '{driverType}'"));
 
         // XIC/OTE evaluation itself is CORE-201/202 (issue #10) and still
         // throws — this only confirms RunScan() reaches the Scan Engine
