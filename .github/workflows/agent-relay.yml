@@ -49,7 +49,8 @@ jobs:
 
       - name: Mark issue in progress
         run: |
-          gh issue edit ${{ steps.role.outputs.issue }} --add-label "status:in-progress" || true
+          gh issue edit ${{ steps.role.outputs.issue }} --add-label "status:in-progress" \
+            || echo "WARNING: could not set status:in-progress -- the hand-off's tolerant removals will cope, but check RELAY_TOKEN permissions if this recurs."
 
       - name: Run Claude Code as ${{ steps.role.outputs.role }}
         id: run_claude
@@ -103,11 +104,38 @@ jobs:
                decoration — stall-recovery.yml parses it to route a
                recovered hand-off correctly, so get the exact format
                right.
-            6. Hand off by running exactly one command:
+            6. Hand off. Run these as SEPARATE commands, in this order —
+               not combined into one. A single `gh issue edit` with
+               several flags fails as a whole if any one label isn't
+               present, which silently skips the hand-off and stalls
+               the issue. Independent commands can't do that.
+
+                 # a) clear any pipeline-status label you inherited —
+                 #    yours to clean up, or they accumulate across
+                 #    every hand-off and contradict each other
+                 for L in status:ready-for-test \
+                          status:ready-for-rtvm-update \
+                          status:ready-for-commit; do
+                   gh issue edit ${{ steps.role.outputs.issue }} \
+                     --remove-label "$L" 2>/dev/null || true
+                 done
+
+                 # b) clear the run flag and your own turn
                  gh issue edit ${{ steps.role.outputs.issue }} \
-                   --remove-label "agent:${{ steps.role.outputs.role }}" \
-                   --remove-label "status:in-progress" \
+                   --remove-label "status:in-progress" 2>/dev/null || true
+                 gh issue edit ${{ steps.role.outputs.issue }} \
+                   --remove-label "agent:${{ steps.role.outputs.role }}" 2>/dev/null || true
+
+                 # c) set the new status, if your role defines one for
+                 #    this transition (e.g. status:ready-for-commit)
+                 gh issue edit ${{ steps.role.outputs.issue }} \
+                   --add-label "status:<new-status>"   # omit if none applies
+
+                 # d) LAST — this is what triggers the next agent, so
+                 #    everything else must already be correct
+                 gh issue edit ${{ steps.role.outputs.issue }} \
                    --add-label "agent:<next-role>"
+
                If you're blocked, add "status:blocked" and set the next
                role to agent:solutions-architect instead of the normal
                next step. Exception: if your role's own instructions
@@ -126,13 +154,20 @@ jobs:
       - name: Handle known infrastructure failures, or fail normally
         if: steps.run_claude.outcome == 'failure'
         run: |
-          # Brief pause: querying this run's own log immediately after the
-          # previous step finished has, at least once, come back empty even
-          # for a run that clearly did produce output -- possibly a lag
-          # between a step finishing and its log being available via the
-          # API. Cheap hedge against that either way.
-          sleep 5
-          RUN_LOG="$(gh run view ${{ github.run_id }} --log 2>/dev/null || true)"
+          # A fixed short sleep has now twice come back with an empty or
+          # incomplete log, even for a run that clearly produced output --
+          # confirmed, not just suspected, given the same pattern recurring.
+          # Poll instead of guessing at a duration: retry until the log
+          # actually contains Claude Code's own completion marker, or give
+          # up after a bounded number of attempts.
+          RUN_LOG=""
+          for attempt in 1 2 3 4 5 6; do
+            RUN_LOG="$(gh run view ${{ github.run_id }} --log 2>/dev/null || true)"
+            if echo "$RUN_LOG" | grep -q '"type": *"result"'; then
+              break
+            fi
+            sleep 5
+          done
 
           notify() {
             gh issue comment ${{ steps.role.outputs.issue }} --body "$1"

@@ -113,6 +113,14 @@ gh issue list --state open --limit 200 --repo "$REPO" \
         LAST_TIME="$UPDATED_AT"
       fi
       AGE=$(( NOW - $(date -u -d "$LAST_TIME" +%s) ))
+      # Safety floor: even --force-immediate won't touch an issue that saw
+      # activity in the last 5 minutes. Something that recent is very likely
+      # a run still in flight, and retriggering it mid-execution is how
+      # duplicate work and concurrency pile-ups start.
+      if (( AGE < 300 )); then
+        echo "#$NUMBER: skipped (active $(( AGE / 60 ))m ago -- likely mid-run)" >> "$REPORT"
+        continue
+      fi
       if (( AGE < THRESHOLD_SECONDS )); then
         continue
       fi
@@ -193,6 +201,15 @@ gh issue list --state open --limit 200 --repo "$REPO" \
         if (( AGENT_COUNT == 1 )) && [[ "$DECLARED" != "$AGENT_LABELS" ]]; then
           CONFLICT=true
           NOTES+=("The last comment declared a hand-off to \`$DECLARED\` that never took effect -- the label stayed on \`$AGENT_LABELS\`. Routing to \`$DECLARED\`.")
+        fi
+        # A declaration outranks the position label, so if the position
+        # label names a stage this target doesn't own, it's a leftover from
+        # an earlier stage. Drop it rather than leave a contradictory pair;
+        # the acting agent re-establishes the right one.
+        if [[ -n "$KEEP_POSITION" && "$(owner_for_position "$KEEP_POSITION")" != "$TARGET" ]]; then
+          CONFLICT=true
+          NOTES+=("\`$KEEP_POSITION\` is a leftover -- it names a stage \`$TARGET\` doesn't own, and the declared hand-off to \`$TARGET\` is the newer signal. Cleared it; set the correct status yourself as part of this turn.")
+          KEEP_POSITION=""
         fi
       elif [[ -n "$EXPECTED_OWNER" ]]; then
         TARGET="$EXPECTED_OWNER"

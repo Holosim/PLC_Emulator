@@ -220,6 +220,28 @@ anywhere. Software Engineer creates it; Test Engineer and CI/CD check
 it out before doing anything else on that issue. Nothing gets merged
 to trunk except by CI/CD, and only once Test Engineer has signed off.
 
+## Hand-off mechanics
+
+Two rules, both learned from real stalls rather than theory:
+
+**Clear the status label you inherited.** A `status:ready-for-*` label
+describes one point in the pipeline. When you hand off, the one that
+routed work *to* you is no longer true — remove it before setting the
+next one. Skipping this doesn't fail loudly; it accumulates, and an
+issue carrying both `status:ready-for-rtvm-update` and
+`status:ready-for-commit` is telling two different stories about where
+it actually is.
+
+**Never combine label edits into one `gh issue edit` call.** A single
+command with several flags fails as a whole if any one label isn't
+present — and `gh` does error on removing a label that isn't there.
+When that happens, the `--add-label` that would have triggered the
+next agent never runs, and the issue stalls with no error anywhere
+visible. Use separate, individually tolerant commands
+(`2>/dev/null || true` on removals), and always perform the
+`agent:<next-role>` add **last**, since that's what actually fires the
+relay — everything else must already be correct by the time it lands.
+
 ## Comment structure
 
 Every comment carries two fixed elements, regardless of role or
