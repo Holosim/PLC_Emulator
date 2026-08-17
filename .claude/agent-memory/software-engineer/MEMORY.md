@@ -24,6 +24,7 @@
 - [Disconnect logging](pattern_disconnect_logging.md) — OUT-402 (issue #22): plcemu:-prefixed stdout line in TcpJsonServer.HandleClient's finally, remote endpoint captured before the socket can be disposed; closed the exact gap #20 flagged, TP-402 manually verified end-to-end
 - [Tag-write queue / GetTagType conversion split](pattern_tag_write_queue.md) — OUT-401 (issue #21): QueueWrite validation, Network-owns-JSON-conversion/Core-stays-JSON-free split, socket-test ordering-barrier trick, and the "no free-running scan loop anywhere in Host" gap flagged to Test Engineer
 - [NFR-501 consolidation review](pattern_nfr501_consolidation_review.md) — issue #24: clean OS-abstraction code review; workflows-permission wall (see below) blocks the Windows CI matrix; final routing corrected to `status:needs-human` (see gotcha below) after an initial wrong `ready-for-test` call
+- [DELIV-900 VS solution review](pattern_deliv900_vs_solution_review.md) — issue #27: full-compliance inspection (`.sln`/`.csproj`/`.gitattributes`/`.gitignore` all clean, 119/119 tests), no code change; also confirms the "deploy windows-verification.yml" decision stays resolved (deleted on #24, not re-litigated)
 
 ## Platform-specific notes
 
