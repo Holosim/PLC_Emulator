@@ -11,6 +11,7 @@
 - [Timer elapsed-time pattern](pattern_timer_elapsed_time.md) — IInstruction.Evaluate gained `TimeSpan elapsed`, measured by ScanEngine's own Stopwatch (not per-instruction state), for TON/TOF (issue #11); reuse for any future controller-owned clock state
 - [ConfigLoader.Validate cross-file check](pattern_config_loader_validate.md) — DATA-IN-103 (issue #8): per-tag-per-component check against ControlLogicDef.Tags; driver-type resolution deliberately deferred to Core
 - [Fault-flag mechanism](pattern_fault_flag.md) — `Tag.Fault` (nullable string), set/cleared by the instruction owning the destination tag, for CORE-208-class "defined runtime error, not a crash" requirements (issue #14)
+- [Driver resolution across Core/Drivers boundary](pattern_driver_resolution.md) — DriverResolver delegate in Core, DriverFactory impl in Drivers, Host wires them (CORE-209, issue #15)
 
 ## Platform-specific notes
 

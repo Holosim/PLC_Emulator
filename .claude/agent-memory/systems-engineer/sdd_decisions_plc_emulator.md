@@ -110,6 +110,24 @@ format, threading model, class boundaries) — recorded here so a future
 `[RTVM-014]` query about "how should X talk to Y" gets answered
 consistently with the SDD instead of re-litigated per issue.
 
+- **Driver instantiation (CORE-209) — issue #15, 2026-08-17:** Host
+  supplies `PlcController`'s constructor a `DriverResolver` delegate
+  (`IDriver DriverResolver(string driverType)`, declared in `Core`
+  next to `IDriver`); `PlcController` itself still owns the
+  per-NETWORK-component instantiate+bind loop (its existing
+  `IDriver[] drivers` responsibility), rather than Host pre-building
+  the whole driver array. Concrete resolver is
+  `PlcEmulator.Drivers.DriverFactory` (maps `"DiscreteSensor"`/
+  `"Relay"` strings to concrete types, throws `ConfigValidationException`
+  on unknown type) — lives in the leaf `Drivers` project, the only
+  place allowed to know both `IDriver` and its implementations. Not
+  yet wired into `Program.cs`/Host (that's UI-001, issue #12,
+  out of scope for #15). SE flagged this as worth codifying explicitly
+  in SDD's Coding Standards "Driver interface" bullet but it doesn't
+  contradict anything currently written — left as-is, not yet added
+  verbatim to `docs/SDD.md`; revisit if a future driver-related issue
+  needs it spelled out.
+
 **How to apply:** when Software Engineer asks an architecture question
 on a feature issue, check here (and `docs/SDD.md` directly, which is
 authoritative) before answering. If SDD.md changes, update this memory
