@@ -39,3 +39,21 @@ hold (i.e. the existing tag points somewhere that isn't a real ancestor
 of the new merge) — that would mean the day-based BUILD math itself is
 producing a wrong/misleading tag, which is a genuine ambiguity worth
 raising rather than guessing past.
+
+**Reconfirmed (issue #8, 2026-08-17, merge `15267cb`):** `v1.0.2` was
+already tagged earlier the same day by issue #11's merge (per
+[[rtvm-merge-conflict-parallel-verification]]). Recomputed BUILD (days
+since first commit `2026-08-15`) still gave `2`. Confirmed
+`git merge-base --is-ancestor v1.0.2 HEAD` held, skipped re-tagging,
+cited the merge SHA in the hand-off comment instead. Third occurrence
+of this exact pattern — with several sibling `type:requirement`
+branches (#10/#12-15/#18, etc.) all landing on the same calendar day,
+expect this to keep recurring; it is not a sign of anything wrong.
+
+**Fourth occurrence (issue #14, 2026-08-17, merge `10c9dad` +
+follow-up `7e1738e`):** same result — `v1.0.2` already tagged, BUILD
+recomputed still `2`, ancestry confirmed, skipped re-tag, cited SHAs
+in hand-off comment. Also hit a same-day *push* rejection mid-merge
+(second CI/CD run landed issue #10's RTVM-SHA follow-up between my
+fetch and push) — see [[concurrent-cicd-runs-same-day]], same
+fetch+merge+retest+push-again resolution, no new pattern.

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace PlcEmulator.Core;
 
 /// <summary>
@@ -8,6 +10,21 @@ namespace PlcEmulator.Core;
 /// </summary>
 public sealed class ScanEngine
 {
+    /// <summary>
+    /// Measures real (wall-clock) time between successive
+    /// <see cref="Evaluate"/> calls, for time-driven instructions
+    /// (<c>TON</c>/<c>TOF</c>, CORE-203/204). This is instance state on
+    /// <see cref="ScanEngine"/> itself, not on any
+    /// <see cref="IInstruction"/> — instructions stay stateless per
+    /// docs/SDD.md, and <see cref="ScanEngine"/> is already documented
+    /// as owned by (never shared across) a single
+    /// <see cref="PlcController"/>, so holding this clock here doesn't
+    /// weaken NFR-500.
+    /// </summary>
+    private readonly Stopwatch _clock = new();
+
+    private bool _hasRunBefore;
+
     /// <summary>
     /// Evaluates every rung, in program order, against
     /// <paramref name="tags"/> — one full pass, left to right within
@@ -26,16 +43,28 @@ public sealed class ScanEngine
     /// itself to turn into a fault flag on its result rather than an
     /// exception (docs/SDD.md, Coding Standards / Error handling), so
     /// a single bad rung can't crash the scan loop.
+    /// <para>
+    /// Also measures the real elapsed time since the previous call to
+    /// this method (<see cref="TimeSpan.Zero"/> on the first call) and
+    /// passes the same value to every instruction evaluated during this
+    /// scan — this is what lets <c>TON</c>/<c>TOF</c> (CORE-203/204)
+    /// accumulate against actual wall-clock time rather than an
+    /// idealized fixed scan period, which v1.0 does not define.
+    /// </para>
     /// </remarks>
     public void Evaluate(IReadOnlyList<Rung> rungs, TagTable tags)
     {
+        var elapsed = _hasRunBefore ? _clock.Elapsed : TimeSpan.Zero;
+        _clock.Restart();
+        _hasRunBefore = true;
+
         foreach (var rung in rungs)
         {
             var rungState = true;
 
             foreach (var instruction in rung.Instructions)
             {
-                rungState = instruction.Evaluate(tags, rungState);
+                rungState = instruction.Evaluate(tags, rungState, elapsed);
             }
         }
     }

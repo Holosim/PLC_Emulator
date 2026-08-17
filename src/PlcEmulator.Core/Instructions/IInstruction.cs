@@ -40,6 +40,19 @@ public interface IInstruction
     /// so power flow continues correctly past them to any further
     /// instructions on the same rung.
     /// </param>
+    /// <param name="elapsed">
+    /// Real (wall-clock) time elapsed since the previous scan's call to
+    /// <see cref="ScanEngine.Evaluate"/> — <see cref="TimeSpan.Zero"/>
+    /// on a controller's very first scan, since there is no previous
+    /// scan to measure from (CORE-203/204). <see cref="ScanEngine"/>
+    /// measures this once per scan (not per rung/instruction) and
+    /// passes the same value to every instruction evaluated during that
+    /// scan. Only time-driven instructions (<c>TON</c>, <c>TOF</c>) use
+    /// this; every other instruction ignores it. Measuring wall-clock
+    /// time here (rather than assuming a fixed scan period) matches how
+    /// a real PLC's timer accumulates against the actual time between
+    /// scans, not an idealized one — see docs/SDD.md, Coding Standards.
+    /// </param>
     /// <returns>This instruction's rung-condition-out, fed to the next instruction in the rung as its <paramref name="rungState"/>.</returns>
-    bool Evaluate(TagTable tags, bool rungState);
+    bool Evaluate(TagTable tags, bool rungState, TimeSpan elapsed);
 }

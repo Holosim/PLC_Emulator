@@ -25,4 +25,18 @@ public sealed class Tag
 
     /// <summary>Populated only for <see cref="TagType.Counter"/> tags (driven by a <c>CTU</c>/<c>CTD</c> instruction).</summary>
     public CounterState? Counter { get; set; }
+
+    /// <summary>
+    /// A description of the last defined runtime error this tag was the
+    /// destination of, or <see langword="null"/> if it isn't currently
+    /// faulted. This is how the Scan Engine surfaces "expected runtime
+    /// conditions" such as <c>DIV</c>-by-zero (CORE-208) without
+    /// throwing (docs/SDD.md, Coding Standards / Error handling): the
+    /// offending instruction sets this instead of raising an exception,
+    /// leaving <see cref="Value"/> at its last good value. Cleared
+    /// (<see langword="null"/>) the next time the same destination is
+    /// written successfully, so a fault is not permanent once the
+    /// condition that caused it goes away.
+    /// </summary>
+    public string? Fault { get; set; }
 }

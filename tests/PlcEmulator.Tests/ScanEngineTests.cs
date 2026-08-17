@@ -30,7 +30,7 @@ public sealed class ScanEngineTests
 
         public string Mnemonic => "TEST_READ";
 
-        public bool Evaluate(TagTable tags, bool rungState) => rungState && (bool)tags.Get(_tagName).Value!;
+        public bool Evaluate(TagTable tags, bool rungState, TimeSpan elapsed) => rungState && (bool)tags.Get(_tagName).Value!;
     }
 
     /// <summary>Action-type stand-in for a coil: writes a BOOL tag to the incoming rung state, unchanged pass-through.</summary>
@@ -42,7 +42,7 @@ public sealed class ScanEngineTests
 
         public string Mnemonic => "TEST_WRITE";
 
-        public bool Evaluate(TagTable tags, bool rungState)
+        public bool Evaluate(TagTable tags, bool rungState, TimeSpan elapsed)
         {
             tags.Set(_tagName, rungState);
             return rungState;
@@ -63,7 +63,7 @@ public sealed class ScanEngineTests
 
         public string Mnemonic => "TEST_RECORD";
 
-        public bool Evaluate(TagTable tags, bool rungState)
+        public bool Evaluate(TagTable tags, bool rungState, TimeSpan elapsed)
         {
             _log.Add(_label);
             return rungState;
@@ -207,10 +207,12 @@ public sealed class ScanEngineTests
 
         var controller = new PlcController(controlLogic, new NetworkDef { Components = Array.Empty<NetworkComponentConfig>() });
 
-        // XIC/OTE evaluation itself is CORE-201/202 (issue #10) and still
-        // throws — this only confirms RunScan() reaches the Scan Engine
-        // and attempts to evaluate every configured rung, not that XIC/OTE
-        // produce a result yet.
-        Assert.ThrowsException<NotImplementedException>(controller.RunScan);
+        // XIC/OTE evaluation semantics are CORE-201/202 (issue #10) and no
+        // longer throw — this confirms RunScan() reaches the Scan Engine
+        // and evaluates every configured rung end to end without error.
+        // Tag-level assertions on XIC/OTE's actual result live in
+        // XicXioOteTests (GetSnapshot()/DATA-OUT-300 is still a stub, so
+        // this test can't inspect B's value through PlcController itself).
+        controller.RunScan();
     }
 }

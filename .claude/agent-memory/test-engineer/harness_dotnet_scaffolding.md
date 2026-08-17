@@ -137,6 +137,20 @@ reconfirmed the timer/counter sub-element exclusion from `TagSnapshot`
 is a pre-existing ICD decision (docs/SDD.md ~lines 404-410 from issue
 #5/#6), not something to flag as new scope creep.
 
+**Regression baseline updated (issue #8, DATA-IN-103, 2026-08-16):** 31/31
+on branch `issue-8` (27 prior baseline + 4 new `ConfigLoaderValidateTests`
+for `ConfigLoader.Validate`, TP-005/TP-103 cross-file tag-reference
+check). Same partial/deferred-TP pass pattern as issue #9: TP-005 also
+traces to UI-003 in `docs/RTVM.md`, and the CLI/Host `Program.cs` wiring
+that would make it a true process-level test (non-zero exit, no TCP
+listener) still doesn't exist — verify at the `ConfigLoader.Validate`
+unit level instead (exception type + message naming both component and
+undefined tag) and call it a legitimate scoped pass, same as CORE-200.
+This is becoming a recurring shape at this project stage: several
+RTVM test procedures assume Host/CLI wiring that lands in a later,
+separate issue — always check whether a TP row cross-references a
+UI-00x item before treating an end-to-end gap as a failure.
+
 **Software Engineer flagging an SDD-documented signature as
 stale/needing sign-off is not a build/test failure** — note it in the
 pass comment and hand off normally; it's the Systems Engineer's doc to
@@ -145,3 +159,75 @@ fix, not grounds to withhold a pass. Example: issue #9 extended
 rungState)` for rung power-flow threading; `docs/SDD.md` line ~168
 still shows the old signature as of 2026-08-16 and needs updating by
 Systems Engineer.
+
+**Regression baseline updated (issue #11, CORE-203/204 `TON`/`TOF`,
+2026-08-17):** 39/39 on branch `issue-11` (27 baseline + 12 new
+`TimerInstructionTests`). Pattern to expect going forward: when a
+feature needs real elapsed wall-clock time (timers), the SE threads it
+in as an explicit `TimeSpan elapsed` parameter on `IInstruction.Evaluate`
+(now 3-arg: `tags, rungState, elapsed`) measured once by `ScanEngine`
+via its own `Stopwatch`, rather than instructions tracking their own
+state — keeps instruction classes stateless per SDD Coding Standards.
+Good unit tests drive `.Evaluate` directly with controlled `TimeSpan`
+values (exact math, no real sleeps, non-flaky); only a single
+loosely-bounded real-`Thread.Sleep` integration test should exist per
+feature, just to prove the engine's `Stopwatch` plumbing itself works
+— don't flag more real-sleep-based tests than that as a flakiness
+concern, and don't require *fewer* either (need at least one to prove
+the plumbing, not just the math). Confirmed the TP-203/TP-204 RTVM row
+wording matches the test assertions line-by-line, same verification
+style as issue #6's `Tp100_`/`Tp101_` check.
+
+**Regression pass confirmed a third time (issue #11, CI/CD-requested trunk
+regression, 2026-08-17):** same checklist against `main`@`e45538d` (post
+`issue-11` merge `2e107fa`) — 39/39, no regressions, RTVM already showed
+`Verified`/`2e107fa` before the run started, handed off to Systems Engineer
+per the established "regression pass still routes through the two-step
+handoff even when RTVM looks current" convention. Three-for-three now
+(issues #6, #7, #11) — treat this as the settled procedure, not something
+to re-derive each time.
+
+**Regression pass confirmed a fourth time (issue #8, DATA-IN-103,
+CI/CD-requested trunk regression, 2026-08-17):** same checklist against
+`main`@`160bbc5` (post `issue-8` merge `15267cb`, plus two RTVM/memory-only
+follow-up commits) — 43/43 (baseline held from CI/CD's own post-merge count,
+no drop), 0/0 build warnings/errors, NFR-502 clean, `ProjectReference`
+graph unchanged, RTVM already showed `Verified`/`15267cb`, `git status`
+clean. Four-for-four now (issues #6, #7, #11, #8) on the "RTVM already
+current → still route through the two-step handoff, don't skip it" pattern.
+43 is now the current regression baseline (was 27 through issue #9, then
+31 on issue-8's own branch before merge, then 39 after issue #11, now 43
+after issue #8 merged — always recount from `main`, not the branch-only
+number quoted mid-development).
+
+**Regression baseline updated (issue #10, CORE-201/202, 2026-08-16):**
+36/36 on branch `issue-10` (commit 98b4418) — 27 baseline + 9 new test
+cases from `XicXioOteTests.cs` (6 `[TestMethod]`s, 3 of them
+`[DataRow]`-parameterized ×2). Real `Xic`/`Xio`/`Ote` classes
+(`SingleTagInstruction.Evaluate` now `virtual`, default still throws
+`NotImplementedException` for the still-unimplemented `TON`/`TOF`/
+`CTU`/`CTD`/`RES`) checked line-by-line against TP-201/TP-202 wording
+in `docs/RTVM.md` (lines 129-130) — exact match, no drift. Straightforward
+fill-in against the rung-state contract issue #9 established; when a
+requirement is this cleanly scoped against a prior issue's interface,
+reading the instruction classes directly (not just trusting the SE's
+comment) took only a few minutes and is worth doing every time rather
+than rubber-stamping the reported test count. (Merged into `main` on
+issue-10's own trunk merge, 2026-08-17 — post-merge, `IInstruction.Evaluate`
+picked up issue-11's 3-arg `elapsed` signature too, so the branch total of
+36/36 became the shared post-merge regression baseline once combined with
+issue-11/issue-8's later merges — see the 43/43 figure above, which is the
+current number as of this file's last edit.)
+
+**Regression baseline updated (issue #14, CORE-208, 2026-08-16):**
+36/36 — Math instructions (`ADD`/`SUB`/`MUL`/`DIV`) landed with 9 new
+tests in `MathInstructionTests.cs` (27 prior + 9 = 36). Fault-flag
+pattern for defined runtime errors (DIV-by-zero) confirmed working
+exactly as SDD's "Error handling" standard describes: new `Tag.Fault`
+(nullable string) is set instead of throwing, destination's last good
+`Value` is preserved, `Evaluate` returns `rungState` unchanged so a
+faulted rung doesn't break power flow or crash the scan. This is the
+first RTVM item to actually exercise that fault-flag mechanism
+end-to-end — worth checking for consistent fault-flag usage (same
+clear-on-next-success semantics) if/when other instructions that can
+have defined runtime errors land later.
