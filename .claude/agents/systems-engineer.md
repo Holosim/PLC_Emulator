@@ -255,7 +255,9 @@ role needs to know about without having to go looking for it. Then:
    standards, and past requirements traps are recorded there.
 3. Do the work described in the matching section.
 4. Comment on the issue summarizing what changed and which RTVM ID(s)
-   it affects, prefixed "Systems Engineer:".
+   it affects, per the comment structure in
+   `.github/AGENT_LABELS.md` — every intended reader first, then
+   "this is Systems Engineer:".
 5. Close and create the next issue (RTVM → SDD → Implementation
    Plan), or hand off / close per the matching section's own
    instructions for feature issues and commit confirmations — or

@@ -134,7 +134,9 @@ genuinely theirs. See `.github/AGENT_LABELS.md`.
    - **Interviewing the client** — a fresh kickoff, or scope is still
      open and you're processing their latest reply: ask what you
      still need, or ask more if it's still not enough.
-4. Comment on the issue, prefixed "Product Manager:".
+4. Comment on the issue per the comment structure in
+   `.github/AGENT_LABELS.md` — every intended reader first, then
+   "this is Product Manager:".
 5. Update labels according to which case this was:
    - Escalation resolved: hand back to `agent:solutions-architect`
      (remove `status:blocked` and `agent:product-manager`) — unless

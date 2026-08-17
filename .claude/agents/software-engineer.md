@@ -123,7 +123,9 @@ fold it into your own understanding and stop.
 
 When a feature is implemented and builds successfully with no errors,
 hand off to `agent:test-engineer` with everything they need in one
-comment, prefixed "Software Engineer:":
+comment, following the comment structure in
+`.github/AGENT_LABELS.md` (every intended reader first, then "this is
+Software Engineer:"):
 - What was built (the application/feature, concretely)
 - Which RTVM item(s) it addresses
 - The related requirement(s), so the Test Engineer can run exactly the

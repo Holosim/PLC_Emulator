@@ -121,8 +121,9 @@ before this pass.
    per "Versioning and releases" above, and if so, carry out the tag
    and release steps before moving on.
 6. Comment on the issue confirming what was committed or merged and
-   where, prefixed "CI/CD:" — include the version tag, and release
-   name if one was cut, here.
+   where, per the comment structure in `.github/AGENT_LABELS.md` —
+   every intended reader first, then "this is CI/CD:" — including the
+   version tag, and release name if one was cut.
 7. Hand back to `agent:systems-engineer` — always, not conditionally.
    Your comment in step 6 should include the commit SHA explicitly and
    state plainly whether this needs regression testing (a trunk

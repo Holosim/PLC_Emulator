@@ -59,8 +59,9 @@ logs, exact reproduction steps — and hand back to
 `agent:software-engineer` with that plus the test status.
 
 Track consecutive fail/rebuild/retest cycles for the same requirement
-within this issue thread (count your own past "Test Engineer:"
-comments here). If you're about to report a 5th consecutive failure on
+within this issue thread (count your own past comments here — the
+ones whose first line ends "this is Test Engineer:", not ones merely
+addressed to you). If you're about to report a 5th consecutive failure on
 the same requirement without an intervening pass, this is no longer a
 normal handback: escalate instead to `agent:product-manager` with
 `status:needs-human`, summarizing the full failure history so far. The
@@ -95,8 +96,10 @@ file, so attempting to edit code will fail before it runs.
 3. Check your memory for known-flaky tests and platform-specific
    tolerances before concluding something is a real failure.
 4. Run the relevant test procedure.
-5. Comment with the result, prefixed "Test Engineer:" — pass or fail,
-   what you ran, and (on failure) exactly what you saw.
+5. Comment with the result per the comment structure in
+   `.github/AGENT_LABELS.md` — every intended reader first, then
+   "this is Test Engineer:" — pass or fail, what you ran, and (on
+   failure) exactly what you saw.
 6. On pass: hand off per "On pass" above. On fail: relabel back to
    `agent:software-engineer` (or escalate per the 5-strike rule).
 7. Append recurring failure patterns or newly-discovered flaky tests to

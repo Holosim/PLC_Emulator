@@ -55,7 +55,9 @@ genuinely theirs. See `.github/AGENT_LABELS.md`.
    Engineer can act without coming back again, or recognize this is
    genuinely a client-intent question and escalate it onward instead
    of guessing.
-4. Comment on the issue, prefixed "Solutions Architect:".
+4. Comment on the issue per the comment structure in
+   `.github/AGENT_LABELS.md` — every intended reader first, then
+   "this is Solutions Architect:".
 5. Update labels:
    - You resolved it: hand back to `agent:systems-engineer` (remove
      `status:blocked` and `agent:solutions-architect`) — unless your
