@@ -708,3 +708,16 @@ Neither issue added new automated tests (both process-level/manual-
 verification requirements). Sixteenth confirmation of "RTVM already
 current → still route through the two-step handoff" — fully settled.
 108 remains the current regression baseline.
+
+**Regression pass confirmed a seventeenth time (issue #27, DELIV-900,
+CI/CD-requested trunk regression, 2026-08-17):** same checklist against
+`main`@`237b641` (post `issue-27` merge `ecbc190`, plus RTVM-SHA-only
+`3ea3f58` and memory-only follow-ups) — 119/119 (matches the baseline
+recorded above, no drop), 0/0 build warnings/errors, NFR-502 clean,
+`ProjectReference` graph unchanged, `git status` clean, RTVM already
+showed `Verified`/`ecbc190` for DELIV-900. Notable context (not a test
+result, just worth recording): this merge completed the project's
+**first-ever release, `v1.0.2`**, and CI/CD's comment noted every
+`docs/RTVM.md` row (all 27) is now `Verified` — this DELIV-900
+regression pass was flagged as the last thing needed before issue #27
+itself closes. 119 remains the current regression baseline.
