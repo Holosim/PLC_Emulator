@@ -36,3 +36,12 @@ entry, keep it terse, and fold near-duplicates together.
   Concurrency and Roadmap subsections). v1.0 scope now fully locked — see
   [PLC Emulator kickoff](project_plc_emulator_kickoff.md) for the details.
   Closed issue #1, opened "RTVM" issue labeled `agent:systems-engineer`.
+- 2026-08-17 (issue #28) — Client asked for a user quick-start guide
+  (`docs/USER_GUIDE.md`) once the solution started building/running, per
+  standard Deliverable Requirement escalation path (not a feature — no
+  runtime behavior to test, just a document to produce/verify).
+  Documented scope + acceptance bar ("clone to running sim using only the
+  doc") in `docs/PROJECT_DEFINITION.md` Deliverable Requirements section,
+  same category/sequencing as the DELIV-900 VS-solution item. Did not write
+  the guide myself — that's Systems Engineer/Software Engineer's build to
+  turn into an RTVM DELIV line item and implement.
