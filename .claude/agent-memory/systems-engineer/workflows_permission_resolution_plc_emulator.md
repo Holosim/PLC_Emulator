@@ -39,3 +39,10 @@ a .NET codebase.
 NFR-501 verified Verified on issue #24, CI run `31997343615` (both
 `ubuntu-latest` and `windows-latest` legs green, 118/118 tests, 0
 build warnings/errors on each). See [[feedback-platform-verification-schedule]].
+`issue-24` branch itself carried no `src`/`tests` diff (inspection-only) but
+CI/CD still merged it to `main` for the memory-file commits it did contain
+(merge commit `03970cd`, flagged as needing regression testing since any
+trunk merge does) — handed to Test Engineer per the "commit confirmation
+needs regression testing" path even though the RTVM Verified status was
+already set via fast-path beforehand. Recorded both the CI run and the
+merge SHA in RTVM's Commit(s) column.
