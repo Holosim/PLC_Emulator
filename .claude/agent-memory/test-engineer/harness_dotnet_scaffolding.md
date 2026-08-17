@@ -780,6 +780,38 @@ since this is exactly the class of defect (environment-dependent,
 invisible in CI) that benefits most from a second, independently-built
 reproduction rather than re-running the same script the SE already ran.
 
+**OUT-403 (issue #30, free-running background scan loop, 2026-08-17) —
+FAIL: unthrottled `Broadcast` starves the TCP accept path, breaking
+OUT-400's already-`Verified` single-client constraint.** TP-403 itself
+(unsolicited `tag_update` traffic + a `tag_write` picked up within 2s
+by the free-running loop with no manual trigger) passed cleanly against
+a live process. But the loop calls `server.Broadcast(...)` back-to-back
+with zero delay (SE's own number: ~877,000 messages/2s), and
+`TcpJsonServer.SendLine` holds `_clientLock` for the full duration of
+every single write+flush. `AcceptLoop` needs that same lock to
+register/reject a second concurrent connection. Under that level of
+continuous contention from the main thread, the accept thread can't
+win the lock in any reasonable time: connect client 1, wait 0.5s,
+connect client 2 — client 2 should get EOF almost immediately (that's
+what TP-400 verified pre-OUT-403) but instead just hangs, confirmed to
+at least 20s, reproduced twice on fresh process restarts. Isolated the
+cause by running the identical test against `main` at the commit this
+branch forked from (still has `Thread.Sleep(Timeout.Infinite)`, no
+loop) — client 2 gets EOF in ~1ms there, so this is a genuine
+regression introduced by this branch, not pre-existing. **Lesson for
+any future free-running/high-frequency loop that shares a lock with a
+lower-frequency path (like TCP accept):** don't just check whether the
+new feature's own TP passes — explicitly re-run the TP of any other
+`Verified` row whose code shares a lock/resource with the new hot path,
+even if the SE's own hand-off claims "confirmed no regression" for it
+(their manual check here was a plain connect/disconnect cycle, not two
+concurrently-held connections, so it didn't exercise the actual
+contention). Building a comparison harness against `main` at the
+pre-change commit (via `git worktree add`) is a fast, clean way to
+prove "was this always broken?" vs. "did this branch cause it" — worth
+doing whenever a regression is suspected but the pre-change behavior
+isn't already pinned down in a unit test.
+
 **Regression pass confirmed an eighteenth time (issue #27, DELIV-900
 field-defect fix, CI/CD-requested trunk regression after the second
 release, 2026-08-17):** same checklist against `main`@`ea2f6a7` (post
