@@ -47,6 +47,23 @@ concluded anything was actually wrong. Check
 `git rev-parse --is-shallow-repository` first if an ancestry check
 gives a surprising answer, rather than trusting the negative result.
 
+**Reconfirmed on issue #23 (2026-08-17), 3 rejections in a row:**
+merging `issue-23` (NFR-500) to `main` was rejected 3 times by sibling
+CI/CD runs finishing issues #17 (UI-002) and #19 (DATA-OUT-301) mid-
+loop. Two of the three catch-up merges were clean docs/memory-only
+auto-merges; one had a real conflict in
+`.claude/agent-memory/test-engineer/MEMORY.md` (two sibling branches
+each rewrote the *same* index bullet's baseline test count — 104/104
+vs. 105/105 — rather than appending a new bullet) — resolved by
+merging the prose into one bullet describing both counts drifted in
+parallel, not a pick-a-side, then re-verified the real post-merge
+count with `dotnet test` (108/108) rather than trusting either side's
+stale number. Full rebuild/retest after every one of the 4 merge
+rounds (initial `--no-ff` + 3 catch-ups), per
+[[merge-required-member-break]] — worth it here since round 3 (issue
+#19) actually did carry real source changes (`TagUpdateSerializer.cs`,
+`TcpJsonServer.cs`), not just docs.
+
 **Reconfirmed on issue #15 (2026-08-17), even worse contention:** `git
 push origin main` was rejected **four times in a row** merging
 `issue-15` (CORE-209) — issues #14, #13, and #12 each landed on `main`
