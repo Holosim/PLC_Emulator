@@ -86,12 +86,11 @@ REPORT=$(mktemp)
 
 gh issue list --state open --limit 200 --repo "$REPO" \
   --json number,title,labels,updatedAt \
-  | jq -c '.[]' \
-  | while read -r issue; do
+  --jq '.[] | [.number, .updatedAt, (.labels | map(.name) | join(",")), .title] | @tsv' \
+  | while IFS=$'\t' read -r NUMBER UPDATED_AT LABELS_CSV TITLE; do
 
-      NUMBER=$(jq -r '.number' <<< "$issue")
-      TITLE=$(jq -r '.title' <<< "$issue")
-      LABELS=$(jq -r '.labels[].name' <<< "$issue")
+      [[ -z "$NUMBER" ]] && continue
+      LABELS=$(tr ',' '\n' <<< "$LABELS_CSV")
 
       AGENT_LABELS=$(grep '^agent:' <<< "$LABELS" || true)
       POSITION_LABELS=$(grep -E "$POSITION_RE" <<< "$LABELS" || true)
@@ -115,7 +114,7 @@ gh issue list --state open --limit 200 --repo "$REPO" \
       LAST_TIME=$(gh issue view "$NUMBER" --repo "$REPO" --json comments \
         -q '.comments | if length > 0 then .[-1].createdAt else null end' 2>/dev/null)
       if [[ -z "$LAST_TIME" || "$LAST_TIME" == "null" ]]; then
-        LAST_TIME=$(jq -r '.updatedAt' <<< "$issue")
+        LAST_TIME="$UPDATED_AT"
       fi
       AGE=$(( NOW - $(date -u -d "$LAST_TIME" +%s) ))
       if (( AGE < THRESHOLD_SECONDS )); then
