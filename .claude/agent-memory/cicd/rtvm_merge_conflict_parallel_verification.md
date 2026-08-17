@@ -33,6 +33,16 @@ still open in parallel at merge time, so this stayed a plain build-
 number bump (`v1.0.2`, no collision with `v1.0.1` since the day
 advanced 2026-08-16 → 2026-08-17), not a release.
 
+**Not always `docs/RTVM.md` itself:** merging `issue-17` (UI-002,
+2026-08-17, commit `148648d`) hit this identical shape entirely inside
+two agent `MEMORY.md`/memory-log files (`software-engineer/MEMORY.md`'s
+append-only pattern index, `test-engineer/harness_dotnet_scaffolding.md`'s
+running pass-log) — `docs/RTVM.md` itself merged clean with zero
+conflict that time. Same resolution either way: union both sides'
+content, don't pick one — see
+[[release-versioning-tag-collision-same-day]]'s ninth occurrence note
+for the full detail.
+
 **Extends beyond `docs/RTVM.md`:** merging `issue-8` (2026-08-17,
 commit `15267cb`) hit the identical shape of conflict in
 `.claude/agent-memory/software-engineer/MEMORY.md` — two sibling

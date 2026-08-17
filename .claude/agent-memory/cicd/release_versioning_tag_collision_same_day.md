@@ -103,6 +103,25 @@ shallow; unshallowed first per [[build-toolchain-shallow-clone]].
 `type:requirement` issues #17, #19-24, #26, #27 all still open
 (on-hold/in-progress mix) — no release trigger.
 
+**Ninth occurrence (issue #17/UI-002, 2026-08-17, substantive merge
+`148648d`, final pushed tip `c6dad94`):** same result — `v1.0.2`
+ancestor-confirmed on both the substantive merge and the final pushed
+tip, skipped re-tag, cited both SHAs in the hand-off comment. Needed
+three rounds of fetch+merge+rebuild+retest+push (two rejected pushes
+from concurrent sibling CI/CD runs finalizing issue #19's RTVM-SHA
+follow-up and other memory-only commits) before it landed — see
+[[concurrent-cicd-runs-same-day]]. Two real (non-empty) merge
+conflicts this time, both docs/memory-only append-lists (`.claude/
+agent-memory/software-engineer/MEMORY.md`'s architecture-patterns
+index, `.claude/agent-memory/test-engineer/harness_dotnet_scaffolding.md`'s
+running pass-log) — resolved by straight union per
+[[rtvm-merge-conflict-parallel-verification]], no code-level conflict
+this time. `docs/RTVM.md`'s UI-002 row was already `Verified` with no
+SHA (SE's job to fill the SHA in, not CI/CD's — left untouched here).
+9 `type:requirement` issues still open post-merge — no release
+trigger; RTVM still has OUT-400/401/402, NFR-501/503, DELIV-900 as
+`Approved` (not yet `Verified`).
+
 **Eighth occurrence (issue #19/DATA-OUT-301, 2026-08-17, merge
 `00f44ee`, final pushed tip `c13addc` after two push-rejection
 rounds):** same result — `v1.0.2` ancestor-confirmed
