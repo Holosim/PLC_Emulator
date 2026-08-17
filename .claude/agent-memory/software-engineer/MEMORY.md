@@ -22,6 +22,7 @@
 - [Startup diagnostics text](pattern_startup_diagnostics.md) — UI-002 (issue #17): literal "N tags loaded"/"N components loaded" text match for TP-003, per-tag/per-component listing, same OUT-400/#20 stub gap resurfacing
 - [TCP listener single-client constraint](pattern_tcp_listener_single_client.md) — OUT-400 (issue #20): accept-then-close for the 2nd+ connection, `_clientLock`-guarded Broadcast/OnClientMessage, tag_write deliberately left throwing for OUT-401/#21, `socket.makefile()` FIN gotcha when manually testing
 - [Disconnect logging](pattern_disconnect_logging.md) — OUT-402 (issue #22): plcemu:-prefixed stdout line in TcpJsonServer.HandleClient's finally, remote endpoint captured before the socket can be disposed; closed the exact gap #20 flagged, TP-402 manually verified end-to-end
+- [Tag-write queue / GetTagType conversion split](pattern_tag_write_queue.md) — OUT-401 (issue #21): QueueWrite validation, Network-owns-JSON-conversion/Core-stays-JSON-free split, socket-test ordering-barrier trick, and the "no free-running scan loop anywhere in Host" gap flagged to Test Engineer
 
 ## Platform-specific notes
 

@@ -568,6 +568,48 @@ the two-step handoff" — fully settled. 108 is now the current
 regression baseline; supersedes both 105 and 104 quoted in isolation
 above.
 
+**OUT-401 (issue #21, `tag_write` handling, 2026-08-17) — PASS, 118/118
+(108 baseline + 10 new: 7 `PlcControllerWriteTests` + 3
+`TcpJsonServerTagWriteTests`).** First requirement to actually build on
+OUT-400's live TCP listener with a real client→server input path. Write
+path confirmed genuinely queued-then-applied, never mutated from the
+network thread: `PlcController.QueueWrite` only ever calls
+`WriteQueue.Enqueue` (never touches `TagTable` directly), and only
+`RunScan()` drains it (`WriteQueue.DrainAll()`) before evaluating rungs
+— matches docs/SDD.md's write-path note. Verified this two ways, same
+as OUT-400's socket-vs-unit split: unit-level (`PlcControllerWriteTests`,
+directly calling `QueueWrite`/`RunScan`) and socket-level
+(`TcpJsonServerTagWriteTests`, real `TcpClient`/`TcpListener`). Also
+independently re-ran a live `plcemu` process (hand-built CONTROL_LOGIC/
+NETWORK JSON — still no fixture files checked into the repo, same as
+OUT-400) with a Python TCP client: confirms the SE-flagged architecture
+gap is real and worth remembering — **there is no free-running
+background scan-loop thread anywhere in the Host** (`Program.cs` just
+does `Thread.Sleep(Timeout.Infinite)` after starting the listener), so
+against a genuinely live process a `tag_write` is queued but never
+auto-applied; every TP-401-class test (this issue's, and TP-200/TP-300
+before it) has to trigger "the next scan cycle" by calling
+`controller.RunScan()` explicitly from the test/host code itself. This
+isn't a bug and doesn't block a TP-401 pass (the RTVM wording says
+"next scan cycle," not "next wall-clock tick," and no RTVM item
+currently assigns ownership of a scan cadence) — but if a *future* RTVM
+item ever specifies a real periodic scan rate, expect a live-process
+TP for it to fail exactly the way my live smoke test did here (write
+accepted, connection survives, but the tag never flips) until that
+item adds the actual timer/loop. Worth watching for as a new RTVM item
+rather than assuming it'll ride along with some other issue's scope.
+Undefined-tag and type-mismatch `tag_write`s confirmed live too: server
+logs `error handling client message: ...` and keeps answering later
+`read_request`s on the same connection — matches the per-message
+try/catch pattern already established for OUT-400. Also useful as a
+second confirmed data point for `NETWORK` JSON's minimal shape: a
+`components` array must be non-empty (empty array is explicitly
+rejected — "defines no components"), so a from-scratch smoke-test
+fixture needs at least one real component (e.g.
+`{"name":"X","driver":"DiscreteSensor","tag":"SomeBoolTag"}`) even when
+the rung under test doesn't otherwise need a driver. 118 is now the
+current regression baseline.
+
 **OUT-400 (issue #20, TCP listener & single-client constraint,
 2026-08-17) — PASS, 108/108 (baseline held, no new automated tests
 added on this branch).** First TP-400-class requirement that's genuinely
