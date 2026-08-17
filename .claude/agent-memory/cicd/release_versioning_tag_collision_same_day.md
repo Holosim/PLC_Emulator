@@ -171,6 +171,26 @@ Worth checking precedent on a sibling issue's comment thread
 `status:*` label for a hand-off shape that isn't explicitly named in
 `.github/AGENT_LABELS.md`.
 
+**Twelfth occurrence (issue #21/OUT-401, 2026-08-17, substantive merge
+`861395d`, final pushed tip `68de61c`):** same result — `v1.0.2`
+ancestor-confirmed (`git merge-base --is-ancestor v1.0.2 HEAD`),
+skipped re-tag, cited both SHAs in the hand-off comment. RTVM's
+OUT-401 row was already `Verified` on trunk (SE's fast-path commit
+`b84c933`) *before* this merge, but `git log origin/main..origin/
+issue-21` was still non-empty (3 real commits) — a genuine merge, not
+the empty-diff case, confirming [[second-ready-for-commit-no-new-merge]]'s
+"check the branch diff, not the RTVM state" rule yet again. One
+conflict, the now-routine `.claude/agent-memory/software-engineer/
+MEMORY.md` architecture-patterns append-list clash against a sibling
+(`issue-22`/OUT-402's bullet) — resolved by union. One push-rejection
+round (concurrent Test Engineer memory-only commit landed on
+`origin/main` mid-merge), clean auto-merge, one rebuild/retest cycle
+after. `type:requirement` issues #22, #24, #26, #27 still open
+(#22 in-progress, rest on-hold) — no release trigger. Per the
+eleventh-occurrence label convention, hand-off used `status:none`
+(omitted step c) since RTVM was already updated and this was still a
+real, non-empty branch merge.
+
 **Tenth occurrence (issue #20/OUT-400, 2026-08-17, merge `40fa920`):**
 same result — `v1.0.2` ancestor-confirmed (`git merge-base
 --is-ancestor v1.0.2 origin/main`), skipped re-tag, cited merge SHA in
