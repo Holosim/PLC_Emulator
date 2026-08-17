@@ -155,6 +155,35 @@ let fall out of scope.
 
 NOTE WELL: Development occurs entirely within the pipeline's native environment (Ubuntu/.NET). Refactoring into a Visual Studio project is a final deliverable step, performed once, after v1.0 is functionally complete and tested — not verified continuously during development. No parallel Windows/MSVC verification pipeline runs per-feature.
 
+[CONFIRMED] **User documentation (added 2026-08-17, issue #28):** Now that
+the solution builds and runs (VS solution consolidated in issue #27), the
+client needs a quick-start/user guide so someone unfamiliar with the project
+can go from a fresh clone to a running simulation on their own. This is a
+deliverable requirement, not a functional feature — there's no runtime
+behavior for the RTVM to exercise directly, only a document to produce and
+verify for completeness/accuracy. Deliver as `docs/USER_GUIDE.md`, covering
+at minimum:
+- An outline of all projects in the Visual Studio solution — what each one
+  does and how it fits together.
+- The CONTROL_LOGIC and NETWORK config file formats, including a complete,
+  working example the reader can copy and run immediately (paths, where the
+  files go on disk).
+- How to launch the emulator and what to expect (CLI args, startup
+  diagnostics, TCP/JSON connection from a sim client).
+- How to write ladder logic and map out a component network using the
+  schemas above.
+- How to extend the system: where a new driver goes, what interface it
+  implements (ties to the `IDriver` architecture), and the minimal steps to
+  register it.
+
+Acceptance bar (for Systems Engineer to turn into a real, verifiable RTVM
+line item): a reader who has never seen this project can go from `git
+clone` to a running simulation using only `docs/USER_GUIDE.md` and the
+delivered solution files — no tribal knowledge, no reading source first.
+This should be sequenced as a late-stage v1.0 task, same category as the
+Visual Studio solution refactor above, since it documents the delivered
+state of the solution and would go stale if written earlier.
+
 ## Status
 
 All open questions from the Issue #1 kickoff have been answered by the
