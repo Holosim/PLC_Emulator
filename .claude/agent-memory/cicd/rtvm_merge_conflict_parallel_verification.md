@@ -53,3 +53,26 @@ a side. Any agent's `MEMORY.md` index file is exactly this
 same shape (an append-mostly list) and should be treated the same way
 on conflict — see [[release-versioning-tag-collision-same-day]] for
 the paired tag-collision note from this same merge.
+
+**Not every same-bullet conflict is this "union both" shape — watch for
+sequential continuation instead of parallel addition (issue #30,
+2026-08-17, merge `a32f132`):** `.claude/agent-memory/systems-engineer/
+MEMORY.md` and `implementation_plan_plc_emulator.md` both conflicted on
+a *single* bullet (the "#30 OUT-403" entry), but this wasn't two
+sibling branches each adding independent content — it was the *same*
+role writing two snapshots of the *same* evolving story at different
+points in time: `main`'s side was Systems Engineer's "issue #30 just
+created" note (written when the branch was cut), the branch's side was
+that same bullet grown into the full "issue #30 resolved, round-tripped
+once on a lock-contention regression, PASSed, handed to CI/CD" account.
+Unioning both (keeping the short note *and* the long one back to back)
+would have left a redundant, confusing doubled-up bullet. Correct
+resolution here was to keep only the branch's version — a strict
+chronological superset of the trunk version, not independent content —
+by regex-replacing each `<<<<<<< HEAD ... ======= ... >>>>>>>` block
+with just the `>>>>>>>`-side text. **How to tell which shape you're in:**
+read both sides fully before resolving; if one side's prose is a
+strict continuation/superset of the other's (same opening sentences,
+same event, just further along in time), pick the fuller one — don't
+union. If the two sides describe genuinely different, independent
+events or RTVM rows, union instead, per the rest of this memory.
