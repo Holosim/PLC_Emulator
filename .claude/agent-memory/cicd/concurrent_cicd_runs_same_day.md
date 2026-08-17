@@ -30,3 +30,19 @@ got to my own tag step, which is exactly the collision that memory
 describes — confirmed again here, same day, same resolution (verify
 ancestry, don't re-tag, cite the merge SHA in the hand-off comment
 instead).
+
+**Escalated on issue #12 (2026-08-17):** with 5+ sibling instruction-
+group issues (#10, #11, #13, #14, #12 itself) all merging to `main`
+same-day, `git push origin main` was rejected **three times in a row**
+after resolving issue-12's own merge conflicts — each retry needed a
+fresh `git fetch origin && git merge origin/main --no-edit` (each pass
+picking up 1-2 more commits from sibling CI/CD runs), then a rebuild/
+retest before pushing again. Don't be alarmed by more than one
+rejection in a row; keep the fetch→merge→build→test→push loop going
+until it succeeds. Also hit [[build-toolchain-shallow-clone]] again
+mid-loop: `git merge-base --is-ancestor` returned a false "not an
+ancestor" for a tag I knew was upstream, because the working clone was
+still shallow — `git fetch --unshallow origin` fixed it before I
+concluded anything was actually wrong. Check
+`git rev-parse --is-shallow-repository` first if an ancestry check
+gives a surprising answer, rather than trusting the negative result.

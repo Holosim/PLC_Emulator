@@ -87,3 +87,23 @@ its own rebuild+retest before pushing (62/62, then 71/71 clean). Bears
 out the #14 note's prediction: check `IInstruction.Evaluate`'s call
 sites first thing on every remaining pre-#11-cut instruction-set
 branch (#12/#15/#18 etc.).
+
+**2026-08-17, issue #12 (CORE-205/206, `Ctu`/`Ctd`/`Res`) merge —
+fifth occurrence, confirms the prediction:** also cut before issue
+#11's 3-arg signature landed. Real textual conflict in
+`SingleTagInstruction.cs` (shared virtual base method + the new
+`RequireCounter` helper both sides needed to coexist), fixed by
+keeping the 3-arg signature and adding `elapsed: TimeSpan elapsed`
+(ignored) to `Ctu`/`Ctd`/`Res`'s own `Evaluate` overrides, plus the
+same no-marker trap in `CounterInstructionTests.cs` (36 direct
+`.Evaluate(tags, bool)` call sites — used `sed -i -E
+'s/\.Evaluate\((tags, (true|false))\)/.Evaluate(\1, TimeSpan.Zero)/g'`
+rather than editing each by hand, faster and no risk of missing one).
+Stacked three separate rounds of `origin/main` catching up mid-merge
+this time (not just two) — sibling issues #10, #11, #13, #14 were all
+landing on `main` within the same short window; `git push` was
+rejected three times in a row before it finally succeeded, each retry
+needing its own fetch+merge+rebuild+retest (38/38 → 72/72 → 82/82,
+all clean). See [[concurrent-cicd-runs-same-day]] for the push-retry
+loop itself. Only #15/#18 (and later ones) remain as pre-#11-cut
+branches likely to hit this same shape.
