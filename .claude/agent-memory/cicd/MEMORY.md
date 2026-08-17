@@ -15,6 +15,10 @@
 - [Which versioning scheme is authoritative](release_versioning_scheme.md) — resolves cicd.md's two conflicting sections; v1.0.1 was PLC_Emulator's first tag.
 - [Same-day BUILD-number tag collision](release_versioning_tag_collision_same_day.md) — don't force-move an existing tag; verify ancestry and skip re-tagging if the day hasn't advanced.
 
+## Workflow patterns
+
+- [Second ready-for-commit hand-off, no new merge](second_ready_for_commit_no_new_merge.md) — happens after post-merge regression loop closes; check `git log origin/main..origin/issue-N` before assuming there's a branch to merge.
+
 ## Known issues
 
 - [git merge silently fast-forwards, dropping -m message](feedback_git_merge_ff.md) — use `--no-ff` if the crafted commit message must land on trunk.
