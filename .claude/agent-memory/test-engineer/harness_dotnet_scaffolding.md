@@ -294,3 +294,15 @@ issue #9 shallow-clone note: never trust a branch-reported total as the
 post-merge baseline once two feature branches with diverging "prior count"
 assumptions both land — always recount straight from the current `main`
 tip.
+
+**Regression pass confirmed a sixth time (issue #14, CORE-208,
+CI/CD-requested trunk regression, 2026-08-17):** same checklist against
+`main`@`bb42d0f` (post CORE-208 merge `10c9dad`, cumulative with
+fast-forward `7e1738e`, plus RTVM-SHA-only and memory-only follow-up
+commits) — 61/61 (matches the combined baseline recorded just above,
+no drop), 0/0 build warnings/errors, NFR-502 clean, `ProjectReference`
+graph unchanged, RTVM already showed `Verified`/`10c9dad`, `git status`
+clean. Six-for-six now (issues #6, #7, #11, #8, #10, #14) on "RTVM
+already current → still route through the two-step handoff" — this
+pattern is fully settled, stop re-confirming it explicitly unless it
+actually breaks. 61 remains the current regression baseline.
