@@ -148,3 +148,12 @@ concern, and don't require *fewer* either (need at least one to prove
 the plumbing, not just the math). Confirmed the TP-203/TP-204 RTVM row
 wording matches the test assertions line-by-line, same verification
 style as issue #6's `Tp100_`/`Tp101_` check.
+
+**Regression pass confirmed a third time (issue #11, CI/CD-requested trunk
+regression, 2026-08-17):** same checklist against `main`@`e45538d` (post
+`issue-11` merge `2e107fa`) — 39/39, no regressions, RTVM already showed
+`Verified`/`2e107fa` before the run started, handed off to Systems Engineer
+per the established "regression pass still routes through the two-step
+handoff even when RTVM looks current" convention. Three-for-three now
+(issues #6, #7, #11) — treat this as the settled procedure, not something
+to re-derive each time.
