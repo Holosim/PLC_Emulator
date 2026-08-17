@@ -25,6 +25,7 @@
 - [Tag-write queue / GetTagType conversion split](pattern_tag_write_queue.md) — OUT-401 (issue #21): QueueWrite validation, Network-owns-JSON-conversion/Core-stays-JSON-free split, socket-test ordering-barrier trick, and the "no free-running scan loop anywhere in Host" gap flagged to Test Engineer
 - [NFR-501 consolidation review](pattern_nfr501_consolidation_review.md) — issue #24: clean OS-abstraction code review; workflows-permission wall (see below) blocks the Windows CI matrix; final routing corrected to `status:needs-human` (see gotcha below) after an initial wrong `ready-for-test` call
 - [DELIV-900 VS solution review](pattern_deliv900_vs_solution_review.md) — issue #27: full-compliance inspection (`.sln`/`.csproj`/`.gitattributes`/`.gitignore` all clean, 119/119 tests), no code change; also confirms the "deploy windows-verification.yml" decision stays resolved (deleted on #24, not re-litigated)
+- [global.json rollForward field defect](pattern_global_json_sdk_rollforward.md) — DELIV-900 post-release regression (issue #27): `latestFeature`→`latestMajor` fix, isolated-single-SDK reproduction technique for "client has only newer SDKs" scenarios, and why CI's pre-provisioned SDK image structurally can't catch this class of bug
 
 ## Platform-specific notes
 
