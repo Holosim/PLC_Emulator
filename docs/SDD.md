@@ -179,8 +179,18 @@ fit cleanly.
   Rockwell mnemonics (SN-3).
 - **Tag data model:** `TagType` enum (`Bool`, `Dint`, `Real`); a `Tag`
   class holding a value plus optional structured sub-elements
-  (`TimerState { Pre, Acc, Dn, En }`, `CounterState { Pre, Acc, Dn }`)
-  per DATA-IN-100.
+  (`TimerState { Pre, Acc, Dn, En }`, `CounterState { Pre, Acc, Dn, Cu,
+  Cd }`) per DATA-IN-100. **Confirmed 2026-08-17 (issue #12, CORE-205/
+  206):** `Cu`/`Cd` are runtime-only edge-memory bits (was the enable
+  input true last scan, per instruction type) added so `CTU`/`CTD`
+  can detect a rising edge without instructions themselves holding
+  state, which "Instruction classes" below requires them to stay
+  free of. Two independent bits, not one, because a `CTU` and a `CTD`
+  can legally target the same counter tag (an up/down counter pair)
+  and each needs its own edge memory — mirrors the real Rockwell
+  `COUNTER` data type's status word. Not exposed in CONTROL_LOGIC
+  JSON; DATA-IN-100's schema (`.PRE`/`.ACC`/`.DN` as authored fields)
+  is unchanged.
 - **Instruction classes:** one class per mnemonic under
   `PlcEmulator.Core.Instructions`, each implementing a shared
   `IInstruction.Evaluate(TagTable tags, bool rungState, TimeSpan elapsed)` — stateless,

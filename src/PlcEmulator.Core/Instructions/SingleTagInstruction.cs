@@ -26,9 +26,8 @@ public abstract class SingleTagInstruction : IInstruction
     /// <summary>
     /// Default: not yet implemented. Overridden by the mnemonics whose
     /// evaluation semantics have landed (currently <c>XIC</c>/<c>XIO</c>/
-    /// <c>OTE</c> — CORE-201/202 — and <c>TON</c>/<c>TOF</c> —
-    /// CORE-203/204); the rest (<c>CTU</c>, <c>CTD</c>, <c>RES</c>)
-    /// still throw here until their own CORE items land.
+    /// <c>OTE</c> — CORE-201/202; <c>TON</c>/<c>TOF</c> — CORE-203/204;
+    /// and <c>CTU</c>/<c>CTD</c>/<c>RES</c> — CORE-205/206).
     /// </summary>
     public virtual bool Evaluate(TagTable tags, bool rungState, TimeSpan elapsed) =>
         throw new NotImplementedException($"{Mnemonic}.Evaluate lands with {_coreItem}.");
@@ -55,6 +54,14 @@ public abstract class SingleTagInstruction : IInstruction
     /// <summary>Writes <paramref name="value"/> to <see cref="TagName"/>'s BOOL value (CORE-202).</summary>
     /// <exception cref="KeyNotFoundException"><see cref="TagName"/> is not defined in <paramref name="tags"/>.</exception>
     protected void WriteBoolTag(TagTable tags, bool value) => tags.Set(TagName, value);
+
+    /// <summary>Looks up this instruction's tag and requires it to carry <see cref="CounterState"/> (i.e. be a <see cref="TagType.Counter"/> tag) — used by <see cref="Ctu"/>/<see cref="Ctd"/>/<see cref="Res"/>.</summary>
+    protected CounterState RequireCounter(TagTable tags)
+    {
+        var tag = tags.Get(TagName);
+        return tag.Counter ?? throw new InvalidOperationException(
+            $"{Mnemonic}('{TagName}') requires a COUNTER-typed tag, but '{TagName}' is {tag.Type}.");
+    }
 
     public override string ToString() => $"{Mnemonic}:{TagName}";
 
