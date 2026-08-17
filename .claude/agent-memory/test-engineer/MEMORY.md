@@ -5,7 +5,7 @@
 <!-- Simulation frameworks, hardware-in-the-loop rigs, and how to run
      each product line's test suite locally vs. in this pipeline. -->
 
-- [PlcEmulator .NET scaffolding: build/test verification + SDD reference-graph checklist](harness_dotnet_scaffolding.md) — how to verify issue #5-style scaffolding and later feature branches; baseline test count updated through issue #14 (36/36, CORE-208 fault-flag pattern); also covers the shallow-clone-hides-a-merge gotcha
+- [PlcEmulator .NET scaffolding: build/test verification + SDD reference-graph checklist](harness_dotnet_scaffolding.md) — how to verify issue #5-style scaffolding and later feature branches; #10 and #14 landed on sibling branches (52/52 and 36/36 respectively, different prior baselines) and merged together — combined `main` baseline is 61/61; also covers the shallow-clone-hides-a-merge gotcha
 
 ## Platform-specific test considerations
 
