@@ -440,3 +440,21 @@ expected, and none added) rather than a new instruction/driver
 component — still the same checklist applies unchanged. Ten-for-ten now
 on "RTVM already current → still route through the two-step handoff."
 97 remains the current regression baseline.
+
+**Regression pass confirmed an eleventh time (issue #18, DATA-OUT-300,
+CI/CD-requested trunk regression, 2026-08-17):** same checklist against
+`main`@`d73edf6` (post `issue-18` merge `77336c5`, plus memory-only
+follow-up commits) — **101/101** passing (baseline had already grown
+from 97→101 across this issue's own build/test/merge cycle — 97
+pre-existing + 4 new `PlcControllerSnapshotTests`), 0/0 build
+warnings/errors, NFR-502 clean, `git status` clean, RTVM already showed
+`Verified`/`77336c5` for DATA-OUT-300 before the run started.
+Eleven-for-eleven now on "RTVM already current → still route through
+the two-step handoff." 101 is now the current regression baseline.
+Also reconfirmed `XicXioOteTests.cs` (real `XIC`/`OTE` rung evaluation,
+CORE-201/202) is present on `main`, so an end-to-end rewrite of TP-300
+(driving `Motor_Run`/`Preset_Count` through a real rung instead of
+seeding `TagTable` directly) is available whenever someone picks it up
+— noted as an opportunistic, non-blocking follow-up in the pass
+comment rather than a required fix, since it doesn't affect the pass
+verdict.
