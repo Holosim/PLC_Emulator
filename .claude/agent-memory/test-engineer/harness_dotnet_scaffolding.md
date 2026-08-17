@@ -936,3 +936,29 @@ walkthrough needed a live-observable scan loop that didn't exist yet)
 "blocked" comment reads like a real functional gap rather than a
 wording ambiguity: it likely needs a *new* RTVM item + issue, not a
 reinterpretation of the existing one.
+
+**Regression pass confirmed a twentieth time (issue #29, DELIV-901,
+CI/CD-requested trunk regression after the project's first full-RTVM
+release, 2026-08-17):** same checklist against `main`@`32d40f1` (post
+`issue-29` no-ff merge `8b4c69c`, RTVM-SHA-recording commit `405cd35`,
+memory-only follow-up `32d40f1`) — 120/120 (baseline held, no drop),
+0/0 build warnings/errors, NFR-502 clean, `ProjectReference` graph
+unchanged, `git status` clean, RTVM already showed `Verified`/`8e1ccf0,
+8b4c69c` for DELIV-901. Because this row's own pre-merge verification
+was a **Demonstration**-method TP requiring a live process (not just
+unit tests) and only became fully demonstrable after OUT-403 (#30)
+landed, re-ran the guide's exact live TCP walkthrough post-merge too
+(built `plcemu` from `main`, guide's exact `quickstart/` fixture +
+Python snippet) even though the merge itself had no conflicts — same
+"re-run the special repro when *the fix itself* is what's being
+confirmed to survive the merge" judgment call as OUT-403's post-merge
+regression (see above), applied here to a Demonstration-method row for
+the first time. Write was live-observable (1,666 buffered lines /
+~0.0115s), and also spot-checked TP-400's second-client-rejection
+behavior given OUT-403's known past lock-contention interaction with
+this exact code path — still holds (0.0003s). Twentieth confirmation
+of "RTVM already current → still route through the two-step handoff"
+— fully settled, this project has now shipped its full v1.0 RTVM
+(v1.0.378) and every regression request through this point has
+followed the identical pattern with zero deviations. 120 remains the
+current regression baseline.
