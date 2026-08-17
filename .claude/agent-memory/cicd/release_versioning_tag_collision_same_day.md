@@ -69,7 +69,7 @@ progress. Confirms this is now the steady-state shape for any day with
 several sibling `type:requirement` branches landing — not worth
 re-deriving each time.
 
-**Eighth occurrence (issue #23/NFR-500, 2026-08-17, substantive merge
+**Ninth-or-later occurrence (issue #23/NFR-500, 2026-08-17, substantive merge
 `5df0234`, final pushed tip `cca2913` after three rounds of catching
 up to `origin/main`):** same result — `v1.0.2` ancestor-confirmed,
 skipped re-tag, cited both the substantive merge SHA and the final
