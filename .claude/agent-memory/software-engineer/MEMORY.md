@@ -9,6 +9,7 @@
 - [Scan engine rung power-flow](pattern_scan_engine_rung_power_flow.md) — IInstruction.Evaluate(tags, rungState) contract for #10-#14's instruction semantics; flagged to SE for SDD.md update (issue #9)
 - [NETWORK JSON schema](schema_network_json.md) — wire shape + DTO/domain-model split for DATA-IN-102 (issue #7); reuse for CONTROL_LOGIC and DATA-IN-103
 - [Timer elapsed-time pattern](pattern_timer_elapsed_time.md) — IInstruction.Evaluate gained `TimeSpan elapsed`, measured by ScanEngine's own Stopwatch (not per-instruction state), for TON/TOF (issue #11); reuse for any future controller-owned clock state
+- [ConfigLoader.Validate cross-file check](pattern_config_loader_validate.md) — DATA-IN-103 (issue #8): per-tag-per-component check against ControlLogicDef.Tags; driver-type resolution deliberately deferred to Core
 
 ## Platform-specific notes
 

@@ -159,14 +159,40 @@ public static class ConfigLoader
     /// Cross-file validation: every NETWORK component's tag binding
     /// must reference a tag that exists in CONTROL_LOGIC (DATA-IN-103).
     /// </summary>
+    /// <remarks>
+    /// Checked per tag per component, not per component (a component
+    /// with a multi-entry <c>"tags"</c> binding can reference several
+    /// tags at once — see <see cref="NetworkComponentConfig.Tags"/>).
+    /// Driver-type resolution (does <c>"DiscreteSensor"</c> name a
+    /// registered <c>IDriver</c>?) is not this method's concern — that
+    /// happens later, at <c>PlcController</c> construction in
+    /// <c>PlcEmulator.Core</c>, which is the layer that actually knows
+    /// the registered driver set (see
+    /// <c>pattern_control_logic_parsing.md</c>'s Config/Core split).
+    /// </remarks>
     /// <exception cref="ConfigValidationException">
     /// Thrown with a descriptive error identifying the offending
-    /// component and tag reference.
+    /// component (by name) and the undefined tag it references, on
+    /// the first such mismatch found in NETWORK document order.
     /// </exception>
     public static void Validate(ControlLogicDef controlLogic, NetworkDef network)
     {
-        // TODO: cross-reference validation (DATA-IN-103).
-        throw new NotImplementedException("ConfigLoader.Validate is scaffolding only.");
+        var knownTags = new HashSet<string>(
+            controlLogic.Tags.Select(tag => tag.Name),
+            StringComparer.Ordinal);
+
+        foreach (var component in network.Components)
+        {
+            foreach (var tagName in component.Tags)
+            {
+                if (!knownTags.Contains(tagName))
+                {
+                    throw new ConfigValidationException(
+                        $"NETWORK component '{component.Name}' references undefined tag " +
+                        $"'{tagName}' — no tag with that name is defined in CONTROL_LOGIC.");
+                }
+            }
+        }
     }
 
     private static string ReadFile(string path, string kind)
