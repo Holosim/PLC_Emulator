@@ -204,32 +204,50 @@ one using `python3` (no extra packages required) against the running
 process from §3 above:
 
 ```python
-import socket
+import socket, json
 s = socket.create_connection(("127.0.0.1", 5050))
 f = s.makefile("rw", buffering=1)
 
 print(f.readline())  # initial snapshot, sent immediately on connect
 f.write('{"type":"read_request"}\n')
-print(f.readline())  # same snapshot again, on request
+print(f.readline())  # a fresh snapshot, answered immediately
 
 f.write('{"type":"tag_write","tags":{"Start_PB":true}}\n')
+
+# plcemu's scan loop is free-running (OUT-403) and re-broadcasts a
+# tag_update after every scan, so the write's effect shows up in the
+# stream almost immediately in real time. But the loop runs far faster
+# than a client can read line-by-line, so don't assume the *next* line
+# is the one that reflects your write — you may first read past a
+# batch of tag_update lines that were already queued from scans just
+# before it landed. Keep reading until you actually see it:
+while True:
+    msg = json.loads(f.readline())
+    if msg["tags"]["Start_PB"]:
+        print("write took effect:", msg)
+        break
 ```
 
-What you should see:
+What you should see (abbreviated — `plcemu` sends far more `tag_update`
+lines than shown between the third and last lines below, because the
+scan loop free-runs with no fixed period):
 
 ```
 S->C: {"type":"tag_update","tags":{"Start_PB":false,"Motor_Run":false}}
 C->S: {"type":"read_request"}
 S->C: {"type":"tag_update","tags":{"Start_PB":false,"Motor_Run":false}}
 C->S: {"type":"tag_write","tags":{"Start_PB":true}}
+S->C: {"type":"tag_update","tags":{"Start_PB":false,"Motor_Run":false}}   (repeated many times)
+...
+S->C: {"type":"tag_update","tags":{"Start_PB":true,"Motor_Run":true}}    <- the write has taken effect
 ```
 
 The three message types:
 
 | Type | Direction | Schema |
 | --- | --- | --- |
-| `tag_update` | Server → Client | `{"type":"tag_update","tags":{"<name>":<value>,...}}` — sent immediately on connect, and again after every scan cycle completes. |
-| `tag_write` | Client → Server | `{"type":"tag_write","tags":{"<name>":<value>,...}}` — asks the server to set one or more input tag values; queued and applied at the start of the next scan cycle, never applied instantly. |
+| `tag_update` | Server → Client | `{"type":"tag_update","tags":{"<name>":<value>,...}}` — sent immediately on connect, and again after every scan cycle completes. The scan loop is free-running (no fixed period; see CORE-203/204 and OUT-403), so expect a very high message rate (hundreds of thousands per second on typical hardware), not a periodic tick. |
+| `tag_write` | Client → Server | `{"type":"tag_write","tags":{"<name>":<value>,...}}` — asks the server to set one or more input tag values; queued and applied atomically at the start of the next scan cycle, never applied instantly or mid-scan. |
 | `read_request` | Client → Server | `{"type":"read_request"}` — ask for the current snapshot outside the normal per-scan push. |
 
 `tags` values are JSON `bool` for a `BOOL` tag, JSON `number` for
@@ -238,25 +256,24 @@ connection attempt is accepted at the TCP layer and then immediately
 closed. A client disconnecting (or a rejected second connection) never
 stops the server; it keeps listening for the next connection.
 
-**Known v1.0 limitation — read this before relying on `tag_write`'s
-effect being visible:** a `tag_write` is queued correctly (it is
-validated and accepted, and you will not get an error for a
-well-formed write), but it is only *applied* to the tag table at the
-start of the controller's next scan cycle — and in this v1.0 build,
-nothing inside `plcemu` ever triggers a scan cycle on its own after
-startup. `Program.cs` starts the TCP listener and then blocks forever;
-`PlcController.RunScan()` is never called automatically at any
-cadence. Practically, this means: if you send a `tag_write` to a
-`plcemu` process launched exactly as above and then send a
-`read_request`, you will get back the *old* value, not the new
-one — confirmed by running the exact exchange above against a live
-`quickstart/` process. Every automated test that exercises "next scan
-cycle" behavior (TP-200/TP-300/TP-401) does so by calling
-`PlcController.RunScan()` directly from a test harness, not by
-observing a live process. There is currently no way to trigger a scan
-from the TCP protocol itself. This is a known, previously-flagged gap
-(see the hand-off comment on this guide's issue) — not something this
-guide can work around by documenting it differently.
+**Observing a `tag_write`'s effect on a live process:** a `tag_write`
+is validated, queued, and applied atomically at the very start of the
+controller's next scan cycle. `plcemu` runs a free-running background
+scan loop for as long as the process is up (OUT-403): back-to-back,
+no artificial delay between scans, matching how a real PLC scans (see
+CORE-203/204 for why v1.0 deliberately has no fixed scan period). That
+means the next scan — and your write's effect — happens within a
+fraction of a millisecond of the write being received; this is
+genuinely live-observable, confirmed by running the exact exchange
+above against a live `quickstart/` process. The one practical wrinkle
+is on the *reading* side, not the writing side: because the loop
+broadcasts a fresh `tag_update` after every single scan without
+throttling for a slow reader, a client that only reads one line at a
+time can fall behind a busy process and see a batch of already-queued
+`tag_update` lines (reflecting state from just before your write
+landed) before it reaches the one that reflects it — that's why the
+snippet above reads in a small loop instead of checking only the very
+next line. It is not a sign the write failed.
 
 ## 4. Writing ladder logic and a component network
 
