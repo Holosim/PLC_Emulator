@@ -365,3 +365,15 @@ even three times — in a single merge attempt on a busy day; keep
 re-fetching/re-merging/re-testing until the push actually succeeds,
 don't assume one retry is enough. 97 is now the current regression
 baseline as of this merge — supersedes the 82/82 figure recorded above.
+
+**Regression pass confirmed an eighth time (issue #12, CORE-205/206,
+CI/CD-requested trunk regression, 2026-08-17):** same checklist against
+`main`@`0efbf4f` (post issue-15's concurrent-merge absorption of #12/#13/#14,
+plus RTVM/memory-only follow-up commits) — **97/97** passing (matches the
+combined baseline recorded just above, no drop), 0/0 build warnings/errors,
+NFR-502 clean, `ProjectReference` graph unchanged, RTVM already showed
+`Verified`/`32d86b4` for both CORE-205 and CORE-206, `git status` clean.
+Eight-for-eight now on "RTVM already current → still route through the
+two-step handoff" (issues #6, #7, #11, #8, #10, #14, and now this regression
+pass for #12) — fully settled, no need to keep counting instances explicitly
+going forward unless the pattern actually breaks.
