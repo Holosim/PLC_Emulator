@@ -202,3 +202,21 @@ round sufficed. Confirms the steady-state loop isn't *always*
 multi-round — worth remembering not to over-anticipate churn on every
 merge. `type:requirement` issues #21, #22, #24, #26, #27 still open
 (all on-hold) — no release trigger.
+
+**Thirteenth occurrence (issue #24/NFR-501, 2026-08-17, merge `03970cd`):**
+same result — `v1.0.2` ancestor-confirmed (`git merge-base
+--is-ancestor v1.0.2 origin/main`), skipped re-tag, cited merge SHA in
+hand-off. This one was inspection-only content (no `src/`/`tests/`
+diff at all — the branch's only real commits were 4 rounds of SE/TE
+memory entries documenting a consolidation review and a blocked-then-
+unblocked `workflows`-permission deployment), but `git log origin/
+main..origin/issue-24` was still non-empty, confirming yet again that
+"RTVM already Verified via fast-path" and "empty diff, nothing to
+merge" are independent questions — this was a real merge. One
+append-list conflict in `.claude/agent-memory/test-engineer/MEMORY.md`
+(union-resolved), single clean push (no concurrent-push rejection),
+one rebuild/retest round (118/118, 0/0). `type:requirement` issues
+#26/#27 still open (`status:on-hold`) — no release trigger. Per the
+eleventh-occurrence label convention, hand-off used `status:none`
+(omitted step c) since RTVM was already `Verified` via SE's earlier
+fast-path commit `2556dd8`.
