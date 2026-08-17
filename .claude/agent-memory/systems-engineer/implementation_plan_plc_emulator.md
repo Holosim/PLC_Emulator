@@ -62,6 +62,19 @@ the number:
   release it rather than hand-verifying and skipping the on-hold step;
   keeps the mechanism consistent and avoids a manual judgment call
   that isn't actually necessary.
+- #30 OUT-403 (background scan loop in Host) — added 2026-08-17,
+  discovered while verifying #29/DELIV-901's guide against a live
+  process (see [[requirements_traps_plc_domain]]). No dep, created
+  `agent:software-engineer` directly. Round-tripped once: first pass
+  free-running `Broadcast` starved `TcpJsonServer`'s `_clientLock`,
+  regressing already-`Verified` OUT-400 (second client stopped being
+  rejected promptly under load) — Software Engineer fixed by splitting
+  the lock (`volatile _clientStream` read lock-free, new `_writeLock`
+  scoped only to the write, `_clientLock` untouched by broadcast rate),
+  Test Engineer independently reproduced both the break and the fix on
+  live processes since the added unit test couldn't repro the race
+  in-sandbox. RTVM set `In Test` (commits `a66ea25` impl, `c707b04`
+  fix) pending CI/CD merge/Verified. #29 (DELIV-901) still FS on #30.
 
 **Why:** grouping RTVM items into ~22 issues (rather than one per
 single RTVM ID) kept issue count manageable while still giving each
