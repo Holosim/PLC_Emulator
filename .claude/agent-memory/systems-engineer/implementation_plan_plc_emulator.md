@@ -62,6 +62,20 @@ the number:
   release it rather than hand-verifying and skipping the on-hold step;
   keeps the mechanism consistent and avoids a manual judgment call
   that isn't actually necessary.
+  **Updated 2026-08-17, unblocked by #30's merge:** Software Engineer
+  rebased `issue-29` onto current `main` (18 commits of drift, only
+  conflict was this project's own `MEMORY.md` index line), rewrote
+  §3's limitation note to reflect the live fix, and caught a real
+  doc bug during re-verification: a naive single-`readline()` client
+  can sit behind thousands of buffered `tag_update` lines from the
+  now-unthrottled free-running broadcast before a write becomes
+  visible (~1,674-2,120 lines observed across two independent runs) —
+  guide's example client now polls in a loop rather than trusting the
+  next line. Test Engineer independently re-ran all five TP-901 steps
+  (build, config copy, launch, live TCP exchange, scratch `IDriver`
+  extension) on a fresh checkout — PASS, no discrepancies, 120/120
+  unit tests. DELIV-901 flipped `Approved`→`Verified` in `docs/RTVM.md`
+  (commit `8e1ccf0`), issue handed to CI/CD for merge.
 - #30 OUT-403 (background scan loop in Host) — added 2026-08-17,
   discovered while verifying #29/DELIV-901's guide against a live
   process (see [[requirements_traps_plc_domain]]). No dep, created
