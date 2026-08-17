@@ -812,6 +812,46 @@ prove "was this always broken?" vs. "did this branch cause it" — worth
 doing whenever a regression is suspected but the pre-change behavior
 isn't already pinned down in a unit test.
 
+**OUT-403 (issue #30) re-test after the fix — PASS (2026-08-17).** SE's
+fix in `TcpJsonServer.cs` split the lock the FAIL above diagnosed:
+`_clientStream` became `volatile` and `SendLine` reads it with no lock
+at all, while a new `_writeLock` (which `AcceptLoop` never touches)
+serializes only the actual socket write against other writers. Net
+effect: `AcceptLoop`'s only lock (`_clientLock`) is now fully decoupled
+from broadcast rate. Also fixed a second bug the SE found while adding
+a regression test: `HandleClient`'s read loop only caught `IOException`
+around `reader.ReadLine()`, but a `Stop()` racing a blocked `ReadLine()`
+throws `ObjectDisposedException` instead, which was uncaught and used
+to crash the whole test host process — now caught the same way
+`SendLine` already handled that race. Verified independently rather
+than just trusting the SE's own manual re-check:
+- 120/120 unit tests (119 + new `TcpJsonServerSingleClientTests`),
+  stable across 5 full-suite runs and 5 filtered runs of just the new
+  test — no crashes (previously flaky-crashed before the
+  `ObjectDisposedException` fix).
+- Read the actual diff in `TcpJsonServer.cs` to confirm the lock split
+  matches the SE's description, not just the test result.
+- Own independent live-process repro (real `plcemu`, TP-200's rung, a
+  Python script doing TP-403 + the TP-400 regression check
+  back-to-back in one session) run 4 times: second-client rejection in
+  0.0001-0.0003s every time (previously hung 20s+), `tag_write`
+  auto-broadcast within 2s every time, OUT-402 disconnect logging
+  intact, no stderr output.
+- The SE's own new unit test (`TcpJsonServerSingleClientTests.
+  SecondConnection_StillRejectedPromptly_UnderFreeRunningBroadcastLoad`)
+  is a well-built reproduction of the exact failure shape (background
+  drain thread on client 1 to avoid masking the bug behind a blocked
+  writer, 200ms warm-up before the second connect) — worth using as a
+  template if a similar hot-loop-vs-lock regression shows up elsewhere.
+  Note the SE could **not** get it to fail against the pre-fix commit
+  in their own sandbox (scheduler-sensitive), so treat a passing
+  version of this test as supporting evidence, not sole proof — the
+  live-process repro above is what actually re-confirms the fix.
+- **Lesson reinforced:** when a hot-loop/lock regression like this gets
+  fixed, re-verify with the *same* live two-client-under-load scenario
+  that caught it originally, not just a clean full-suite pass — the
+  unit test alone wasn't trusted even by the SE who wrote it.
+
 **Regression pass confirmed an eighteenth time (issue #27, DELIV-900
 field-defect fix, CI/CD-requested trunk regression after the second
 release, 2026-08-17):** same checklist against `main`@`ea2f6a7` (post
