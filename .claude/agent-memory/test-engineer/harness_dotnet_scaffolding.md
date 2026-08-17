@@ -673,6 +673,28 @@ logging code. Reused the CONTROL_LOGIC/NETWORK fixture field names from
 `DriverFactory.cs`'s actual constants before guessing driver names).
 108 remains the current regression baseline.
 
+**DELIV-900 (issue #27, VS solution consolidation, 2026-08-17) — PASS,
+119/119 (baseline held, no new tests expected for an Inspection-only
+TP-900 build/open check).** Late-stage consolidation issue confirming
+`PlcEmulator.sln` opens/builds cleanly — SE's SDD reference said this
+project has been SDK-style `.csproj`/`.sln` since Generate Code Base,
+so it was verification/cleanup only, no structural changes. Confirmed
+independently: 6 `Project(...)` entries in the `.sln` all resolve to
+real `.csproj` files, GUIDs consistent across every `GlobalSection`,
+`src`/`tests` solution-folder nesting correct, NFR-502 (`PackageReference`
+only in `tests/*.csproj`) and NFR-501 (no hardcoded backslash paths/
+`RuntimeInformation`/`OSPlatform` in `src/`) both re-confirmed clean.
+**For "builds on Windows" evidence, prefer the most recent
+`build-and-test.yml` run against `main` over whatever run number the
+Software Engineer cited** — `gh run list --workflow=build-and-test.yml`
++ `gh run view <id>` is cheap and gives genuinely current evidence
+rather than trusting a possibly-stale CI run number from an earlier
+issue's comment; the SE cited the #24-era run (`31997343615`), but a
+newer one from the issue-26/NFR-503 merge (`31998470683`) was already
+sitting on `main` with both `windows-latest` and `ubuntu-latest` jobs
+green — always pull the latest rather than the one named in the
+handoff comment. 119 remains the current regression baseline.
+
 **Regression pass confirmed a sixteenth time (issue #22, OUT-402,
 CI/CD-requested trunk regression, 2026-08-17):** same checklist against
 `main`@`748fdd7` (post `issue-22`/OUT-402 merge `e200537`, plus
