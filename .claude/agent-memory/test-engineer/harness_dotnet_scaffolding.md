@@ -551,14 +551,19 @@ this is now the second confirmed instance of that exact shape, expect
 it to recur for any remaining UI-00x/OUT-40x TP that only needs the
 pre-listener phase.
 
-**Combined baseline confirmed at 108/108 (issue #19, CI/CD-requested
-trunk regression, 2026-08-17):** the two siblings noted above that each
-counted from a `main` that hadn't yet absorbed the other — issue #19's
-own 105/105 (101+4 `TagUpdateSerializerTests`) and issue #23's 104/104
-(101+3 `MultiControllerIsolationTests`) — are now both actually on
-`main`@`c62c3c2` together: **108/108** (101 shared prior + 4 + 3), 0/0
-build warnings/errors, NFR-502 clean, `docs/RTVM.md` DATA-OUT-301 row
-already `Verified`/`00f44ee`. Fourteenth confirmation of "RTVM already
-current → still route through the two-step handoff" — fully settled.
-108 is now the current regression baseline; supersedes both 105 and 104
-quoted in isolation above.
+**Combined baseline confirmed at 108/108 (issues #19 and #23, both
+CI/CD-requested trunk regressions landing the same day, 2026-08-17):**
+the two siblings noted above each counted from a `main` that hadn't yet
+absorbed the other — issue #19's own 105/105 (101+4
+`TagUpdateSerializerTests`) and issue #23's own 104/104 (101+3
+`MultiControllerIsolationTests`) — are now both actually on `main`
+together (`c62c3c2` / `db59c3d`, post `issue-23` merge, substantive
+commit `5df0234`/final pushed tip `cca2913`, this merge having also
+absorbed sibling issue #17/UI-002 which added no new tests): **108/108**
+(101 shared prior + 4 + 3), 0/0 build warnings/errors, NFR-502 clean,
+`git status` clean, `docs/RTVM.md` DATA-OUT-301 row already
+`Verified`/`00f44ee` and NFR-500 row already `Verified`/`5df0234`.
+Fourteenth confirmation of "RTVM already current → still route through
+the two-step handoff" — fully settled. 108 is now the current
+regression baseline; supersedes both 105 and 104 quoted in isolation
+above.
