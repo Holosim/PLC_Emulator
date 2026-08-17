@@ -44,3 +44,26 @@ Software Engineer's design-decision note is really "which of two
 standard domain conventions did you mean," resolve and pre-clarify the
 RTVM text for every sibling requirement with the same shape in the
 same pass, not just the one that prompted the question.
+
+2026-08-17 (issue #29/#30, OUT-403): a missing-feature gap flagged as
+a "scope question" by Software Engineer isn't always one — check
+whether scope was already decided elsewhere before escalating to
+Solutions Architect. Here, SE asked whether a live `plcemu` process
+needed a background scan loop (none existed; only test harnesses ever
+called `RunScan()`) and what cadence to use. Both were already answered:
+`docs/PROJECT_DEFINITION.md`'s MVP definition requires "real time" I/O
+exchange, and `docs/SDD.md`'s own ICD already described periodic
+`tag_update` pushes "after every scan cycle completes" — the loop was
+always in scope, just never wired up in `Program.cs`. The cadence
+question was likewise pre-answered: CORE-203/204's elapsed-time timer
+design exists specifically because "v1.0 does not define a fixed scan
+period," so a free-running (no artificial delay) loop follows directly
+without inventing new policy. **How to apply:** before escalating a
+"should we build X" question to Solutions Architect, grep
+`docs/PROJECT_DEFINITION.md` and `docs/SDD.md` for language that already
+implies the answer — a gap between documented intent and actual
+`Program.cs`/implementation behavior is a missing-feature bug to give a
+new RTVM item (resolved directly, new issue, dependency added on the
+blocked issue), not a scope ambiguity. Reserve real SA escalation for
+when the docs are silent or genuinely contradictory, not just
+unimplemented.

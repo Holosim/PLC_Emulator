@@ -62,6 +62,18 @@ the number:
   release it rather than hand-verifying and skipping the on-hold step;
   keeps the mechanism consistent and avoids a manual judgment call
   that isn't actually necessary.
+- #30 OUT-403 (background scan loop in Host) — added 2026-08-17,
+  discovered by Software Engineer mid-#29 while verifying TP-901
+  against a *live* process: `Program.cs` never actually calls
+  `RunScan()` on its own (only test harnesses did, through #6-#22), so
+  a connected client never observes a queued `tag_write` take effect.
+  Flagged as non-blocking three times before (#21, #22, #23) since no
+  test procedure needed a live-observable effect until TP-901. No
+  dependencies (created `agent:software-engineer` directly — every
+  prerequisite already on `main`). #29 retroactively gained
+  `Finish-Start: #30` and moved to `status:on-hold`. See
+  [[requirements-traps-plc-domain]] for why this was resolved directly
+  rather than escalated to Solutions Architect as a scope question.
 
 **Why:** grouping RTVM items into ~22 issues (rather than one per
 single RTVM ID) kept issue count manageable while still giving each
