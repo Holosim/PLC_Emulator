@@ -29,3 +29,15 @@ step (c) of the label sequence.
 
 Related: [[build-toolchain-shallow-clone]] (still need to unshallow
 to resolve older SHAs even on this confirmation-only pass).
+
+**Don't confuse this with a fast-path RTVM commit on trunk (issue #23,
+2026-08-17):** Systems Engineer can mark an RTVM row `Verified` via a
+*direct single-line commit to `main`* (the fast-path) citing a commit
+SHA that only exists on the feature branch, ahead of that branch
+actually being merged. Seeing `docs/RTVM.md` already show `Verified`
+on trunk does **not** mean this is the empty-diff case above — check
+`git log origin/main..origin/issue-N --oneline` regardless; if it's
+non-empty, this is still a real merge (issue #23 had 3 real commits
+still to land). The RTVM state and "is there a branch left to merge"
+are two independent questions — always check the branch diff, not the
+docs.

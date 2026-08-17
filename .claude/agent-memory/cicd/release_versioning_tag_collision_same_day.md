@@ -69,6 +69,22 @@ progress. Confirms this is now the steady-state shape for any day with
 several sibling `type:requirement` branches landing — not worth
 re-deriving each time.
 
+**Eighth occurrence (issue #23/NFR-500, 2026-08-17, substantive merge
+`5df0234`, final pushed tip `cca2913` after three rounds of catching
+up to `origin/main`):** same result — `v1.0.2` ancestor-confirmed,
+skipped re-tag, cited both the substantive merge SHA and the final
+pushed SHA in the hand-off comment. Notable wrinkle: this issue's RTVM
+row had already been marked `Verified` by Systems Engineer via a
+*direct commit to `main`* (fast-path, ahead of the branch merge) —
+`git log origin/main..origin/issue-23` was still non-empty (3 real
+commits: the test file + 2 memory follow-ups), so this was a genuine
+merge, not the empty-diff case in
+[[second-ready-for-commit-no-new-merge]]. Don't conflate "RTVM already
+shows Verified on trunk" with "nothing left to merge" — check the
+branch-diff, not the RTVM state, to decide which case applies. See
+[[concurrent-cicd-runs-same-day]] for the 3-rejection push loop this
+merge also hit.
+
 **Seventh occurrence (issue #18/DATA-OUT-300, 2026-08-17, merge
 `77336c5`, substantive content merge `127c472`):** same result again —
 `v1.0.2` ancestor-confirmed (`git merge-base --is-ancestor v1.0.2
