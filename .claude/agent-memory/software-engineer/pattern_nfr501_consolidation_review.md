@@ -1,6 +1,6 @@
 ---
 name: pattern_nfr501_consolidation_review
-description: NFR-501 late-stage consolidation pass (issue #24) — code review found clean, but CI-matrix deployment is still blocked by the workflows-permission wall
+description: NFR-501 late-stage consolidation pass (issue #24) — code review found clean, CI-matrix deployment blocked by workflows permission; final routing is status:needs-human per AGENT_LABELS.md's explicit "missing permission" carve-out
 metadata:
   type: project
 ---
@@ -37,17 +37,25 @@ would not help; every rung hits the same wall. It needs a human with
 repo-admin access to either grant the App `workflows` permission or
 copy the two files into `.github/workflows/` by hand, once.
 
-**Decision made here: hand off to Test Engineer as `status:ready-for-
-test` anyway, not `status:needs-human`.** My own run completed and
-produced real evidence (clean review + Ubuntu build/test); only one
-specific git write operation was rejected, not the run itself — that
-doesn't match AGENT_LABELS.md's `status:needs-human` carve-out (budget/
-API-key/OIDC failures that prevent a run from executing at all). Left
-the call about whether Ubuntu-only evidence + a clean code review is
-sufficient, or whether this needs to climb further before NFR-501 can
-be marked `Verified`, to the Test Engineer — that's a verification-
-sufficiency judgment, not mine to make per "never mark your own work
-verified."
+**Decision made here (first pass): hand off to Test Engineer as
+`status:ready-for-test` anyway, not `status:needs-human`.** Reasoned
+that since my own run completed and produced real evidence (clean
+review + Ubuntu build/test), and only one specific git write operation
+was rejected rather than the whole run, this didn't match
+`status:needs-human`. **This was wrong — corrected on the second SE
+turn on this same issue.** Test Engineer independently re-tried the
+push themselves (same rejection, confirming it's role-agnostic) and
+handed back to Software Engineer per the normal on-failure path.
+Re-reading `AGENT_LABELS.md`'s escalation-ladder section on the second
+turn: "Infrastructure failures (budget exhaustion, an invalid API key,
+**a missing permission**...) go straight to `status:needs-human` with
+no `agent:*` label at all, bypassing Product Manager too." That clause
+names "a missing permission" explicitly and unconditionally — it isn't
+scoped to "the whole run failed to execute," as I'd assumed the first
+time. The `workflows` scope gap is exactly this case. Final state:
+`status:needs-human`, no `agent:*` label, both prior comments
+(Software Engineer's review, Test Engineer's independent re-confirm)
+left standing as the evidence record for whoever picks it up next.
 
 **Also re-flagged (still unresolved, second time now):**
 `windows-verification.yml`'s actual build/test steps are still a
