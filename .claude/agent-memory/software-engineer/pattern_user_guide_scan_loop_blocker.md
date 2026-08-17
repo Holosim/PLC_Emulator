@@ -54,3 +54,37 @@ compares require `DINT`/`REAL`, neither accepts a `TIMER`/`COUNTER`
 tag) — a real v1.0 limitation worth documenting explicitly so a reader
 doesn't waste time trying to chain a timer's `.DN` into a downstream
 rung.
+
+**Resolution (2026-08-17, once OUT-403/#30 merged to main):** picked
+the issue back up per Systems Engineer's hand-off. Rebased `issue-29`
+onto `main` (18 commits of drift, mostly the OUT-403 fix/regression/CI
+history — see [[pattern_host_scan_loop]]); only merge conflict was
+this MEMORY.md index, resolved by keeping both lines. Rewrote §3's
+"Known v1.0 limitation" block into an "Observing a `tag_write`'s
+effect on a live process" note describing the *actual* current
+behavior, and re-verified live end-to-end against a freshly built
+`plcemu` (same technique as the original draft — ran the guide's exact
+snippet verbatim, not just read the source).
+
+**A second, more subtle thing the live re-verification caught:** a
+naive single-`readline()`-after-write client (what the original
+pre-OUT-403 draft's snippet did) *still* looks like the write silently
+failed even after OUT-403 landed — not because it wasn't applied
+(confirmed applied within a fraction of a millisecond via
+[[pattern_host_scan_loop]]'s "~877k msg/2s" cadence finding) but
+because the free-running broadcast firehose fills the socket's queue
+faster than a slow reader drains it, so the *next* line read is
+whatever was already queued from scans before the write landed — in
+one live run this took ~2,120 buffered `tag_update` lines before the
+write became visible to the reader. Fixed the guide's snippet to loop
+until it actually observes the expected value instead of trusting the
+next line, and added an explicit paragraph explaining why (reading
+side, not writing side). Worth remembering for any future
+free-running-broadcast protocol: "confirmed applied" and "confirmed
+observable by a naive line-at-a-time reader" are different claims, and
+a user guide needs to honestly address both.
+
+TP-901 step 4 (live tag exchange: read + one write) now holds
+end-to-end against a live process built from `main` + this guide's own
+instructions, verbatim. Full DELIV-901 hand-off restored to
+`agent:test-engineer`.

@@ -28,7 +28,7 @@
 - [DELIV-900 VS solution review](pattern_deliv900_vs_solution_review.md) — issue #27: full-compliance inspection (`.sln`/`.csproj`/`.gitattributes`/`.gitignore` all clean, 119/119 tests), no code change; also confirms the "deploy windows-verification.yml" decision stays resolved (deleted on #24, not re-litigated)
 - [global.json rollForward field defect](pattern_global_json_sdk_rollforward.md) — DELIV-900 post-release regression (issue #27): `latestFeature`→`latestMajor` fix, isolated-single-SDK reproduction technique for "client has only newer SDKs" scenarios, and why CI's pre-provisioned SDK image structurally can't catch this class of bug
 - [Host free-running scan loop](pattern_host_scan_loop.md) — OUT-403 (issue #30): closed the loop gap flagged since #21/#22/#23, `RunScanLoop` helper replaces `Thread.Sleep(Timeout.Infinite)`, ~877k msg/2s empirically confirmed cadence (flag to Test Engineer for TP-403 client design)
-- [USER_GUIDE.md drafted, blocked on scan-loop gap](pattern_user_guide_scan_loop_blocker.md) — DELIV-901 (issue #29): guide fully written+live-verified, but TP-901's live-demo bar exposed the long-flagged "no free-running scan loop" gap as an actual blocker for the first time; unblocked once OUT-403/#30 merged — see follow-up entry for the re-verified outcome
+- [USER_GUIDE.md scan-loop blocker + resolution](pattern_user_guide_scan_loop_blocker.md) — DELIV-901 (issue #29): TP-901's live-demo bar exposed the "no free-running scan loop" gap; unblocked once OUT-403/#30 merged, then guide's §3 rewritten + re-verified live — includes the "applied instantly vs. observable by a naive line-at-a-time reader" distinction the free-running broadcast firehose creates
 
 ## Platform-specific notes
 
