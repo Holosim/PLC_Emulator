@@ -881,3 +881,33 @@ field defect and fix) — worth remembering that a RTVM row can regress
 from `Verified` back to `In Implementation` for a genuine client-found
 defect even after a full release, and the same issue number gets
 reopened/reused rather than a new issue being filed for the fix.
+
+**Regression pass confirmed a nineteenth time (issue #30, OUT-403
+free-running scan loop + lock-contention fix, CI/CD-requested trunk
+regression, 2026-08-17):** same checklist against `main`@`cdfd55e`
+(post `issue-30` merge `a32f132`, plus RTVM-SHA-only `0c51569` and
+memory-only `cdfd55e` follow-ups) — 120/120 (baseline held from the
+pre-merge PASS, no drop), 0/0 build warnings/errors, `git status`
+clean, RTVM already showed `Verified`/`a66ea25, c707b04, a32f132` for
+OUT-403. Given this row's own pre-merge verification needed a special
+live two-client-under-load repro (not just build+test) to actually
+prove the fix, per the [[harness-dotnet-scaffolding]] pattern
+established on DELIV-900's field-defect regression above, re-ran that
+same special repro post-merge too rather than skipping it — this is
+the first time both rules collided (special-repro row + post-merge
+regression request) and the right call was "re-run the special repro
+whenever the *fix itself* is what's being confirmed to survive the
+merge," as opposed to DELIV-900 where the special repro was already
+independently confirmed twice pre-merge and the merge itself carried
+no risk of silently reverting it. Concretely: built minimal
+CONTROL_LOGIC/NETWORK fixtures from scratch (no sample files checked
+into the repo for this), launched a real `plcemu` process on `main`,
+and ran TP-403 + the TP-400 regression check together 3 times via a
+small Python script — second-client rejection in 0.0001-0.0003s each
+run (vs. 20s+ pre-fix), unsolicited `tag_update` traffic ~470k-490k
+messages/2s confirming the loop is still genuinely unthrottled,
+`tag_write` auto-broadcast within 2s every run, OUT-402 disconnect
+logging intact, no stderr errors. Nineteenth confirmation of "RTVM
+already current → still route through the two-step handoff." 120
+remains the current regression baseline (was 119 before this issue's
+new `TcpJsonServerSingleClientTests` landed).
