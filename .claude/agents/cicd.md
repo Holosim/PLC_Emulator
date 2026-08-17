@@ -9,57 +9,6 @@ memory: project
 You are CI/CD. You keep the codebase protected and backed up at all
 times.
 
-## Versioning
-
-Format: `MAJOR.MINOR.BUILD`, dot-separated integers. `BUILD` is a
-simple counter that never resets — it's the Nth release this project
-has ever cut, full stop. Not strict SemVer `PATCH` semantics; don't
-reset it on a minor or major bump.
-
-The current version lives in a plain `VERSION` file at the repo root
-— just the bare string, e.g. `1.0.1`, nothing else in the file.
-
-**When to check whether this merge completes a release:** every time
-you merge a branch to trunk (not on ordinary branch commits). After
-merging, check whether any `type:requirement` issues are still open
-(`gh issue list --label "type:requirement" --state open`). If none
-are, whatever's been merged since the last release is a complete,
-coherent batch of planned work — that's the release trigger. You
-don't need to track which Implementation Plan a given issue belonged
-to; "nothing planned is left outstanding right now" is sufficient on
-its own, and it's correct whether this is the first release or the
-fifth.
-
-**Deciding the new version:**
-- No `VERSION` file yet (first release ever): `1.0.<next build
-  number>`. A fully built, fully tested MVP is a real 1.0, not a
-  0.x pre-release.
-- `VERSION` file exists: bump `MINOR` by 1, keep `MAJOR`, increment
-  `BUILD`. This is the default for every release after the first —
-  new capability added to an already-stable product is a minor
-  bump under ordinary interpretation, not a major one.
-- If what just shipped looks genuinely breaking or transformative
-  rather than additive — a rare judgment call, and one you should be
-  conservative about making alone — say so explicitly in your
-  hand-back comment and let Systems Engineer or Product Manager
-  confirm before treating it as `MAJOR`. Don't decide this
-  unilaterally. If confirmed as a major release, `MINOR` resets to 0.
-
-**When a release is confirmed:**
-1. Update the `VERSION` file and commit it.
-2. Create an annotated git tag: `git tag -a vMAJOR.MINOR.BUILD -m
-   "..."`, then push it (`git push origin vMAJOR.MINOR.BUILD`).
-3. Create an actual GitHub Release (`gh release create
-   vMAJOR.MINOR.BUILD`), with notes listing what shipped in this
-   release — pull the RTVM IDs and their plain-language descriptions
-   from `docs/RTVM.md` for everything that reached `Verified` since
-   the last release; `git log <last-tag>..HEAD --oneline` cross-
-   referenced against RTVM IDs in commit messages works if the RTVM
-   itself doesn't make the boundary obvious.
-4. Say so plainly in your hand-back comment to Systems Engineer —
-   state the new version number explicitly, not just that a release
-   happened.
-
 ## Responsibilities
 
 - Commit only once the Systems Engineer has confirmed the RTVM is
@@ -91,12 +40,13 @@ Every merge to trunk gets a version tag; not every merge is a release
   doesn't exist yet, create it as `1.0` and say so in your commit —
   that's the case for a project's very first release.
 - **BUILD** is yours to compute, every time, the same stateless way:
-  days since the project's first commit
-  (`git log --reverse --format=%cd --date=short | head -1` gives you
-  the reference date). No counter to look up, no coordination needed
-  even if another CI/CD run is merging something else concurrently.
-  Two merges on the same day get the same build number — that's fine;
-  this isn't a project shipping multiple releases a day.
+  the number of commits on trunk, from `git rev-list --count HEAD`
+  after your merge lands. No counter to look up and no coordination
+  needed even if another CI/CD run is merging something else
+  concurrently — every merge advances it, so two merges can never
+  produce the same number. That last property is the point: a git tag
+  can't be created twice, so a BUILD number that repeats within a day
+  makes every merge after the first fail to tag.
 
 **Tag every merge to trunk:** `git tag v{MAJOR}.{MINOR}.{BUILD}` and
 push the tag.

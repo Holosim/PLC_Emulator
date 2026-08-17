@@ -1,0 +1,354 @@
+# Windows verification — produces Windows-specific evidence for the Test
+# Engineer to rule on.
+#
+# ---------------------------------------------------------------------------
+# DEPLOYMENT: no agent in this pipeline can push a file under
+# .github/workflows/ — the GitHub App has no `workflows` permission, and that
+# permission cannot be granted (the App does not declare it). A human copies
+# this file to .github/workflows/windows-verification.yml once, by hand.
+# ---------------------------------------------------------------------------
+#
+# NO PER-PROJECT EDITING NEEDED. The `detect` job below finds which
+# toolchains are actually in the repo and runs only the matching legs:
+# a C++ project runs the MSBuild leg, a C#/.NET project runs the dotnet leg,
+# a mixed project runs both, and a project with neither skips straight past
+# the expensive Windows runner entirely. Solution files, executable projects,
+# and test assemblies are all discovered rather than hardcoded — there is no
+# SOLUTION or EXE_NAME to update when this lands in a new project.
+#
+# THIS WORKFLOW PRODUCES EVIDENCE. It never issues a verdict, never sets a
+# status:* or agent:* label, and never marks anything Verified. A green run is
+# an input to a test procedure, not a pass. The Test Engineer reads the
+# summary and the artifact and decides.
+
+name: windows-verification
+
+on:
+  push:
+    branches:
+      - main
+      - "issue-*"
+    paths:
+      - "**/*.sln"
+      - "**/*.csproj"
+      - "**/*.vcxproj"
+      - "**/*.cs"
+      - "**/*.cpp"
+      - "**/*.h"
+      - "**/*.hpp"
+      - "global.json"
+      - "tests/windows/**"
+  workflow_dispatch: {}
+
+# Read-only. This workflow must never relabel an issue or push a commit.
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-verification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Runs on Linux on purpose: detection is trivial, and Windows runners bill
+  # GitHub Actions minutes at a higher multiplier. Deciding here means an
+  # inapplicable leg never starts a Windows machine at all.
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      dotnet: ${{ steps.scan.outputs.dotnet }}
+      cpp: ${{ steps.scan.outputs.cpp }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: scan
+        run: |
+          CS=$(find . -name '*.csproj' -not -path './publish/*' -not -path './**/obj/*' | head -1)
+          CPP=$(find . -name '*.vcxproj' -not -path './**/obj/*' | head -1)
+          [[ -n "$CS"  ]] && echo "dotnet=true"  >> "$GITHUB_OUTPUT" || echo "dotnet=false" >> "$GITHUB_OUTPUT"
+          [[ -n "$CPP" ]] && echo "cpp=true"     >> "$GITHUB_OUTPUT" || echo "cpp=false"    >> "$GITHUB_OUTPUT"
+          echo "Detected: dotnet=${CS:-none} cpp=${CPP:-none}"
+          {
+            echo "## Toolchains detected"
+            echo ""
+            echo "| Toolchain | Present | Leg |"
+            echo "| --- | --- | --- |"
+            echo "| C#/.NET | $([[ -n "$CS" ]] && echo yes || echo no) | $([[ -n "$CS" ]] && echo runs || echo skipped) |"
+            echo "| C++/MSBuild | $([[ -n "$CPP" ]] && echo yes || echo no) | $([[ -n "$CPP" ]] && echo runs || echo skipped) |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  dotnet-verify:
+    needs: detect
+    if: needs.detect.outputs.dotnet == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Record the machine
+        shell: pwsh
+        run: |
+          $os  = Get-CimInstance Win32_OperatingSystem
+          $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
+          New-Item -ItemType Directory -Force -Path evidence | Out-Null
+          $lines = @(
+            "| Property | Value |", "| --- | --- |",
+            "| OS | $($os.Caption) $($os.Version) |",
+            "| CPU | $($cpu.Name) ($($cpu.NumberOfLogicalProcessors) logical) |",
+            "| Image | $env:ImageOS $env:ImageVersion |",
+            "| Commit | $env:GITHUB_SHA |"
+          )
+          "## .NET leg — machine`n" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          $lines -join "`n" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          "`n" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          $lines -join "`n" | Out-File evidence/machine.md
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Record the SDK that resolved
+        shell: pwsh
+        run: |
+          # A global.json pin that resolves on the runner but not on a client
+          # machine is a real deliverable defect. Recording what resolved here
+          # makes that visible rather than implicit.
+          dotnet --version   | Tee-Object evidence/sdk-version.txt
+          dotnet --list-sdks | Tee-Object evidence/sdk-list.txt
+          if (Test-Path global.json) { Get-Content global.json | Tee-Object evidence/global-json.txt }
+
+      - name: Build (Release)
+        shell: pwsh
+        run: |
+          $sln = Get-ChildItem -Recurse -Filter *.sln | Select-Object -First 1
+          $target = if ($sln) { $sln.FullName } else { "." }
+          "building: $target" | Tee-Object evidence/build-target.txt
+          dotnet restore $target 2>&1 | Tee-Object evidence/restore.log
+          dotnet build   $target -c Release --no-restore 2>&1 | Tee-Object evidence/build-release.log
+
+      - name: Test on Windows
+        shell: pwsh
+        continue-on-error: true   # a failure is evidence; later steps still run
+        run: |
+          $sln = Get-ChildItem -Recurse -Filter *.sln | Select-Object -First 1
+          $target = if ($sln) { $sln.FullName } else { "." }
+          dotnet test $target -c Release --no-build `
+            --logger "trx;LogFileName=tests-windows.trx" `
+            --results-directory evidence 2>&1 | Tee-Object evidence/test-windows.log
+
+      - name: Publish every executable project, and launch it
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          # Executable projects are discovered by OutputType, not named here.
+          $exeProjects = Get-ChildItem -Recurse -Filter *.csproj |
+            Where-Object { (Get-Content $_.FullName -Raw) -match '<OutputType>\s*Exe\s*</OutputType>' }
+          if (-not $exeProjects) {
+            "no csproj with <OutputType>Exe</OutputType> found - publish leg NOT-RUN" |
+              Tee-Object evidence/publish-result.txt
+            exit 0
+          }
+          foreach ($p in $exeProjects) {
+            $name = [IO.Path]::GetFileNameWithoutExtension($p.Name)
+            $out  = "publish/$name"
+            dotnet publish $p.FullName -c Release -o $out 2>&1 |
+              Tee-Object "evidence/publish-$name.log"
+            $exe = Get-ChildItem $out -Filter *.exe | Select-Object -First 1
+            if (-not $exe) { "$name: no .exe produced" | Tee-Object -Append evidence/publish-result.txt; continue }
+            # Many hosts are servers and never exit on their own. Start,
+            # give it a moment to bind or fail, then stop.
+            $proc = Start-Process -FilePath $exe.FullName -PassThru `
+                      -RedirectStandardOutput "evidence/launch-$name-stdout.txt" `
+                      -RedirectStandardError  "evidence/launch-$name-stderr.txt"
+            Start-Sleep -Seconds 5
+            if ($proc.HasExited) {
+              "$name: exited early, code $($proc.ExitCode)" | Tee-Object -Append evidence/publish-result.txt
+            } else {
+              "$name: still running after 5s (expected for a server)" | Tee-Object -Append evidence/publish-result.txt
+              Stop-Process -Id $proc.Id -Force
+            }
+          }
+
+      - name: Publish self-contained (nothing preinstalled on target)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          # The .NET analogue of a static-link check: prove the delivered
+          # artifact needs no runtime installed. The "runs on a machine that
+          # never had .NET" clause still cannot be shown on a hosted image --
+          # every runner has the runtime -- so this is the automatable half.
+          $exeProjects = Get-ChildItem -Recurse -Filter *.csproj |
+            Where-Object { (Get-Content $_.FullName -Raw) -match '<OutputType>\s*Exe\s*</OutputType>' }
+          foreach ($p in $exeProjects) {
+            $name = [IO.Path]::GetFileNameWithoutExtension($p.Name)
+            dotnet publish $p.FullName -c Release -r win-x64 --self-contained true `
+              -o "publish/sc-$name" 2>&1 | Tee-Object "evidence/publish-sc-$name.log"
+          }
+          if (Test-Path publish) {
+            Get-ChildItem publish -Recurse -Filter *.exe |
+              Select-Object FullName,Length | Format-Table | Out-String |
+              Tee-Object evidence/published-exes.txt
+          }
+
+      - name: Test Engineer procedure scripts (optional)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          # Owned by the Test Engineer, outside .github/ on purpose so they can
+          # be revised without a permission round trip. Absent = NOT-RUN, never
+          # a pass.
+          if (Test-Path tests/windows/run-procedures.ps1) {
+            & pwsh tests/windows/run-procedures.ps1 -EvidenceDir "$PWD\evidence"
+          } else {
+            "tests/windows/run-procedures.ps1 not present - NOT-RUN" |
+              Tee-Object evidence/runtime-procedures.txt
+          }
+
+      - name: Summarise what ran
+        if: always()
+        shell: pwsh
+        run: |
+          $rows = @(
+            @{ n = "Build (Release)";           ok = (Test-Path evidence/build-release.log) },
+            @{ n = "Tests on Windows";          ok = (Test-Path evidence/tests-windows.trx) },
+            @{ n = "Publish + launch";          ok = (Test-Path evidence/publish-result.txt) },
+            @{ n = "Publish self-contained";    ok = (Test-Path evidence/published-exes.txt) },
+            @{ n = "TE procedure scripts";      ok = (Test-Path evidence/runtime-procedures.json) }
+          )
+          "## .NET leg — what executed`n" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          "| Step | Executed |" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          "| --- | --- |"       | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          foreach ($r in $rows) {
+            $state = if ($r.ok) { "yes - see artifact" } else { "NOT-RUN" }
+            "| $($r.n) | $state |" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          }
+          "`n_Evidence only. Verdicts are the Test Engineer's._" |
+            Out-File -Append $env:GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-evidence-dotnet-${{ github.sha }}
+          path: evidence/
+          retention-days: 30
+          if-no-files-found: warn
+
+  cpp-verify:
+    needs: detect
+    if: needs.detect.outputs.cpp == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Record the machine
+        shell: pwsh
+        run: |
+          $os  = Get-CimInstance Win32_OperatingSystem
+          $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
+          New-Item -ItemType Directory -Force -Path evidence | Out-Null
+          $lines = @(
+            "| Property | Value |", "| --- | --- |",
+            "| OS | $($os.Caption) $($os.Version) |",
+            "| CPU | $($cpu.Name) ($($cpu.NumberOfLogicalProcessors) logical) |",
+            "| Image | $env:ImageOS $env:ImageVersion |",
+            "| Commit | $env:GITHUB_SHA |"
+          )
+          "## C++ leg — machine`n" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          $lines -join "`n" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          "`n" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          $lines -join "`n" | Out-File evidence/machine.md
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Build Debug|x64 and Release|x64
+        shell: pwsh
+        run: |
+          # No /p: overrides beyond Configuration and Platform: this must be
+          # the build a client's own engineer would get from the IDE. A build
+          # that only works with CI-only switches has verified a project the
+          # client doesn't have.
+          $sln = Get-ChildItem -Recurse -Filter *.sln | Select-Object -First 1
+          if (-not $sln) { throw "no .sln found, but a .vcxproj was detected" }
+          "building: $($sln.FullName)" | Tee-Object evidence/build-target.txt
+          msbuild $sln.FullName /p:Configuration=Debug   /p:Platform=x64 `
+            /v:normal /fl "/flp:LogFile=evidence/build-debug.log;Verbosity=normal"
+          msbuild $sln.FullName /p:Configuration=Release /p:Platform=x64 `
+            /v:normal /fl "/flp:LogFile=evidence/build-release.log;Verbosity=normal"
+
+      - name: Discover and run native tests
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -property installationPath
+          $vstest = Join-Path $vs "Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe"
+          $dlls = Get-ChildItem -Recurse -Filter *.dll |
+            Where-Object { $_.FullName -match '\\(x64\\)?Release\\' -and $_.Name -match 'Test' }
+          if (-not $dlls) {
+            "no Release test DLL found - test leg NOT-RUN" | Tee-Object evidence/tests-result.txt
+            exit 0
+          }
+          foreach ($d in $dlls) {
+            & $vstest $d.FullName /Platform:x64 `
+              /Logger:"trx;LogFileName=$($d.BaseName).trx" `
+              /ResultsDirectory:"$PWD\evidence" `
+              /ListTests:"$PWD\evidence\discovered-$($d.BaseName).txt"
+          }
+
+      - name: Import table of each delivered executable
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          # Static-link evidence: expect stock system DLLs only, and no
+          # MSVCP140 / VCRUNTIME140* if the project links the CRT statically.
+          # The clean-machine launch clause cannot run here -- every hosted
+          # image ships the VC++ runtimes -- so this is the automatable half.
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -property installationPath
+          Import-Module (Join-Path $vs "Common7\Tools\Microsoft.VisualStudio.DevShell.dll")
+          Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments '-arch=x64'
+          $exes = Get-ChildItem -Recurse -Filter *.exe |
+            Where-Object { $_.FullName -match '\\(x64\\)?Release\\' }
+          foreach ($e in $exes) {
+            "=== $($e.Name) ===" | Tee-Object -Append evidence/dumpbin-dependents.txt
+            dumpbin /dependents $e.FullName | Tee-Object -Append evidence/dumpbin-dependents.txt
+          }
+
+      - name: Test Engineer procedure scripts (optional)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          if (Test-Path tests/windows/run-procedures.ps1) {
+            & pwsh tests/windows/run-procedures.ps1 -EvidenceDir "$PWD\evidence"
+          } else {
+            "tests/windows/run-procedures.ps1 not present - NOT-RUN" |
+              Tee-Object evidence/runtime-procedures.txt
+          }
+
+      - name: Summarise what ran
+        if: always()
+        shell: pwsh
+        run: |
+          $rows = @(
+            @{ n = "Build Debug|x64";        ok = (Test-Path evidence/build-debug.log) },
+            @{ n = "Build Release|x64";      ok = (Test-Path evidence/build-release.log) },
+            @{ n = "Native test discovery";  ok = ((Get-ChildItem evidence -Filter 'discovered-*.txt' -ErrorAction SilentlyContinue).Count -gt 0) },
+            @{ n = "dumpbin import table";   ok = (Test-Path evidence/dumpbin-dependents.txt) },
+            @{ n = "TE procedure scripts";   ok = (Test-Path evidence/runtime-procedures.json) }
+          )
+          "## C++ leg — what executed`n" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          "| Step | Executed |" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          "| --- | --- |"       | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          foreach ($r in $rows) {
+            $state = if ($r.ok) { "yes - see artifact" } else { "NOT-RUN" }
+            "| $($r.n) | $state |" | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          }
+          "`n_Evidence only. Verdicts are the Test Engineer's._" |
+            Out-File -Append $env:GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-evidence-cpp-${{ github.sha }}
+          path: evidence/
+          retention-days: 30
+          if-no-files-found: warn

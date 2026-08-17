@@ -26,31 +26,30 @@ to any one piece.
 
 ## Deploying Windows verification
 
-One decision to make once, during the Generate Code Base issue, and
-not revisit afterward without a real reason: does `docs/SDD.md` name
-Windows or MSVC as a target platform this project actually needs
-verified?
+One decision to make once, during the Generate Code Base issue: does
+`docs/SDD.md` name Windows as a target platform this project actually
+needs verified?
 
-- **If yes:** copy `docs/ci/windows-verification.yml` to
-  `.github/workflows/windows-verification.yml`, then customize the two
-  things its own header comment names — the `paths:` filter (match
-  this project's actual language, not whatever it was copied with) and
-  `env: SOLUTION:` (this project's actual `.sln` filename, which
-  doesn't exist yet at the very start of this issue — set it once the
-  scaffolding creates it, before this issue closes). Mention in your
-  hand-off comment that you deployed it and why.
-- **If no:** leave `docs/ci/windows-verification.yml` exactly where it
-  sits — don't copy it anywhere. A project with no Windows-specific
-  verification need shouldn't have a Windows workflow running on every
-  push for no reason; that's wasted runner time triggered by nothing
-  the project actually requires. Note in your hand-off comment that
-  you considered this and it doesn't apply, so nobody downstream
-  wonders whether it was overlooked.
+- **If yes:** `docs/ci/windows-verification.yml` needs to reach
+  `.github/workflows/windows-verification.yml` — but you cannot put it
+  there. Every role's git identity is rejected when pushing under
+  `.github/workflows/` (the GitHub App has no `workflows` permission,
+  and it cannot be granted, since the App doesn't declare it). Don't
+  spend a turn re-attempting the push in a different way; it fails the
+  same way every time. Instead say plainly in your hand-off comment
+  that a human needs to copy that one file across, once. No
+  customization is required first — the workflow detects whether the
+  repo contains C++ (`.vcxproj`), C#/.NET (`.csproj`), or both, and
+  runs only the matching legs, discovering solution files, executable
+  projects, and test assemblies rather than having them hardcoded.
+- **If no:** leave `docs/ci/windows-verification.yml` where it sits.
+  A project with no Windows-specific verification need shouldn't have
+  a Windows workflow running on every push. Note in your hand-off
+  comment that you considered it and it doesn't apply, so nobody
+  downstream wonders whether it was overlooked.
 
-If a later phase of the same project introduces a genuine Windows/MSVC
-requirement that wasn't there at Generate Code Base time, this
-decision can be revisited then — it's not permanently closed, just not
-something to default to without a stated reason.
+If a later phase introduces a genuine Windows requirement that wasn't
+there at Generate Code Base time, this decision can be revisited then.
 
 ## Branching
 
