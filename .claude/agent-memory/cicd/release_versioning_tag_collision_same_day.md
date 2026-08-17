@@ -68,3 +68,17 @@ follow-ups both landed on `origin/main` while this merge was in
 progress. Confirms this is now the steady-state shape for any day with
 several sibling `type:requirement` branches landing — not worth
 re-deriving each time.
+
+**Sixth occurrence (issue #16/UI-001/UI-003, 2026-08-17, merge
+`fa26c47`):** same result — session started from a **shallow clone**
+(`git rev-parse --is-shallow-repository` → `true`, only 7 commits
+visible, first-commit date wrongly read as `2026-08-16`); ran `git
+fetch --unshallow` first (per [[build-toolchain-shallow-clone]]), which
+corrected the visible history to 166 commits and the true first-commit
+date `2026-08-15`, giving the same BUILD=2 as prior occurrences today.
+`v1.0.2` ancestor-confirmed, skipped re-tag, cited merge SHA in
+hand-off. No open-issue-count release trigger either (several
+`type:requirement` issues still open/on-hold). **Always check
+shallowness before trusting `git log --reverse` for the BUILD-number
+date — a shallow clone's "first" visible commit is not the repo's
+actual first commit and will silently under- or over-count days.**

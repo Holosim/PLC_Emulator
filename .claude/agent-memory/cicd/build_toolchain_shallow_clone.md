@@ -26,3 +26,13 @@ trunk into a feature branch), run `git rev-parse
 first. Don't trust "unrelated histories" as necessarily meaning the
 branches truly don't share history — check shallow status before
 concluding that.
+
+**Also breaks BUILD-number computation, not just merges (issue #16,
+2026-08-17):** a fresh shallow session showed only 7 commits and a
+first-commit date one day later than reality, which would have
+produced a wrong BUILD number for the `v{MAJOR}.{MINOR}.{BUILD}` tag
+(see [[release-versioning-tag-collision-same-day]]). Run the
+shallow-repo check (and `--unshallow` if needed) before *any*
+git-history-derived computation this session — not just before
+merges — since `git log --reverse --format=%cd | head -1` is exactly
+this same failure mode.
