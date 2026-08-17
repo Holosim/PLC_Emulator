@@ -531,3 +531,22 @@ first as a matter of course rather than only when a merge "looks"
 missing. Thirteenth confirmation of "RTVM already current → still
 route through the two-step handoff" — fully settled, no need to keep
 counting.
+
+**UI-002 (issue #17, startup diagnostics, 2026-08-17) — PASS, 101/101
+(baseline held, no new tests — same Host-wiring shape as UI-001/UI-003
+in issue #16).** TP-003's fixture (3 tags `Start_PB:BOOL`/
+`Motor_Run:BOOL`/`Preset_Count:DINT` + `rungs: []`, 2 components
+`ProxSensor1/DiscreteSensor` + `Relay1/Relay`) is a byte-for-byte match
+of the existing fixture at `ConfigLoaderNetworkTests.cs` lines 57-59 —
+worth grepping an existing test file for the exact fixture before
+hand-typing one from RTVM prose, confirms both TP-003's own wording and
+that the SE didn't need a novel component/tag shape. Verified by
+actually launching the process (`dotnet run --project src/PlcEmulator.Host
+-- --control-logic ... --network ...`) rather than trusting the SE's
+pasted stdout — output matched exactly. Same OUT-400 (issue #20)
+scoped-dependency gap as issue #16: the diagnostics print completes
+before `TcpJsonServer.Start`'s scaffolding-only exit, so TP-003 (which
+only covers the config-load/diagnostics phase) isn't blocked by it —
+this is now the second confirmed instance of that exact shape, expect
+it to recur for any remaining UI-00x/OUT-40x TP that only needs the
+pre-listener phase.
