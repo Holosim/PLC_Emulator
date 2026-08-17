@@ -1,10 +1,16 @@
 name: stall-recovery
 
-# Scheduled sweep: finds issues stuck at status:in-progress with no
-# recent activity and recovers them. Never touches status:blocked,
+# Scheduled sweep: finds issues stuck at status:in-progress,
+# status:ready-for-commit, or status:ready-for-rtvm-update with no
+# recent activity, and recovers them. Never touches status:blocked,
 # status:needs-human, status:on-hold, or status:waiting-on-lock --
 # those are intentional pauses waiting on a human or a dependency,
 # not accidental stalls.
+#
+# Manual runs (workflow_dispatch) can set force_immediate to recover
+# everything matching right now, bypassing the normal 1-hour age
+# check -- this is the "clear the stalls" command, invoked directly
+# rather than waiting for the scheduled sweep.
 #
 # Heuristic for where to route a recovered issue: if the last comment
 # named a specific hand-off target (e.g. "Handing off to
@@ -17,7 +23,12 @@ name: stall-recovery
 on:
   schedule:
     - cron: "0 * * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      force_immediate:
+        description: "Skip the 1-hour age check and recover every open, non-in-progress hand-off right now"
+        type: boolean
+        default: false
 
 permissions:
   issues: write
@@ -31,9 +42,14 @@ jobs:
       - name: Find and recover stalled issues
         run: |
           NOW=$(date -u +%s)
-          THRESHOLD_SECONDS=3600
+          if [[ "${{ inputs.force_immediate }}" == "true" ]]; then
+            THRESHOLD_SECONDS=0
+            echo "force_immediate set -- recovering everything matching, regardless of age."
+          else
+            THRESHOLD_SECONDS=3600
+          fi
 
-          gh issue list --label "status:in-progress" --state open \
+          gh issue list --label "status:in-progress,status:ready-for-commit,status:ready-for-rtvm-update" --state open \
             --json number,labels,updatedAt --repo "${{ github.repository }}" \
             | jq -c '.[]' \
             | while read -r issue; do
@@ -42,9 +58,11 @@ jobs:
                 AGENT_LABEL=$(echo "$LABELS" | grep '^agent:' || true)
 
                 if [[ -z "$AGENT_LABEL" ]]; then
-                  echo "Issue #$NUMBER: status:in-progress with no agent:* label -- not this sweep's problem, skipping."
+                  echo "Issue #$NUMBER: matched status label with no agent:* label -- not this sweep's problem, skipping."
                   continue
                 fi
+
+                STATUS_LABEL=$(echo "$LABELS" | grep -E '^status:(in-progress|ready-for-commit|ready-for-rtvm-update)$' | head -1)
 
                 LAST_COMMENT_TIME=$(gh issue view "$NUMBER" --json comments \
                   --repo "${{ github.repository }}" \
@@ -60,7 +78,7 @@ jobs:
                   continue
                 fi
 
-                echo "Issue #$NUMBER: no activity in $(( AGE / 60 ))m, currently $AGENT_LABEL -- recovering."
+                echo "Issue #$NUMBER: no activity in $(( AGE / 60 ))m, currently $AGENT_LABEL / $STATUS_LABEL -- recovering."
 
                 LAST_COMMENT_BODY=$(gh issue view "$NUMBER" --json comments \
                   --repo "${{ github.repository }}" \
@@ -73,14 +91,14 @@ jobs:
                   gh issue comment "$NUMBER" --repo "${{ github.repository }}" \
                     --body "Stall recovery: no activity for over an hour. The Next line declared a hand-off to $TARGET that never took effect -- routing there directly."
                   gh issue edit "$NUMBER" --repo "${{ github.repository }}" \
-                    --remove-label "$AGENT_LABEL" --remove-label "status:in-progress"
+                    --remove-label "$AGENT_LABEL" --remove-label "$STATUS_LABEL"
                   gh issue edit "$NUMBER" --repo "${{ github.repository }}" \
                     --add-label "$TARGET"
                 elif echo "$NEXT_LINE" | grep -qi 'waiting on human reply'; then
                   gh issue comment "$NUMBER" --repo "${{ github.repository }}" \
-                    --body "Stall recovery: no activity for over an hour. The Next line said this is waiting on a human reply -- clearing status:in-progress only, leaving $AGENT_LABEL in place."
+                    --body "Stall recovery: no activity for over an hour. The Next line said this is waiting on a human reply -- clearing $STATUS_LABEL only, leaving $AGENT_LABEL in place."
                   gh issue edit "$NUMBER" --repo "${{ github.repository }}" \
-                    --remove-label "status:in-progress"
+                    --remove-label "$STATUS_LABEL"
                 else
                   # "Continuing", or no parseable Next line at all -- the
                   # safest recovery is retriggering whoever currently holds
@@ -88,7 +106,7 @@ jobs:
                   gh issue comment "$NUMBER" --repo "${{ github.repository }}" \
                     --body "Stall recovery: no activity for over an hour. Retriggering $AGENT_LABEL."
                   gh issue edit "$NUMBER" --repo "${{ github.repository }}" \
-                    --remove-label "status:in-progress"
+                    --remove-label "$STATUS_LABEL"
                   gh issue edit "$NUMBER" --repo "${{ github.repository }}" \
                     --remove-label "$AGENT_LABEL"
                   gh issue edit "$NUMBER" --repo "${{ github.repository }}" \
