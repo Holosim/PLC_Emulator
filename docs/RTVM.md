@@ -119,6 +119,18 @@ client's intent differs:
   explicitly. Handed to Software Engineer to apply the one-line fix
   and confirm a full build/test pass under a non-`8.x`-only SDK
   environment before Test Engineer re-verifies.
+  **Resolved 2026-08-17 (issue #27, commit `98c6485`).** Software
+  Engineer applied the one-line `rollForward: "latestMajor"` fix;
+  both Software Engineer and Test Engineer independently reproduced
+  the exact field failure in an isolated single-SDK (`9.0.316`-only)
+  environment, confirmed the fix resolves it, and confirmed no
+  regression in the normal multi-SDK build (119/119 tests both
+  scenarios). Runner-specific-assumption scan (both passes) found
+  nothing else in the build that assumes CI's pre-provisioned SDK
+  state — the only reason this class of defect never surfaced in CI
+  is that `build-and-test.yml` pre-provisions `8.0.x` via
+  `setup-dotnet` before every run, which a clean client workstation
+  has no equivalent of. DELIV-900/TP-900 flipped back to `Verified`.
 - **`docs/ci/windows-verification.yml` — not recreated.** The client's
   2026-08-17 comment states this file "has been added to the workflows
   in Github," but it does not exist on `main`, in `docs/ci/`, in
@@ -163,7 +175,7 @@ client's intent differs:
 | NFR-501 | Server builds and runs identically on Windows and Linux from the same C#/.NET codebase, with no OS-specific code path left unabstracted. | SN-1, SN-5 | Test | Verified | CI run `31997343615`; merge `03970cd` |
 | NFR-502 | Third-party dependencies are avoided by default; any dependency adopted is referenced only from behind an internal interface/wrapper, never directly from core logic, so it can be swapped later. | SN-5 | Inspection | Verified | `d312747` |
 | NFR-503 | Server does not persist runtime tag/controller state across restarts; each launch (re)loads CONTROL_LOGIC/NETWORK definitions fresh and runs in-memory only. | SN-1 | Test | Verified | `9567727` |
-| DELIV-900 | As a late-stage v1.0 task, the codebase is organized/refactored to compile as a Microsoft Visual Studio solution (`.sln`) with appropriate project files, so the client's engineering team can open and extend it directly in Visual Studio — **including on a workstation whose installed .NET SDKs are all newer than `global.json`'s pinned floor** (no exact-version match required; a fresh clone must not require installing an old SDK side by side just to build). | SN-5 | Inspection | In Implementation | `ecbc190` (fix pending — see 2026-08-17 client defect report) |
+| DELIV-900 | As a late-stage v1.0 task, the codebase is organized/refactored to compile as a Microsoft Visual Studio solution (`.sln`) with appropriate project files, so the client's engineering team can open and extend it directly in Visual Studio — **including on a workstation whose installed .NET SDKs are all newer than `global.json`'s pinned floor** (no exact-version match required; a fresh clone must not require installing an old SDK side by side just to build). | SN-5 | Inspection | Verified | `ecbc190`, `98c6485` (rollForward fix) |
 
 ## Test Procedures
 
