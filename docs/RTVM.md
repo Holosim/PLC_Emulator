@@ -91,8 +91,8 @@ client's intent differs:
 | CORE-200 | Scan-cycle execution engine evaluates all ladder rungs in program order once per scan, updating tag values from rung logic before the next scan begins. | SN-1 | Test | Verified | 49d5150 |
 | CORE-201 | `XIC`/`XIO` contact instructions evaluate against a `BOOL` tag's current value: `XIC` is true when the tag is true, `XIO` is true when the tag is false. | SN-1 | Test | Verified | |
 | CORE-202 | `OTE` coil instruction sets its `BOOL` output tag equal to the evaluated (non-latching) logic of the rung each scan. | SN-1 | Test | Verified | |
-| CORE-203 | `TON` (timer-on-delay): while enabled, `.ACC` accumulates elapsed time; `.DN` becomes true once `.ACC >= .PRE`; disabling the instruction resets `.ACC` to 0 and `.DN` to false. | SN-1 | Test | Verified | |
-| CORE-204 | `TOF` (timer-off-delay): `.DN` is true immediately while enabled; on disable, `.DN` remains true until `.PRE` has elapsed since disable, then goes false. | SN-1 | Test | Verified | |
+| CORE-203 | `TON` (timer-on-delay): while enabled, `.ACC` accumulates elapsed time; `.DN` becomes true once `.ACC >= .PRE`; disabling the instruction resets `.ACC` to 0 and `.DN` to false. | SN-1 | Test | Verified | `2e107fa` |
+| CORE-204 | `TOF` (timer-off-delay): `.DN` is true immediately while enabled; on disable, `.DN` remains true until `.PRE` has elapsed since disable, then goes false. | SN-1 | Test | Verified | `2e107fa` |
 | CORE-205 | `CTU` (count-up): `.ACC` increments by 1 on each rising edge of the instruction's enable input; `.DN` becomes true once `.ACC >= .PRE` (and remains true if counting continues past preset). | SN-1 | Test | Approved | |
 | CORE-206 | `CTD` (count-down) decrements `.ACC` by 1 on each rising edge of its enable input, with `.DN` true when `.ACC <= 0`; `RES` resets a counter's `.ACC` to 0 and `.DN` to false when executed. | SN-1 | Test | Approved | |
 | CORE-207 | Compare instructions (`EQU`, `NEQ`, `GRT`, `LES`, `GEQ`, `LEQ`) evaluate two operands (tag or literal) of matching numeric type and produce a boolean rung-true/false result. | SN-1 | Test | Approved | |
