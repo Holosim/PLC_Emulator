@@ -29,3 +29,24 @@ off to `agent:test-engineer` with `status:ready-for-test` exactly like
 a normal implemented feature — Inspection is still a verification
 method that needs Test Engineer sign-off before Systems Engineer can
 flip the RTVM status to `Verified`.
+
+**Also applies when RTVM lists the verification method as "Test", not
+just "Inspection"**, if the requirement turns out to already hold by
+design review alone: NFR-503 (issue #26, no-persistence-across-restart)
+is `docs/RTVM.md`-labeled "Test" with a concrete TP-503 procedure, but
+review found zero persistence code anywhere in `src/` (no
+`PackageReference` for storage, no `File.Write`/database calls,
+`Program.Main` already builds a fresh `PlcController` every launch,
+`ControlLogicBuilder.CreateTag` already builds new `Tag` instances from
+`TagDef.InitialValue` every call) — so the fix was already "in" by
+construction. Unlike a pure-Inspection issue, still add the concrete
+unit-test artifact the TP calls for (see
+[[pattern_multi_controller_isolation_review]]'s
+`MultiControllerIsolationTests` for the precedent shape): construct one
+config object, mutate/scan a first controller instance, then build a
+*second* controller from the *same* config object (simulating the
+restart) and assert the fresh instance shows initial values, not the
+first instance's mutated ones. Reusing the same config object across
+both instances is the strongest form of the check — it would catch an
+accidental cache keyed off the shared config, which two independently
+re-parsed config objects would not expose.
