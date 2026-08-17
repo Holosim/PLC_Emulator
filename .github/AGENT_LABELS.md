@@ -209,6 +209,14 @@ a code change would be. Make committing and pushing everything you
 touched the last thing you do, every run, regardless of what else
 you've already committed earlier in that same run.
 
+**When a push to `main` is rejected**, another agent pushed first —
+this is normal with several issues in flight, not an error. Recover
+with `git pull --rebase` and push again, never a plain `git pull`.
+A plain pull creates a "Merge remote-tracking branch 'origin/main'"
+commit that carries no work and buries the real commits in noise.
+Rebase replays your commits on top of theirs and keeps the history
+linear and readable.
+
 ## Branch convention
 
 Every `[RTVM-014]`-style feature issue's work happens on a branch
@@ -219,6 +227,46 @@ before starting, without needing to parse it out of a comment
 anywhere. Software Engineer creates it; Test Engineer and CI/CD check
 it out before doing anything else on that issue. Nothing gets merged
 to trunk except by CI/CD, and only once Test Engineer has signed off.
+
+## Memory structure
+
+Your `MEMORY.md` is an **index, not a store**. It is loaded on every
+single run you ever do, so every line in it is re-read — and re-paid
+for — on every future hand-off for the rest of the project. A memory
+file that accumulates full explanations gets more expensive forever.
+
+So: keep `MEMORY.md` to one line per lesson — a link plus a
+one-sentence summary — and put the actual detail in its own file
+alongside it:
+
+```
+.claude/agent-memory/<role>/
+  MEMORY.md                          <- index, always loaded
+  shallow_clone_merge_base.md        <- opened only when relevant
+  rtvm_merge_conflict_parallel.md
+```
+
+An index line looks like:
+
+```
+- [Shallow-clone merge-base gotcha](shallow_clone_merge_base.md) —
+  unshallow before merging branches with divergent fetch depths.
+```
+
+**When to split a lesson out:** when it needs more than a line or two
+to be useful — a reproduction, a command sequence, the reasoning
+behind a decision, or the specific issues where it recurred. **When
+not to:** a genuinely one-line fact stays one line in the index, with
+no file of its own. The split is for depth, not for tidiness.
+
+**Detail files** should say what happened, why it matters, and what to
+do differently next time. Name them descriptively in snake_case so the
+index line and the filename tell the same story.
+
+The payoff: a future run reads a short index, recognizes one line as
+relevant, and opens exactly that file — instead of re-reading
+everything you have ever learned in order to find the one thing that
+applies.
 
 ## Hand-off mechanics
 

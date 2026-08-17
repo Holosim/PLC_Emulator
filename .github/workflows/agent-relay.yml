@@ -83,6 +83,10 @@ jobs:
                of this handoff.
             2. Read .claude/agent-memory/${{ steps.role.outputs.role }}/MEMORY.md
                for anything relevant you've learned on past issues.
+               It's an index of one-line summaries — if a line looks
+               relevant to this task, open the file it links to for the
+               full detail. Don't open files whose summaries don't
+               apply; that's the whole point of the index.
             3. If this task touches one of the standard docs
                (docs/PROJECT_DEFINITION.md, docs/RTVM.md, docs/SDD.md,
                docs/IMPLEMENTATION_PLAN.md), check whether it already
@@ -145,8 +149,12 @@ jobs:
                place, so nothing else gets triggered on this issue
                until they reply.
             7. If you learned something durable — a pattern, a gotcha,
-               an architectural decision — append it to your MEMORY.md.
-               Keep entries short and dated.
+               an architectural decision — record it. If it fits in one
+               line, add that line to your MEMORY.md index. If it needs
+               real explanation, write a detail file next to MEMORY.md
+               and add a one-line summary linking to it. See "Memory
+               structure" in .github/AGENT_LABELS.md. Keep MEMORY.md
+               itself short — it's loaded on every future run.
           claude_args: |
             --agent ${{ steps.role.outputs.role }}
             --permission-mode bypassPermissions
