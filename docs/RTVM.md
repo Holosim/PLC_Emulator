@@ -131,6 +131,19 @@ client's intent differs:
   is that `build-and-test.yml` pre-provisions `8.0.x` via
   `setup-dotnet` before every run, which a clean client workstation
   has no equivalent of. DELIV-900/TP-900 flipped back to `Verified`.
+- **DELIV-901 added (issue #28, 2026-08-17 client request).** Client
+  asked for a user quick-start guide now that the solution builds and
+  runs (post-DELIV-900). Product Manager captured this in
+  `docs/PROJECT_DEFINITION.md`'s Deliverable Requirements as a new
+  non-functional deliverable, not a feature — no runtime behavior for
+  the RTVM to exercise, just a document (`docs/USER_GUIDE.md`) to
+  produce and verify for completeness/accuracy against a concrete
+  acceptance bar ("clone to running simulation using only the guide").
+  Modeled directly on the DELIV-900/TP-900 precedent above. Sequenced
+  as a late-stage v1.0 task, same category as DELIV-900, depending on
+  it (Finish-Start) since the guide documents the delivered state of
+  the VS solution and would go stale if written before that
+  consolidation landed.
 - **`docs/ci/windows-verification.yml` — not recreated.** The client's
   2026-08-17 comment states this file "has been added to the workflows
   in Github," but it does not exist on `main`, in `docs/ci/`, in
@@ -176,6 +189,7 @@ client's intent differs:
 | NFR-502 | Third-party dependencies are avoided by default; any dependency adopted is referenced only from behind an internal interface/wrapper, never directly from core logic, so it can be swapped later. | SN-5 | Inspection | Verified | `d312747` |
 | NFR-503 | Server does not persist runtime tag/controller state across restarts; each launch (re)loads CONTROL_LOGIC/NETWORK definitions fresh and runs in-memory only. | SN-1 | Test | Verified | `9567727` |
 | DELIV-900 | As a late-stage v1.0 task, the codebase is organized/refactored to compile as a Microsoft Visual Studio solution (`.sln`) with appropriate project files, so the client's engineering team can open and extend it directly in Visual Studio — **including on a workstation whose installed .NET SDKs are all newer than `global.json`'s pinned floor** (no exact-version match required; a fresh clone must not require installing an old SDK side by side just to build). | SN-5 | Inspection | Verified | `ecbc190`, `98c6485` (rollForward fix), `5f4c5d6` (merge) |
+| DELIV-901 | As a late-stage v1.0 task (after DELIV-900), deliver a user quick-start guide at `docs/USER_GUIDE.md` covering: (1) an outline of all projects in the Visual Studio solution — what each does and how it fits together; (2) the CONTROL_LOGIC and NETWORK JSON config formats, including a complete working example with real file paths the reader can copy and run immediately; (3) how to launch the emulator (CLI args, startup diagnostics, TCP/JSON connection) and what to expect; (4) how to author ladder logic and map a component network using the documented schemas; (5) how to extend the system — where a new driver goes, what interface (`IDriver`) it implements, and the minimal steps to register it. Acceptance bar: a reader who has never seen this project can go from `git clone` to a running simulation using only this document and the delivered solution files, no tribal knowledge, no reading source first. | SN-2, SN-4, SN-5 | Demonstration | Approved | |
 
 ## Test Procedures
 
@@ -213,3 +227,4 @@ client's intent differs:
 | TP-502 | NFR-502 | N/A (design review). | Review `.csproj`/package references; confirm any third-party package is only referenced from a wrapper/interface class. | No direct third-party API usage from core logic classes. |
 | TP-503 | NFR-503 | Server run once, `Start_PB` set true via TP-401. | Stop the process, restart with the same CONTROL_LOGIC/NETWORK files. | `Start_PB` (and all tags) reset to their CONTROL_LOGIC-defined initial values, not the prior run's values. |
 | TP-900 | DELIV-900 | Delivered repository at the late-stage v1.0 milestone. **Plus:** a workstation whose only installed .NET SDKs are newer major versions than `global.json`'s pinned floor (e.g. only `9.0.317`/`10.0.303` present, no `8.x`) — reproduces the client's 2026-08-17 field report exactly (VS2022, `dotnet --list-sdks` showing `9.0.317`/`10.0.303` only, `global.json` pinned to `8.0.100`). | Open the `.sln` in Visual Studio (or run `msbuild`/`dotnet build` against it as a CI proxy) in both scenarios: (a) normal CI image with the pinned SDK present, (b) only a newer-major SDK present, no exact/`8.x` match. | (a) and (b) both: all projects load and the solution builds successfully with no missing project-file errors and no `NETSDK1141`/"Unable to resolve the .NET SDK version" error — `global.json`'s `rollForward` must resolve to the newest installed SDK rather than failing. |
+| TP-901 | DELIV-901 | A machine with no prior exposure to this project: fresh `git clone` of the delivered repository, plus `docs/USER_GUIDE.md`, no other context. | Following *only* the guide's instructions, verbatim, in order: (1) build/open the solution per the guide's project-outline section; (2) copy the guide's complete CONTROL_LOGIC/NETWORK example to the paths it documents; (3) launch the emulator with the guide's documented CLI invocation; (4) connect a TCP/JSON client per the guide and confirm a tag exchange (read + one write) as documented; (5) separately, follow only the guide's extension section to add one trivial new driver (e.g. a stub sensor) implementing `IDriver`, and confirm it loads without touching core scan-engine/instruction code. | At every step, the guide's instructions match actual behavior exactly — no missing prerequisite, no undocumented manual step, no path/command that doesn't work as written. Reader reaches a running simulation exchanging TCP/JSON tag state using only the guide + delivered files. The new driver added purely from the extension section's instructions loads and its bound tag behaves correctly (CORE-209-class check), with no source file outside the new driver touched. |

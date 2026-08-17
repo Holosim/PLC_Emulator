@@ -79,6 +79,15 @@ priority order, not a strict serial gate.
     Requirements and `docs/SDD.md`'s Build & Toolchain Conventions: a
     verification/cleanup pass, not a structural rewrite, run only once
     the rest of the functional and NFR build (#19–#22) is complete.
+24. **[DELIV-901] User quick-start guide (`docs/USER_GUIDE.md`)** —
+    added 2026-08-17 (issue #28, client request). Explicitly sequenced
+    after #23: the guide documents the *delivered* state of the VS
+    solution (project outline, launch instructions, extension points)
+    and would go stale if written before that consolidation landed.
+    Depends only on #23 (Finish-Start) — the functional/NFR feature
+    set it describes (#2–#22) is already stable well before this
+    point, so no additional Start-Start dependency is needed beyond
+    the transitive one through #23.
 
 ## Sequence Diagram
 
@@ -113,4 +122,5 @@ graph TD
     NFR501 --> DELIV900
     NFR502 --> DELIV900
     NFR503 --> DELIV900
+    DELIV900 --> DELIV901["DELIV-901<br/>User quick-start guide"]
 ```
