@@ -41,3 +41,12 @@ non-empty, this is still a real merge (issue #23 had 3 real commits
 still to land). The RTVM state and "is there a branch left to merge"
 are two independent questions — always check the branch diff, not the
 docs.
+
+**Second confirmed occurrence (issue #20/OUT-400, 2026-08-17):** same
+pattern exactly — `git log origin/main..origin/issue-20` empty,
+RTVM's `OUT-400` row already `Verified` with commit `40fa920`
+recorded. Re-verified build (0/0) + test (108/108) on trunk anyway,
+confirmed no open-requirement release trigger, then handed straight
+to `agent:systems-engineer` with no `status:*` label added (omitted
+step c) and no re-tag. This is turning into the normal shape of the
+"trunk merge → regression pass → close-out" loop, not a one-off.
