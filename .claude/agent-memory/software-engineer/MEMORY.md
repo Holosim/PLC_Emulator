@@ -21,6 +21,7 @@
 - [Multi-controller isolation review](pattern_multi_controller_isolation_review.md) — NFR-500/TP-500 (issue #23): no static/singleton state found on review; same-name-collision test shape for "prove no shared state"; also corrects a wrong claim about Windows CI deployment status — see that file's "deferred-promotion decision" section
 - [Startup diagnostics text](pattern_startup_diagnostics.md) — UI-002 (issue #17): literal "N tags loaded"/"N components loaded" text match for TP-003, per-tag/per-component listing, same OUT-400/#20 stub gap resurfacing
 - [TCP listener single-client constraint](pattern_tcp_listener_single_client.md) — OUT-400 (issue #20): accept-then-close for the 2nd+ connection, `_clientLock`-guarded Broadcast/OnClientMessage, tag_write deliberately left throwing for OUT-401/#21, `socket.makefile()` FIN gotcha when manually testing
+- [Tag-write queue / GetTagType conversion split](pattern_tag_write_queue.md) — OUT-401 (issue #21): QueueWrite validation, Network-owns-JSON-conversion/Core-stays-JSON-free split, socket-test ordering-barrier trick, and the "no free-running scan loop anywhere in Host" gap flagged to Test Engineer
 
 ## Platform-specific notes
 
