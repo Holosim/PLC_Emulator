@@ -49,3 +49,11 @@ cited the merge SHA in the hand-off comment instead. Third occurrence
 of this exact pattern — with several sibling `type:requirement`
 branches (#10/#12-15/#18, etc.) all landing on the same calendar day,
 expect this to keep recurring; it is not a sign of anything wrong.
+
+**Fourth occurrence (issue #14, 2026-08-17, merge `10c9dad` +
+follow-up `7e1738e`):** same result — `v1.0.2` already tagged, BUILD
+recomputed still `2`, ancestry confirmed, skipped re-tag, cited SHAs
+in hand-off comment. Also hit a same-day *push* rejection mid-merge
+(second CI/CD run landed issue #10's RTVM-SHA follow-up between my
+fetch and push) — see [[concurrent-cicd-runs-same-day]], same
+fetch+merge+retest+push-again resolution, no new pattern.

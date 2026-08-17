@@ -223,3 +223,16 @@ picked up issue-11's 3-arg `elapsed` signature too, so the branch total of
 36/36 became the shared post-merge regression baseline once combined with
 issue-11/issue-8's later merges — see the 43/43 figure above, which is the
 current number as of this file's last edit.)
+
+**Regression baseline updated (issue #14, CORE-208, 2026-08-16):**
+36/36 — Math instructions (`ADD`/`SUB`/`MUL`/`DIV`) landed with 9 new
+tests in `MathInstructionTests.cs` (27 prior + 9 = 36). Fault-flag
+pattern for defined runtime errors (DIV-by-zero) confirmed working
+exactly as SDD's "Error handling" standard describes: new `Tag.Fault`
+(nullable string) is set instead of throwing, destination's last good
+`Value` is preserved, `Evaluate` returns `rungState` unchanged so a
+faulted rung doesn't break power flow or crash the scan. This is the
+first RTVM item to actually exercise that fault-flag mechanism
+end-to-end — worth checking for consistent fault-flag usage (same
+clear-on-next-success semantics) if/when other instructions that can
+have defined runtime errors land later.
