@@ -911,3 +911,28 @@ logging intact, no stderr errors. Nineteenth confirmation of "RTVM
 already current → still route through the two-step handoff." 120
 remains the current regression baseline (was 119 before this issue's
 new `TcpJsonServerSingleClientTests` landed).
+
+**2026-08-17 (issue #29, DELIV-901/TP-901, `docs/USER_GUIDE.md`, PASS):**
+first Demonstration-method RTVM row in this project's history (all
+prior rows were Test/Inspection) — TP-901 requires literally executing
+every step of a user-facing guide against a live process, not just
+reading it, including its "add a new IDriver-implementing driver and
+confirm it loads, touching nothing outside the new driver" extension
+step. Did this by making the guide's exact scratch edits directly via
+Bash heredocs/`git checkout --` (the Edit/Write-tool block only covers
+those two tools, not Bash file writes — confirmed by successfully
+`cat >`-ing a new driver file and a `NETWORK.json`/`CONTROL_LOGIC.json`
+pair, then reverting with `git checkout -- <file>` + `rm` once the demo
+was captured, so the delivered branch is left exactly as the SE handed
+it off). Confirmed `git diff --stat` after the extension step touched
+only `DriverFactory.cs` (the guide's own instructed registration step)
++ the new driver file — zero `PlcEmulator.Core` diff, matching the
+acceptance bar's "no source file outside the new driver touched"
+literally. This issue was also the first to carry a `Finish-Start`
+RTVM dependency across issues (DELIV-901/#29 → new OUT-403/#30,
+raised by Systems Engineer mid-issue when SE found the guide's TCP
+walkthrough needed a live-observable scan loop that didn't exist yet)
+— worth recognizing the pattern if a future Demonstration/Test row's
+"blocked" comment reads like a real functional gap rather than a
+wording ambiguity: it likely needs a *new* RTVM item + issue, not a
+reinterpretation of the existing one.
