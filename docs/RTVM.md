@@ -157,6 +157,39 @@ client's intent differs:
   deleted file; not acted on. Flag to Product Manager/client for
   clarification if a literal `windows-verification.yml` is actually
   wanted.
+- **OUT-403 added (issue #29, 2026-08-17).** While verifying DELIV-901's
+  guide against a live `plcemu` process (not a test harness), Software
+  Engineer found there is no free-running background scan loop
+  anywhere in the Host: `Program.cs` starts `TcpJsonServer` and then
+  blocks forever (`Thread.Sleep(Timeout.Infinite)`); nothing ever
+  calls `PlcController.RunScan()` on its own. A `tag_write` is queued
+  correctly but never applied/broadcast in a live process — this had
+  been flagged three times before (issues #21, #22, #23) as "not
+  blocking, no owning RTVM item," because every test procedure through
+  OUT-402 explicitly drove `RunScan()` itself the same way the unit
+  tests do. TP-901 is the first procedure that requires a genuinely
+  live demonstration, so the gap is no longer harmless.
+  Resolving this as a plain requirements gap, not a scope question for
+  the Solutions Architect, because scope was already decided:
+  `docs/PROJECT_DEFINITION.md`'s MVP definition explicitly requires
+  the TCP/JSON interface to "exchange I/O state in real time," and
+  `docs/SDD.md`'s own ICD already documents `tag_update` being sent
+  "again after every scan cycle completes" — i.e. a continuous loop was
+  always the intended design, just never wired up in `Program.cs`. The
+  cadence question SE also raised is likewise already answered by
+  existing SDD text: CORE-203/204's `.ACC` timing was deliberately
+  built around the Scan Engine measuring its own elapsed wall-clock
+  time *because* "v1.0 does not define a fixed scan period" — so the
+  new loop is free-running (calls `RunScan()` back-to-back, no
+  artificial delay/sleep between scans, matching how a real PLC scans
+  as fast as it can), not a new cadence policy invented here. Added
+  **OUT-403** (new RTVM item, `docs/SDD.md` Architecture section
+  updated to name Host as the owner of this loop — not `TcpJsonServer`,
+  correcting a misleading comment in `Program.cs` that implied
+  otherwise) with **TP-403**. DELIV-901 (#29) depends on it
+  (Finish-Start) since TP-901 step 4 cannot be demonstrated against a
+  live process until it lands; tracked as a separate issue (#30) rather
+  than folded into #29 so each commit still traces to one RTVM ID.
 
 ## Requirements
 
@@ -184,6 +217,7 @@ client's intent differs:
 | OUT-400 | Server exposes a TCP listener on an operator-configurable port implementing a custom JSON protocol; exactly one external simulation client may be connected and read current tag state in real time (v1.0 single-client constraint). | SN-1, SN-3 | Test | Verified | 40fa9203139cc380aec7abe685de900e11acec19 |
 | OUT-401 | Server accepts JSON write messages from the connected simulation client to set input tag values (e.g. simulated sensor states); writes are applied to the internal model and take effect on the next scan cycle. | SN-1, SN-3 | Test | Verified | `861395d` |
 | OUT-402 | Server detects simulation-client disconnect, logs the event (per UI-002's diagnostics), and continues running/accepting a new connection without crashing or requiring a restart. | SN-1 | Test | Verified | `e200537` |
+| OUT-403 | Host process runs a continuous, free-running background scan loop once startup succeeds: repeatedly invokes `PlcController.RunScan()` back-to-back with no fixed/idealized scan period (consistent with CORE-203/204's own elapsed-time design — see SDD Architecture) and broadcasts a `tag_update` snapshot (DATA-OUT-301) after each scan completes, so a live `plcemu` process actually exhibits the "real time" I/O exchange described in `docs/PROJECT_DEFINITION.md`'s MVP definition and `docs/SDD.md`'s ICD (`tag_update` sent "again after every scan cycle completes") — not only the externally/test-harness-driven scans OUT-400/OUT-401 were verified against. | SN-1, SN-3 | Test | Approved | |
 | NFR-500 | Architecture supports holding multiple distinct, independently-stated NETWORK/CONTROL_LOGIC configurations in memory at once (each with isolated tag/runtime state), even though v1.0 only wires up and tests one PLC instance + one simulation client end-to-end. This is an architectural constraint on the SDD, not a v1.0 runtime feature. | SN-1 | Inspection | Verified | `5df0234` |
 | NFR-501 | Server builds and runs identically on Windows and Linux from the same C#/.NET codebase, with no OS-specific code path left unabstracted. | SN-1, SN-5 | Test | Verified | CI run `31997343615`; merge `03970cd` |
 | NFR-502 | Third-party dependencies are avoided by default; any dependency adopted is referenced only from behind an internal interface/wrapper, never directly from core logic, so it can be swapped later. | SN-5 | Inspection | Verified | `d312747` |
@@ -222,6 +256,7 @@ client's intent differs:
 | TP-400 | OUT-400 | Server started with `--port 5050`. | Connect a TCP client to port 5050, send a read request; then attempt a second concurrent client connection. | First client receives current tag snapshot (per TP-301). Second connection is rejected/refused per the v1.0 single-client constraint. |
 | TP-401 | OUT-401 | Server running with rung from TP-200 (`XIC(A) OTE(B)`, renamed `A=Start_PB`, `B=Motor_Run`). | Connected client sends `{"type":"tag_write","tags":{"Start_PB":true}}`. | Next scan cycle: `Start_PB=true`, `Motor_Run=true`. |
 | TP-402 | OUT-402 | Server running with 1 connected client. | Client disconnects (TCP FIN). Wait, then connect a new client. | Startup/runtime log records the disconnect event; server keeps running scan cycles; new client connection succeeds without a restart. |
+| TP-403 | OUT-403 | `plcemu` launched as a real, standalone process (not a unit-test harness) with the rung from TP-200 (`XIC(Start_PB) OTE(Motor_Run)`), default initial values (`Start_PB=false`, `Motor_Run=false`). | Connect a TCP/JSON client and, without issuing any explicit "run a scan" command or any other message, observe messages received for 2 seconds; then send `{"type":"tag_write","tags":{"Start_PB":true}}` and continue observing for up to 2 more seconds, issuing no further messages. | At least one unsolicited `tag_update` arrives during the first observation window (proves the loop free-runs even with no writes pending). Within 2 seconds of the `tag_write`, a `tag_update` arrives showing `Start_PB=true, Motor_Run=true` with no `read_request` or other manual trigger sent — proves the write is picked up and broadcast by the background loop on its own. |
 | TP-500 | NFR-500 | N/A (design review). | Inspect SDD architecture and controller/network state classes; instantiate two independent controller/network objects with distinct CONTROL_LOGIC/NETWORK configs in the same process (unit test). | No shared mutable/static state between the two instances; each holds and scans its own tag/runtime state independently. |
 | TP-501 | NFR-501 | Scan-cycle scenario from TP-200. | Run once, as part of the late-stage consolidation pass alongside TP-900 (not per-feature during development — see SDD's "Target-platform verification strategy"): build and run on a `windows-latest` CI runner and a `ubuntu-latest` CI runner (e.g. `docs/ci/build-and-test.yml`, promoted to `.github/workflows/` at consolidation time). | Identical output on both platforms. |
 | TP-502 | NFR-502 | N/A (design review). | Review `.csproj`/package references; confirm any third-party package is only referenced from a wrapper/interface class. | No direct third-party API usage from core logic classes. |

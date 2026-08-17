@@ -88,6 +88,19 @@ priority order, not a strict serial gate.
     set it describes (#2–#22) is already stable well before this
     point, so no additional Start-Start dependency is needed beyond
     the transitive one through #23.
+25. **[OUT-403] Background scan loop** — added 2026-08-17 (issue #30),
+    discovered while verifying #24: OUT-400/401's live process never
+    actually calls `RunScan()` on its own, only a test harness does.
+    Belongs technically back at #18's dependency depth (only needs
+    #16's listener + #17's write queue), but was never separately
+    specced because every test procedure through #18 was satisfied by
+    an explicitly-driven scan. Sequenced here because that's when it
+    was found, not because it has a late technical dependency — #24
+    (issue #29) now has a Finish-Start dependency on this item, since
+    TP-901 needs a live-observable effect this item provides.
+    `docs/PROJECT_DEFINITION.md`'s MVP definition and `docs/SDD.md`'s
+    ICD already implied this loop; it was simply never wired up in
+    `Program.cs`.
 
 ## Sequence Diagram
 
@@ -123,4 +136,7 @@ graph TD
     NFR502 --> DELIV900
     NFR503 --> DELIV900
     DELIV900 --> DELIV901["DELIV-901<br/>User quick-start guide"]
+    OUT400 --> OUT403["OUT-403<br/>Background scan loop"]
+    OUT401 --> OUT403
+    OUT403 --> DELIV901
 ```

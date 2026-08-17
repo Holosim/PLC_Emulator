@@ -23,6 +23,17 @@ one.
   controller, and starts both. Owns startup diagnostics (UI-002) and
   fail-fast error handling (UI-003) — nothing below the Host swallows
   a load error into a partially-started state.
+  **Added 2026-08-17 (OUT-403, issue #29/#30):** Host also owns the
+  free-running background scan loop — after `TcpJsonServer.Start()`
+  succeeds, Host repeatedly calls `controller.RunScan()` back-to-back
+  (no artificial delay, consistent with the Scan Engine's own
+  elapsed-time design below) and calls `server.Broadcast(controller.GetSnapshot())`
+  after each scan, instead of just blocking forever. This lives on the
+  Host, not on `TcpJsonServer` — the server's job is the client
+  protocol/connection lifecycle, not deciding when a scan runs. (An
+  earlier `Program.cs` comment claimed this loop belonged to
+  `TcpJsonServer`; that was never actually implemented anywhere and is
+  corrected by this note.)
 - **Config Loader / Validator.** Parses CONTROL_LOGIC and NETWORK JSON
   into immutable definition objects (`ControlLogicDef`, `NetworkDef`),
   including cross-file validation (DATA-IN-103). Produces either a
