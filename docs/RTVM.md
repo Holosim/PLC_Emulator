@@ -133,7 +133,7 @@ client's intent differs:
 | NFR-500 | Architecture supports holding multiple distinct, independently-stated NETWORK/CONTROL_LOGIC configurations in memory at once (each with isolated tag/runtime state), even though v1.0 only wires up and tests one PLC instance + one simulation client end-to-end. This is an architectural constraint on the SDD, not a v1.0 runtime feature. | SN-1 | Inspection | Verified | `5df0234` |
 | NFR-501 | Server builds and runs identically on Windows and Linux from the same C#/.NET codebase, with no OS-specific code path left unabstracted. | SN-1, SN-5 | Test | Verified | CI run `31997343615`; merge `03970cd` |
 | NFR-502 | Third-party dependencies are avoided by default; any dependency adopted is referenced only from behind an internal interface/wrapper, never directly from core logic, so it can be swapped later. | SN-5 | Inspection | Verified | `d312747` |
-| NFR-503 | Server does not persist runtime tag/controller state across restarts; each launch (re)loads CONTROL_LOGIC/NETWORK definitions fresh and runs in-memory only. | SN-1 | Test | In Test | |
+| NFR-503 | Server does not persist runtime tag/controller state across restarts; each launch (re)loads CONTROL_LOGIC/NETWORK definitions fresh and runs in-memory only. | SN-1 | Test | Verified | `9567727` |
 | DELIV-900 | As a late-stage v1.0 task, the codebase is organized/refactored to compile as a Microsoft Visual Studio solution (`.sln`) with appropriate project files, so the client's engineering team can open and extend it directly in Visual Studio. | SN-5 | Inspection | Approved | |
 
 ## Test Procedures
