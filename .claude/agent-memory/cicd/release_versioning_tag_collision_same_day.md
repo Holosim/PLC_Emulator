@@ -148,6 +148,29 @@ shallowness before trusting `git log --reverse` for the BUILD-number
 date — a shallow clone's "first" visible commit is not the repo's
 actual first commit and will silently under- or over-count days.**
 
+**Eleventh occurrence (issue #22/OUT-402, 2026-08-17, merge `e200537`):**
+same result — `v1.0.2` ancestor-confirmed (`git merge-base --is-ancestor
+v1.0.2 HEAD`), skipped re-tag, cited merge SHA in hand-off. Single
+`git push origin main` succeeded first try, no concurrent-push
+rejection, no merge conflicts (clean `--no-ff` merge of a branch that
+only touched `TcpJsonServer.cs` plus memory files — same shape as
+issue #20's OUT-400 predecessor it built on). `type:requirement`
+issues #21, #24, #26, #27 still open — no release trigger. Also
+reconfirms the [[second-ready-for-commit-no-new-merge]] hand-off-label
+convention: when RTVM is already `Verified` via SE's fast-path direct
+commit *and* CI/CD still had a real, non-empty branch to merge, the
+correct hand-back label is **`status:none`** (not
+`status:ready-for-rtvm-update`) — that label is reserved for
+"test just passed, RTVM needs updating," which had already happened
+here. I initially posted the hand-off comment with
+`status:ready-for-rtvm-update` by mistake, caught it against issue
+#20's precedent before setting labels, and edited the comment via
+`gh api .../comments/<id> -X PATCH` before running the label commands.
+Worth checking precedent on a sibling issue's comment thread
+(`gh issue view <N> --comments | grep -A5 "Next:"`) before picking a
+`status:*` label for a hand-off shape that isn't explicitly named in
+`.github/AGENT_LABELS.md`.
+
 **Tenth occurrence (issue #20/OUT-400, 2026-08-17, merge `40fa920`):**
 same result — `v1.0.2` ancestor-confirmed (`git merge-base
 --is-ancestor v1.0.2 origin/main`), skipped re-tag, cited merge SHA in
