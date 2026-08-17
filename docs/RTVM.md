@@ -87,14 +87,25 @@ client's intent differs:
   identically to CORE-208's `ADD`/`SUB`/`MUL`/`DIV` operand resolution
   (same tag-or-literal operand shape) — no separate confirmation
   needed when CORE-208 is implemented.
+- **UI-001/UI-003 CLI wiring (issue #16).** `--port` is an optional
+  CLI argument defaulting to `5000` when omitted (consistent with the
+  existing "TCP port" assumption above — operator-configurable, not
+  hardcoded); TP-001's example command omits `--port` entirely so a
+  default was needed for the happy path to make sense. UI-001/UI-003
+  are marked Verified on the strength of TP-002/TP-004 (fully passing,
+  no caveats) and the argument-parsing/load/validate portion of
+  TP-001; TP-001's final clause ("begins listening on the configured
+  TCP port") cannot be exercised until `TcpJsonServer.Start` has a
+  real implementation (OUT-400, issue #20, which correctly declares
+  `Finish-Start: #16`) — re-verify that clause once #20 lands.
 
 ## Requirements
 
 | Req ID | Requirement | Stakeholder Need(s) | Verification Method | Status | Commit(s) |
 | --- | --- | --- | --- | --- | --- |
-| UI-001 | CLI server accepts startup arguments specifying the path to a CONTROL_LOGIC JSON file and a NETWORK JSON file, and loads both before beginning execution. | SN-1, SN-2 | Test | Approved | |
+| UI-001 | CLI server accepts startup arguments specifying the path to a CONTROL_LOGIC JSON file and a NETWORK JSON file, and loads both before beginning execution. | SN-1, SN-2 | Test | Verified | |
 | UI-002 | CLI server prints structured startup diagnostics to console/log: number of tags loaded, number of network components loaded, and a per-tag/per-component summary. | SN-2 | Test | Approved | |
-| UI-003 | CLI server fails fast on invalid startup input: if required arguments are missing, or a CONTROL_LOGIC/NETWORK file is malformed JSON or fails schema/cross-reference validation, the process exits with a non-zero code and a descriptive error identifying the file and problem, without starting the TCP listener. | SN-2 | Test | Approved | |
+| UI-003 | CLI server fails fast on invalid startup input: if required arguments are missing, or a CONTROL_LOGIC/NETWORK file is malformed JSON or fails schema/cross-reference validation, the process exits with a non-zero code and a descriptive error identifying the file and problem, without starting the TCP listener. | SN-2 | Test | Verified | |
 | DATA-IN-100 | CONTROL_LOGIC JSON schema defines a tag-based data model: named tags with a type (`BOOL`, `DINT`, `REAL`) and initial value, plus structured tag types for timers (`.PRE`, `.ACC`, `.DN`, `.EN`) and counters (`.PRE`, `.ACC`, `.DN`). | SN-1, SN-3 | Test | Verified | b0ebb72 |
 | DATA-IN-101 | CONTROL_LOGIC JSON schema defines ladder rungs as an ordered list of instructions drawn from the MVP instruction set: contacts (`XIC`, `XIO`), coil (`OTE`), timers (`TON`, `TOF`), counters (`CTU`, `CTD`, `RES`), compare (`EQU`, `NEQ`, `GRT`, `LES`, `GEQ`, `LEQ`), and math (`ADD`, `SUB`, `MUL`, `DIV`). | SN-1 | Test | Verified | b0ebb72 |
 | DATA-IN-102 | NETWORK JSON schema defines a set of control-network components (e.g. relay, discrete sensor), each with a name, a driver-type reference, and a binding to one or more CONTROL_LOGIC tags — with no PLC logic embedded in the network definition itself. | SN-3, SN-4 | Test | Verified | 5e2402a |
