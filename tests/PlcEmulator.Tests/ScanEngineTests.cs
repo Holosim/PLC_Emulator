@@ -30,7 +30,7 @@ public sealed class ScanEngineTests
 
         public string Mnemonic => "TEST_READ";
 
-        public bool Evaluate(TagTable tags, bool rungState) => rungState && (bool)tags.Get(_tagName).Value!;
+        public bool Evaluate(TagTable tags, bool rungState, TimeSpan elapsed) => rungState && (bool)tags.Get(_tagName).Value!;
     }
 
     /// <summary>Action-type stand-in for a coil: writes a BOOL tag to the incoming rung state, unchanged pass-through.</summary>
@@ -42,7 +42,7 @@ public sealed class ScanEngineTests
 
         public string Mnemonic => "TEST_WRITE";
 
-        public bool Evaluate(TagTable tags, bool rungState)
+        public bool Evaluate(TagTable tags, bool rungState, TimeSpan elapsed)
         {
             tags.Set(_tagName, rungState);
             return rungState;
@@ -63,7 +63,7 @@ public sealed class ScanEngineTests
 
         public string Mnemonic => "TEST_RECORD";
 
-        public bool Evaluate(TagTable tags, bool rungState)
+        public bool Evaluate(TagTable tags, bool rungState, TimeSpan elapsed)
         {
             _log.Add(_label);
             return rungState;
