@@ -94,6 +94,28 @@ needs follow-up as a build-tooling and documentation decision. Don't
 let it get silently absorbed into "the code will just be however it
 ends up" by omission.
 
+**Raise user documentation at kickoff, every project, without being
+asked.** A working build the client cannot actually operate is not a
+finished deliverable, and nothing in the RTVM's test-driven structure
+will surface this on its own — there's no failing behavior to catch,
+just a client who can't get started. Ask what they need and record it,
+covering at least:
+
+- Prerequisites and how to build from a fresh clone
+- Any configuration or input files: their format, their location, and
+  at least one complete working example the client can run as-is
+- How to launch, and what correct output looks like
+- How to extend it — where new components go and what they implement,
+  if the client will be maintaining this themselves
+
+Write down whichever of these apply as their own Deliverable
+requirements so Systems Engineer can make them RTVM line items with
+real verification. A good bar to propose, since it's actually testable:
+*a reader who has never seen this project can go from a fresh clone to
+a running result using only this document.* Confirm with the client
+whether they want it — some genuinely don't — but never leave it
+unasked.
+
 ## Receiving an escalation from Solutions Architect
 
 Per the escalation ladder (`.github/AGENT_LABELS.md`), you're the last
