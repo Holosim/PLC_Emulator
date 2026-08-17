@@ -204,6 +204,14 @@ client's intent differs:
   `IDriver` extension) against a fresh checkout — PASS, no
   discrepancies, 120/120 unit tests green, no regressions. DELIV-901
   flipped `Approved` → `Verified`.
+- **DELIV-901 merged to `main` (issue #29, 2026-08-17).** CI/CD merged
+  branch `issue-29` clean (`--no-ff`, no conflicts) as `8b4c69c`;
+  post-merge rebuild/retest confirmed (0 warnings/errors, 120/120
+  unit tests). Commit(s) column above recorded (`8e1ccf0` RTVM update,
+  `8b4c69c` merge). This merge completes the RTVM: every row from UI
+  through DELIV-901 is now `Verified` — CI/CD cut release
+  **v1.0.378** ("PLC Emulator v1.0 — Complete"). Regression testing
+  required per CI/CD (trunk merge); handed to Test Engineer.
 
 ## Requirements
 
@@ -237,7 +245,7 @@ client's intent differs:
 | NFR-502 | Third-party dependencies are avoided by default; any dependency adopted is referenced only from behind an internal interface/wrapper, never directly from core logic, so it can be swapped later. | SN-5 | Inspection | Verified | `d312747` |
 | NFR-503 | Server does not persist runtime tag/controller state across restarts; each launch (re)loads CONTROL_LOGIC/NETWORK definitions fresh and runs in-memory only. | SN-1 | Test | Verified | `9567727` |
 | DELIV-900 | As a late-stage v1.0 task, the codebase is organized/refactored to compile as a Microsoft Visual Studio solution (`.sln`) with appropriate project files, so the client's engineering team can open and extend it directly in Visual Studio — **including on a workstation whose installed .NET SDKs are all newer than `global.json`'s pinned floor** (no exact-version match required; a fresh clone must not require installing an old SDK side by side just to build). | SN-5 | Inspection | Verified | `ecbc190`, `98c6485` (rollForward fix), `5f4c5d6` (merge) |
-| DELIV-901 | As a late-stage v1.0 task (after DELIV-900), deliver a user quick-start guide at `docs/USER_GUIDE.md` covering: (1) an outline of all projects in the Visual Studio solution — what each does and how it fits together; (2) the CONTROL_LOGIC and NETWORK JSON config formats, including a complete working example with real file paths the reader can copy and run immediately; (3) how to launch the emulator (CLI args, startup diagnostics, TCP/JSON connection) and what to expect; (4) how to author ladder logic and map a component network using the documented schemas; (5) how to extend the system — where a new driver goes, what interface (`IDriver`) it implements, and the minimal steps to register it. Acceptance bar: a reader who has never seen this project can go from `git clone` to a running simulation using only this document and the delivered solution files, no tribal knowledge, no reading source first. | SN-2, SN-4, SN-5 | Demonstration | Verified | |
+| DELIV-901 | As a late-stage v1.0 task (after DELIV-900), deliver a user quick-start guide at `docs/USER_GUIDE.md` covering: (1) an outline of all projects in the Visual Studio solution — what each does and how it fits together; (2) the CONTROL_LOGIC and NETWORK JSON config formats, including a complete working example with real file paths the reader can copy and run immediately; (3) how to launch the emulator (CLI args, startup diagnostics, TCP/JSON connection) and what to expect; (4) how to author ladder logic and map a component network using the documented schemas; (5) how to extend the system — where a new driver goes, what interface (`IDriver`) it implements, and the minimal steps to register it. Acceptance bar: a reader who has never seen this project can go from `git clone` to a running simulation using only this document and the delivered solution files, no tribal knowledge, no reading source first. | SN-2, SN-4, SN-5 | Demonstration | Verified | `8e1ccf0`, `8b4c69c` (merge) |
 
 ## Test Procedures
 
