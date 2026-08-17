@@ -130,3 +130,22 @@ fix, not grounds to withhold a pass. Example: issue #9 extended
 rungState)` for rung power-flow threading; `docs/SDD.md` line ~168
 still shows the old signature as of 2026-08-16 and needs updating by
 Systems Engineer.
+
+**CORE-209 (issue #15, 2026-08-17) — driver architecture, PASS, 42/42
+(27 baseline + 10 `DriverFactoryTests` + 5 `PlcControllerDriverTests`).**
+Confirmed by diffing `main..issue-15` that neither `ScanEngine.cs` nor
+anything under `src/PlcEmulator.Core/Instructions/` changed — that's
+the concrete way to verify TP-209's "no changes to core scan/
+instruction code" clause, don't just trust the SE's description of it.
+Repo had several parallel feature branches open at once (issue-10
+through issue-18 all existed simultaneously) — a feature branch's
+`docs/RTVM.md` can legitimately show *older* statuses (`Approved`
+instead of `Verified`) on rows unrelated to the issue at hand, because
+other issues finished and merged to `main` after this branch was cut.
+That's normal multi-branch divergence, not a regression to flag as a
+failure — just note it for the merge step and move on. Also reconfirms
+the "test-local `IDriver`/`IInstruction` stub instead of the real
+built-in implementation" pattern (first seen issue #9) is the right
+way to prove an architectural/wiring requirement (TP-200-class,
+TP-209) independent of whichever concrete feature isn't the point of
+that specific test.
