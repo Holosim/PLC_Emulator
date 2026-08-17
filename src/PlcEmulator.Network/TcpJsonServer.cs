@@ -24,10 +24,18 @@ public sealed class TcpJsonServer
         throw new NotImplementedException("TcpJsonServer.Start is scaffolding only.");
     }
 
-    /// <summary>Broadcasts a <c>tag_update</c> message to the connected client (DATA-OUT-301).</summary>
+    /// <summary>
+    /// Broadcasts a <c>tag_update</c> message to the connected client.
+    /// The message text itself is fully implemented
+    /// (<see cref="TagUpdateSerializer.Serialize"/>, DATA-OUT-301) —
+    /// what remains scaffolding here is writing that text to an
+    /// actual connected socket, which depends on the listener/
+    /// connection state OUT-400 (issue #20) still needs to add.
+    /// </summary>
     public void Broadcast(TagSnapshot snapshot)
     {
-        throw new NotImplementedException("TcpJsonServer.Broadcast is scaffolding only.");
+        _ = TagUpdateSerializer.Serialize(snapshot);
+        throw new NotImplementedException("TcpJsonServer.Broadcast cannot transmit yet — no connected-client socket until OUT-400 (issue #20) lands.");
     }
 
     /// <summary>

@@ -483,6 +483,24 @@ seeding `TagTable` directly) is available whenever someone picks it up
 comment rather than a required fix, since it doesn't affect the pass
 verdict.
 
+**DATA-OUT-301 (issue #19, `TagUpdateSerializer`, 2026-08-17) — PASS,
+105/105 (101 baseline + 4 new `TagUpdateSerializerTests`).** Another
+clean serialize-vs-transmit scope split, same shape as DATA-OUT-300/
+OUT-400: `TagUpdateSerializer.Serialize(TagSnapshot)` fully implements
+TP-301's exact wire-format match (`System.Text.Json` + camelCase
+naming policy over a PascalCase DTO — no per-property attributes
+needed), and `TcpJsonServer.Broadcast` now calls the serializer before
+its still-`NotImplementedException` stub, correctly deferring actual
+socket transmission to OUT-400 (issue #20, on-hold, dependency
+declared on its own issue). Verified the RTVM row's literal expected
+JSON string reproduced exactly, REAL→JSON-number typing, timer/counter
+exclusion (inherited from DATA-OUT-300), and an empty-snapshot edge
+case. `grep -c "\[TestMethod\]"` under-counts total tests by 3 here
+too (102 vs. actual 105) — same `[DataRow]`-parameterization gap noted
+for `XicXioOteTests.cs` on earlier issues; always trust `dotnet test`'s
+own summary line over the grep count. 105 is now the current
+regression baseline.
+
 **NFR-502 (issue #25, dependency-policy review, 2026-08-17) — first
 pure design-review/Inspection TP with zero source diff.** SE's branch
 `issue-25` had no code changes at all (just an SE-memory note about
