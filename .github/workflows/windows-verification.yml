@@ -101,6 +101,32 @@ jobs:
           "`n" | Out-File -Append $env:GITHUB_STEP_SUMMARY
           $lines -join "`n" | Out-File evidence/machine.md
 
+      - name: Client parity — does global.json resolve without provisioning?
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          # Runs BEFORE setup-dotnet on purpose. Every later step builds
+          # against an SDK this workflow installed for itself, which a client
+          # machine cannot do -- so those steps can never catch a global.json
+          # pin the client has no way to satisfy. This step is the only one
+          # that sees the same situation a client does: whatever SDKs happen
+          # to be present, and no ability to add one.
+          New-Item -ItemType Directory -Force -Path evidence | Out-Null
+          "SDKs available with no provisioning:" | Tee-Object evidence/client-parity.txt
+          dotnet --list-sdks | Tee-Object -Append evidence/client-parity.txt
+          if (Test-Path global.json) {
+            Get-Content global.json | Tee-Object -Append evidence/client-parity.txt
+            $v = dotnet --version 2>&1
+            "resolved SDK: $v" | Tee-Object -Append evidence/client-parity.txt
+            if ($LASTEXITCODE -ne 0) {
+              "FAIL: global.json does not resolve against preinstalled SDKs. A client with only these SDKs cannot build this solution." |
+                Tee-Object -Append evidence/client-parity.txt
+            } else {
+              "OK: global.json resolves without provisioning." |
+                Tee-Object -Append evidence/client-parity.txt
+            }
+          }
+
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
@@ -207,6 +233,7 @@ jobs:
         shell: pwsh
         run: |
           $rows = @(
+            @{ n = "Client parity (no provisioning)"; ok = (Test-Path evidence/client-parity.txt) },
             @{ n = "Build (Release)";           ok = (Test-Path evidence/build-release.log) },
             @{ n = "Tests on Windows";          ok = (Test-Path evidence/tests-windows.trx) },
             @{ n = "Publish + launch";          ok = (Test-Path evidence/publish-result.txt) },
