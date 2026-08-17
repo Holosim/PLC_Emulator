@@ -69,6 +69,16 @@ progress. Confirms this is now the steady-state shape for any day with
 several sibling `type:requirement` branches landing — not worth
 re-deriving each time.
 
+**Seventh occurrence (issue #18/DATA-OUT-300, 2026-08-17, merge
+`77336c5`, substantive content merge `127c472`):** same result again —
+`v1.0.2` ancestor-confirmed (`git merge-base --is-ancestor v1.0.2
+HEAD`), skipped re-tag, cited the merge SHA in the hand-off comment.
+This merge needed two rounds: `git push origin main` was rejected once
+mid-merge by a concurrent sibling push (issue #10/#15 closeout notes),
+requiring a second fetch+merge+rebuild+retest+push pass — see
+[[concurrent-cicd-runs-same-day]]. `type:requirement` issues #17,
+#19-27 all still open, so still nowhere near a release trigger.
+
 **Sixth occurrence (issue #16/UI-001/UI-003, 2026-08-17, merge
 `fa26c47`):** same result — session started from a **shallow clone**
 (`git rev-parse --is-shallow-repository` → `true`, only 7 commits

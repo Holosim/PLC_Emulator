@@ -88,6 +88,26 @@ out the #14 note's prediction: check `IInstruction.Evaluate`'s call
 sites first thing on every remaining pre-#11-cut instruction-set
 branch (#12/#15/#18 etc.).
 
+**2026-08-17, issue #18 (DATA-OUT-300) merge to `main` — sixth
+occurrence, a different call site this time:** not the `elapsed`
+signature (issue-18 doesn't touch `IInstruction`) but the same shape
+of bug via `PlcController`'s constructor — CORE-209 (issue #15, driver
+architecture) added a required third `DriverResolver driverFactory`
+param to `PlcController(...)` on `main` after `issue-18`'s branch was
+cut. `PlcControllerSnapshotTests.cs` (brand-new file, `issue-18`-side
+only, zero conflict markers — `docs/RTVM.md` and a memory file were
+the only things that actually conflicted) still called the old 2-arg
+ctor and wouldn't compile. Fixed by adopting the same no-op-resolver
+lambda pattern already established in `ScanEngineTests.cs`
+(`static driverType => throw new InvalidOperationException(...)`,
+since no NETWORK components are configured in these tests). Confirms
+the lesson generalizes beyond `IInstruction.Evaluate` specifically:
+**any** required-parameter/constructor-signature change landed by a
+sibling branch that merged first can silently break a same-side-only
+new test file with zero conflict markers — always rebuild the whole
+merge, not just the files git flagged, regardless of which type/method
+changed.
+
 **2026-08-17, issue #12 (CORE-205/206, `Ctu`/`Ctd`/`Res`) merge —
 fifth occurrence, confirms the prediction:** also cut before issue
 #11's 3-arg signature landed. Real textual conflict in
