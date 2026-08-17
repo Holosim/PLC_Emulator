@@ -12,9 +12,10 @@
 
 ## Release & versioning
 
-- [Which versioning scheme is authoritative](release_versioning_scheme.md) — resolves cicd.md's two conflicting sections; v1.0.1 was PLC_Emulator's first tag.
-- [Same-day BUILD-number tag collision](release_versioning_tag_collision_same_day.md) — don't force-move an existing tag; verify ancestry and skip re-tagging if the day hasn't advanced.
+- [Which versioning scheme is authoritative](release_versioning_scheme.md) — RESOLVED 2026-08-17: cicd.md now has one section only; BUILD = `git rev-list --count HEAD` (jumped 2 → 339, expected).
+- [Same-day BUILD-number tag collision](release_versioning_tag_collision_same_day.md) — from the old date-based scheme; likely moot now BUILD is commit-count-based, but keep for history.
 - [First-ever GitHub Release, v1.0.2 (issue #27)](release_first_project_release_v1_0_2.md) — `gh release create` uses an already-existing tag's stale commit as-is (`--target` ignored); hand-write release notes from RTVM.md instead of `--generate-notes` when that happens.
+- [Post-release field defect reopens the same issue](post_release_field_defect_reopens_issue.md) — issue #27/DELIV-900 reopened after close+release for a client build defect; can trigger a legitimate second Release (v1.0.339) on the same requirement.
 
 ## Workflow patterns
 
