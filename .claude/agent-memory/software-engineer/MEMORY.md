@@ -23,6 +23,7 @@
 - [TCP listener single-client constraint](pattern_tcp_listener_single_client.md) — OUT-400 (issue #20): accept-then-close for the 2nd+ connection, `_clientLock`-guarded Broadcast/OnClientMessage, tag_write deliberately left throwing for OUT-401/#21, `socket.makefile()` FIN gotcha when manually testing
 - [Disconnect logging](pattern_disconnect_logging.md) — OUT-402 (issue #22): plcemu:-prefixed stdout line in TcpJsonServer.HandleClient's finally, remote endpoint captured before the socket can be disposed; closed the exact gap #20 flagged, TP-402 manually verified end-to-end
 - [Tag-write queue / GetTagType conversion split](pattern_tag_write_queue.md) — OUT-401 (issue #21): QueueWrite validation, Network-owns-JSON-conversion/Core-stays-JSON-free split, socket-test ordering-barrier trick, and the "no free-running scan loop anywhere in Host" gap flagged to Test Engineer
+- [NFR-501 consolidation review](pattern_nfr501_consolidation_review.md) — issue #24: clean OS-abstraction code review, but workflows-permission wall (see below) still blocks actually deploying/running the Windows CI matrix; handed to Test Engineer as ready-for-test, not needs-human
 
 ## Platform-specific notes
 
