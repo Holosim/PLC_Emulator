@@ -14,6 +14,7 @@
 
 - [Which versioning scheme is authoritative](release_versioning_scheme.md) — resolves cicd.md's two conflicting sections; v1.0.1 was PLC_Emulator's first tag.
 - [Same-day BUILD-number tag collision](release_versioning_tag_collision_same_day.md) — don't force-move an existing tag; verify ancestry and skip re-tagging if the day hasn't advanced.
+- [First-ever GitHub Release, v1.0.2 (issue #27)](release_first_project_release_v1_0_2.md) — `gh release create` uses an already-existing tag's stale commit as-is (`--target` ignored); hand-write release notes from RTVM.md instead of `--generate-notes` when that happens.
 
 ## Workflow patterns
 
