@@ -14,6 +14,7 @@
 - [Fault-flag mechanism](pattern_fault_flag.md) — `Tag.Fault` (nullable string), set/cleared by the instruction owning the destination tag, for CORE-208-class "defined runtime error, not a crash" requirements (issue #14)
 - [Driver resolution across Core/Drivers boundary](pattern_driver_resolution.md) — DriverResolver delegate in Core, DriverFactory impl in Drivers, Host wires them (CORE-209, issue #15)
 - [Counter edge-detection gap](pattern_counter_edge_detection.md) — CTU/CTD rising-edge state needed CounterState.Cu/Cd fields beyond the documented 3-field schema; flagged for SE sign-off (issue #12)
+- [Host CLI startup wiring](pattern_host_cli_startup.md) — Program.cs UI-001/003 implementation, default `--port 5000` assumption, and the known TcpJsonServer.Start (OUT-400/#20) stub gap that keeps TP-001 from fully passing yet (issue #16)
 
 ## Platform-specific notes
 

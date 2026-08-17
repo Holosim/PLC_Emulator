@@ -331,6 +331,29 @@ checklist (recount test total, diff-scope isn't meaningful here since
 it's trunk not a branch) still catches this correctly as long as you
 always recount live rather than trusting a quoted number.
 
+**UI-001/UI-003 (issue #16, Host/CLI startup wiring, 2026-08-17) — PASS,
+97/97 (baseline held, no new tests added).** First issue where the CLI
+entry point (`src/PlcEmulator.Host/Program.cs`) actually exists and can
+be process-tested directly (`dotnet run --project src/PlcEmulator.Host --
+...`), rather than only unit-testing `ConfigLoader`/`ConfigLoader.Validate`
+the way issue #8 (DATA-IN-103) had to. Verified TP-001/TP-002/TP-004 by
+launching the real process with fixture files (note: `CONTROL_LOGIC`
+tags need `initialValue` not `initial`, plus a `rungs: []` array, per
+`ControlLogicSchemaTests.cs`'s fixtures — worth checking an existing test
+file's fixture shape before hand-writing one from the RTVM prose alone).
+TP-001's final "begins listening on the configured TCP port" clause is a
+**legitimate, dependency-driven partial pass**: `TcpJsonServer.Start` is
+still a `NotImplementedException` stub, and its real implementation is
+scoped to issue #20 (OUT-400), which declares `Finish-Start: #16` (i.e.
+depends on #16, not the reverse) — confirmed by reading #20's own
+Dependencies section directly rather than trusting the SE's claim at face
+value. This is the same scoped-partial-pass shape as issues #8/#9 in this
+file, but the first time it showed up for a *process-level* TP (CLI exit
+code + stdout/stderr) rather than a unit-level one — same rule applies:
+check whether the still-missing piece is explicitly declared as a
+downstream issue's own scope (grep that issue's Dependencies section)
+before treating an incomplete TP clause as a failure.
+
 **CORE-209 (issue #15, 2026-08-17) — driver architecture, PASS, 42/42
 (27 baseline + 10 `DriverFactoryTests` + 5 `PlcControllerDriverTests`,
 on a branch cut before #8/#10/#11/#14 had merged, so its own "27
