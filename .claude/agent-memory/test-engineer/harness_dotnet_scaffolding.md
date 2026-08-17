@@ -779,3 +779,33 @@ worth doing personally even when the SE already did the same scan,
 since this is exactly the class of defect (environment-dependent,
 invisible in CI) that benefits most from a second, independently-built
 reproduction rather than re-running the same script the SE already ran.
+
+**Regression pass confirmed an eighteenth time (issue #27, DELIV-900
+field-defect fix, CI/CD-requested trunk regression after the second
+release, 2026-08-17):** same checklist against `main`@`ea2f6a7` (post
+`issue-27` field-defect merge `5f4c5d6`/v1.0.339, plus `8bbdab9`
+Commit(s)-column update and memory-only follow-ups) — 119/119
+(matches baseline, no drop), 0/0 build warnings/errors, `global.json`
+confirmed carrying the fix (`rollForward: latestMajor`) post-merge,
+NFR-502 clean, `.sln` structural spot-check clean (8 `Project(`
+entries: 2 solution-folders + 6 real, all resolve), `git status`
+clean, RTVM DELIV-900 row already `Verified` with the full commit
+chain (`ecbc190, 98c6485, 5f4c5d6`) recorded. Didn't re-run the
+isolated-single-SDK repro (TP-900 scenario b) in this pass — that was
+independently verified twice already (SE's fix commit + my own prior
+PASS) before the merge; a post-*merge* trunk regression pass's job is
+confirming the merge itself didn't reintroduce the defect or drop
+anything else, which build+test+git-status+RTVM-check covers. This is
+the pattern to follow for any future post-merge regression on a row
+whose TP already required a special (non-default-environment) repro
+during its own pre-merge verification: don't automatically re-run the
+special repro every single time downstream, just confirm the fix
+artifact (here, the one changed line) is actually present on `main`.
+Eighteenth confirmation of "RTVM already current → still route
+through the two-step handoff" — fully settled. 119 remains the
+current regression baseline. Also: this is the second release cut on
+this same issue thread (`v1.0.2` then `v1.0.339` after a post-release
+field defect and fix) — worth remembering that a RTVM row can regress
+from `Verified` back to `In Implementation` for a genuine client-found
+defect even after a full release, and the same issue number gets
+reopened/reused rather than a new issue being filed for the fix.
