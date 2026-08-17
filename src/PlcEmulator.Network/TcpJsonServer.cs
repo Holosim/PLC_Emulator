@@ -107,10 +107,11 @@ public sealed class TcpJsonServer
     /// <summary>
     /// Handles one decoded client message: answers a
     /// <c>read_request</c> immediately with the current snapshot, or
-    /// surfaces that a <c>tag_write</c> (OUT-401, issue #21) can't be
-    /// applied yet. Malformed JSON or an unrecognized <c>type</c> also
-    /// throws — callers (see <see cref="HandleClient"/>) catch per
-    /// message so one bad line never takes the listener down.
+    /// queues a <c>tag_write</c>'s tag values for the controller's next
+    /// scan (OUT-401). Malformed JSON, an unrecognized <c>type</c>, an
+    /// undefined tag name, or a value that doesn't match its tag's
+    /// declared type also throws — callers (see <see cref="HandleClient"/>)
+    /// catch per message so one bad line never takes the listener down.
     /// </summary>
     public void OnClientMessage(string rawJsonLine)
     {
@@ -126,7 +127,7 @@ public sealed class TcpJsonServer
 
         switch (type)
         {
-            case "read_request":
+            case MessageType.ReadRequest:
                 // A one-shot client explicitly asking for a snapshot
                 // outside the normal per-scan push (docs/SDD.md ICD) —
                 // answered with the same tag_update wire format
@@ -134,16 +135,73 @@ public sealed class TcpJsonServer
                 Broadcast(_controller.GetSnapshot());
                 break;
 
-            case "tag_write":
-                // Applying a tag_write is OUT-401's job (issue #21):
-                // PlcController.QueueWrite is still scaffolding there,
-                // so this deliberately surfaces the gap rather than
-                // silently dropping the client's write.
-                throw new NotImplementedException(
-                    "tag_write handling is scaffolding only until OUT-401 (issue #21) lands.");
+            case MessageType.TagWrite:
+                ApplyTagWrite(root);
+                break;
 
             default:
                 throw new FormatException($"Unrecognized client message type: '{type}'.");
+        }
+    }
+
+    /// <summary>
+    /// Extracts the <c>tags</c> object from a decoded <c>tag_write</c>
+    /// message and queues each entry on <see cref="PlcController.QueueWrite"/>
+    /// (OUT-401) — applied atomically at the start of the controller's
+    /// next scan, never here on the network thread (see docs/SDD.md,
+    /// Architecture / write path note). Each entry's JSON value is
+    /// converted to the CLR type matching its tag's declared
+    /// <see cref="TagType"/> (queried via <see cref="PlcController.GetTagType"/>),
+    /// the same tag-type-driven conversion <c>ConfigLoader.ParseInitialValue</c>
+    /// uses for CONTROL_LOGIC's <c>initialValue</c>. An undefined tag
+    /// name or a value that doesn't match the declared type throws,
+    /// which stops processing any remaining entries in the same message
+    /// — entries already queued before the failing one still apply at
+    /// the next scan; this is not treated as an all-or-nothing
+    /// transaction across one message.
+    /// </summary>
+    private void ApplyTagWrite(JsonElement root)
+    {
+        if (!root.TryGetProperty("tags", out var tagsElement) || tagsElement.ValueKind != JsonValueKind.Object)
+        {
+            throw new FormatException("Client 'tag_write' message is missing an object 'tags' field.");
+        }
+
+        foreach (var tagEntry in tagsElement.EnumerateObject())
+        {
+            var tagName = tagEntry.Name;
+            var tagType = _controller.GetTagType(tagName); // throws KeyNotFoundException for an undefined tag
+            var value = ConvertWriteValue(tagType, tagEntry.Value, tagName);
+            _controller.QueueWrite(tagName, value);
+        }
+    }
+
+    /// <summary>
+    /// Converts one <c>tag_write</c> entry's raw JSON value to the CLR
+    /// type (<c>bool</c>/<c>int</c>/<c>double</c>) matching
+    /// <paramref name="tagType"/>, per the ICD ("<c>tags</c> values are
+    /// JSON <c>bool</c> for <c>BOOL</c>, JSON <c>number</c> for
+    /// <c>DINT</c>/<c>REAL</c>"). Timer/Counter tags have no
+    /// externally-writable scalar value in v1.0.
+    /// </summary>
+    private static object ConvertWriteValue(TagType tagType, JsonElement value, string tagName)
+    {
+        try
+        {
+            return tagType switch
+            {
+                TagType.Bool => value.GetBoolean(),
+                TagType.Dint => value.GetInt32(),
+                TagType.Real => value.GetDouble(),
+                _ => throw new FormatException(
+                    $"Tag '{tagName}' is a {tagType} tag and has no externally-writable scalar value " +
+                    "(see docs/SDD.md ICD)."),
+            };
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new FormatException(
+                $"tag_write value for tag '{tagName}' does not match its declared type ({tagType}).", ex);
         }
     }
 

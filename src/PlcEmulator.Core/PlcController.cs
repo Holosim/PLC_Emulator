@@ -107,12 +107,55 @@ public sealed class PlcController
     }
 
     /// <summary>
+    /// Looks up a defined tag's declared type, so a caller outside this
+    /// controller (namely <c>PlcEmulator.Network.TcpJsonServer</c>) can
+    /// convert an incoming <c>tag_write</c> value (OUT-401) to the right
+    /// CLR type before calling <see cref="QueueWrite"/>, without needing
+    /// direct access to this controller's <see cref="TagTable"/>
+    /// (NFR-500 — no shared state, only a narrow read-only query).
+    /// </summary>
+    /// <exception cref="KeyNotFoundException">No tag named <paramref name="tagName"/> is defined.</exception>
+    public TagType GetTagType(string tagName) => _tags.Get(tagName).Type;
+
+    /// <summary>
     /// Queues an input tag write (OUT-401), applied atomically at the
     /// start of the next scan — never mid-scan, and never called
-    /// directly on <see cref="TagTable"/> from the network thread.
+    /// directly on <see cref="TagTable"/> from the network thread (see
+    /// docs/SDD.md, Architecture / write path note). <paramref name="value"/>
+    /// must already be the CLR type matching the tag's declared
+    /// <see cref="TagType"/> (<c>bool</c>/<c>int</c>/<c>double</c> for
+    /// <see cref="TagType.Bool"/>/<see cref="TagType.Dint"/>/
+    /// <see cref="TagType.Real"/> respectively) — callers coming from
+    /// JSON (e.g. the TCP/JSON server) convert using <see cref="GetTagType"/>
+    /// first, the same way <c>ConfigLoader.ParseInitialValue</c> converts
+    /// CONTROL_LOGIC's <c>initialValue</c>.
     /// </summary>
+    /// <exception cref="KeyNotFoundException">No tag named <paramref name="tagName"/> is defined.</exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="tagName"/> refers to a <see cref="TagType.Timer"/>/
+    /// <see cref="TagType.Counter"/> tag (no externally-writable scalar
+    /// value in v1.0 — see docs/SDD.md ICD), or <paramref name="value"/>'s
+    /// CLR type does not match the tag's declared type.
+    /// </exception>
     public void QueueWrite(string tagName, object value)
     {
-        throw new NotImplementedException("PlcController.QueueWrite is scaffolding only.");
+        var tag = _tags.Get(tagName);
+        var isValidValue = tag.Type switch
+        {
+            TagType.Bool => value is bool,
+            TagType.Dint => value is int,
+            TagType.Real => value is double,
+            _ => false,
+        };
+
+        if (!isValidValue)
+        {
+            throw new ArgumentException(
+                $"Tag '{tagName}' ({tag.Type}) cannot be written with a value of CLR type " +
+                $"'{value.GetType().Name}'.",
+                nameof(value));
+        }
+
+        _pendingWrites.Enqueue(tagName, value);
     }
 }
