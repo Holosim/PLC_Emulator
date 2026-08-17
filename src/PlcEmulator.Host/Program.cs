@@ -85,9 +85,9 @@ public static class Program
         // Startup load succeeded — only now do we stand up the network
         // layer. Any failure here is reported the same fail-fast way,
         // even though it is not itself a UI-003 config-validation error.
+        var server = new TcpJsonServer(controller);
         try
         {
-            var server = new TcpJsonServer(controller);
             server.Start(port);
         }
         catch (Exception ex)
@@ -98,13 +98,45 @@ public static class Program
 
         Console.WriteLine($"plcemu: listening on TCP port {port}.");
 
-        // Keep the process (and its listener) alive; plcemu is a
-        // long-running server, not a one-shot command. The scan loop /
-        // connection-lifecycle wiring that actually keeps work flowing
-        // while blocked here belongs to TcpJsonServer itself (OUT-400
-        // and friends), not to this composition root.
-        Thread.Sleep(Timeout.Infinite);
+        // Keep the process alive by driving the free-running scan loop
+        // (OUT-403) on the main thread itself — this both keeps plcemu
+        // running as a long-lived server and is the thing that
+        // actually keeps work flowing. This loop belongs to the Host,
+        // not TcpJsonServer: the server's job is the client
+        // protocol/connection lifecycle, not deciding when a scan runs
+        // (see docs/SDD.md, Architecture).
+        RunScanLoop(controller, server);
         return 0;
+    }
+
+    /// <summary>
+    /// Repeatedly runs one scan cycle (<see cref="PlcController.RunScan"/>)
+    /// and broadcasts the resulting snapshot (<see cref="TcpJsonServer.Broadcast"/>,
+    /// DATA-OUT-301) to whoever is connected — or no one, if no client
+    /// is connected right now (OUT-403). Runs back-to-back with no
+    /// artificial delay between scans: v1.0 does not define a fixed
+    /// scan period (see CORE-203/204's own elapsed-time design), so
+    /// this free-runs as fast as possible, matching how a real PLC
+    /// scans. A failure inside one scan is logged and the loop
+    /// continues with the next cycle rather than taking the whole
+    /// long-running process down, the same "one bad cycle doesn't kill
+    /// the server" posture already used for individual client messages
+    /// (see <see cref="TcpJsonServer"/>'s read loop).
+    /// </summary>
+    private static void RunScanLoop(PlcController controller, TcpJsonServer server)
+    {
+        while (true)
+        {
+            try
+            {
+                controller.RunScan();
+                server.Broadcast(controller.GetSnapshot());
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"plcemu: error during scan cycle: {ex.Message}");
+            }
+        }
     }
 
     /// <summary>
