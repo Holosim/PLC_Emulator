@@ -567,3 +567,18 @@ Fourteenth confirmation of "RTVM already current → still route through
 the two-step handoff" — fully settled. 108 is now the current
 regression baseline; supersedes both 105 and 104 quoted in isolation
 above.
+
+**Regression pass confirmed a fifteenth time (issue #17, UI-002,
+CI/CD-requested trunk regression, 2026-08-17, arriving separately from
+and slightly after the combined #19/#23 regression above):** same
+checklist against `main`@`33741f0` (post UI-002 merge `148648d`, plus
+memory/doc-only follow-up commits) — 108/108 (matches the just-settled
+combined baseline, no drop), 0/0 build warnings/errors, `git status`
+clean, RTVM already showed `Verified`/`148648d` for UI-002 before the
+run started. Also re-ran TP-003 directly against the built process
+(not just the build/test count) since it's a process-level CLI test,
+not just a unit test — output matched exactly. Confirms multiple
+sibling CI/CD regression requests for merges that landed the same day
+can arrive as separate issue threads even after their combined total
+was already established elsewhere — recount fresh each time regardless
+of what a sibling issue's memory entry already confirmed.
