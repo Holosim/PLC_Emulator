@@ -296,12 +296,24 @@ Every comment carries two fixed elements, regardless of role or
 outcome — not organic habit, a fixed structure, because tooling now
 depends on it and not just readability.
 
-**First line: addressee, then speaker.** `Systems Engineer, Test
-Engineer:` means Test Engineer is speaking *to* Systems Engineer, not
-just introducing itself. (Convention borrowed from Navy watch-standing
-communication — "Conn, Sonar" identifies who needs the attention
-before who's asking for it.) When the primary intended reader is the
-human client rather than another role, use `Client, <Speaker>:`.
+**First line: every intended reader, then `this is`, then you.**
+
+```
+Systems Engineer, Software Engineer, this is Test Engineer:
+Systems Engineer, this is Test Engineer:
+Client, this is Product Manager:
+```
+
+List everyone who should read this — one name or several — then close
+with `this is <your role>`. The `this is` marker is not optional and
+not decoration: without it, a two-recipient line like "Systems
+Engineer, Software Engineer:" is genuinely unreadable, because nothing
+distinguishes a second recipient from the sender. Recipients first
+(who needs to act), sender last (who is asking), always separated by
+`this is`.
+
+Use `Client` as the recipient when the intended reader is the human
+rather than another role.
 
 **Last line: an explicit, structured next-status line.** This is what
 `stall-recovery.yml` actually parses to recover a stalled hand-off —

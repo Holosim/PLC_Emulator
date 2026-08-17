@@ -103,7 +103,11 @@ jobs:
                can. The comment thread should never go quiet with no
                record of what was attempted. Follow the comment
                structure in .github/AGENT_LABELS.md exactly: first
-               line is "<Addressee>, <Your role>:", last line is a
+               line lists every intended reader and then identifies
+               you, as "<Reader>[, <Reader>...], this is <Your role>:"
+               — the "this is" is required, since without it a second
+               reader is indistinguishable from the sender. Last line
+               is a
                "**Next:**" status line. The Next line isn't
                decoration — stall-recovery.yml parses it to route a
                recovered hand-off correctly, so get the exact format
