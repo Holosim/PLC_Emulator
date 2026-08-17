@@ -307,6 +307,30 @@ already current → still route through the two-step handoff" — this
 pattern is fully settled, stop re-confirming it explicitly unless it
 actually breaks. 61 remains the current regression baseline.
 
+**Regression pass confirmed a seventh time (issue #13, CORE-207,
+CI/CD-requested trunk regression, 2026-08-17):** same checklist against
+`main`@`71b42ee` (post CORE-207 merge `6dfb295`/tip `d6b67f9`, plus
+RTVM-SHA-only/memory-only follow-ups). By the time this regression ran,
+`main` had *also* absorbed issue #12's CORE-205/206 counter merge
+concurrently (its 11 `CounterInstructionTests` were present even though
+issue #12's own issue thread hadn't yet routed a trunk-regression request
+to me) — **82/82** passing (79 `[TestMethod]` attributes + 3 more from
+`XicXioOteTests.cs`'s `[DataRow]` parameterization), 0/0 build
+warnings/errors, NFR-502 clean, `ProjectReference` graph unchanged,
+`git status` clean, RTVM already showed `Verified`/`6dfb295` for CORE-207.
+Seven-for-seven now on the "RTVM already current → still route through
+the two-step handoff" pattern. This 82/82 count was immediately
+superseded by issue #15's concurrent merge landing right after (see next
+entry, 97/97) — don't be surprised if a future regression request's
+"prior" branch count looks lower than the very latest recorded number;
+recount from `main` as always. Also: when checking `main` for a
+regression, don't assume only the named issue's changes are present —
+sibling issues' merges may have landed on `main` in between the
+merge-confirmation comment and the regression request reaching you; the
+checklist (recount test total, diff-scope isn't meaningful here since
+it's trunk not a branch) still catches this correctly as long as you
+always recount live rather than trusting a quoted number.
+
 **CORE-209 (issue #15, 2026-08-17) — driver architecture, PASS, 42/42
 (27 baseline + 10 `DriverFactoryTests` + 5 `PlcControllerDriverTests`,
 on a branch cut before #8/#10/#11/#14 had merged, so its own "27
@@ -339,4 +363,5 @@ from issue #12, both absorbed via concurrent merges). Reconfirms
 [[concurrent-cicd-runs-same-day]]'s pattern can chain more than once —
 even three times — in a single merge attempt on a busy day; keep
 re-fetching/re-merging/re-testing until the push actually succeeds,
-don't assume one retry is enough.
+don't assume one retry is enough. 97 is now the current regression
+baseline as of this merge — supersedes the 82/82 figure recorded above.
