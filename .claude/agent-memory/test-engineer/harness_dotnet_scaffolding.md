@@ -171,3 +171,16 @@ per the established "regression pass still routes through the two-step
 handoff even when RTVM looks current" convention. Three-for-three now
 (issues #6, #7, #11) — treat this as the settled procedure, not something
 to re-derive each time.
+
+**Regression pass confirmed a fourth time (issue #8, DATA-IN-103,
+CI/CD-requested trunk regression, 2026-08-17):** same checklist against
+`main`@`160bbc5` (post `issue-8` merge `15267cb`, plus two RTVM/memory-only
+follow-up commits) — 43/43 (baseline held from CI/CD's own post-merge count,
+no drop), 0/0 build warnings/errors, NFR-502 clean, `ProjectReference`
+graph unchanged, RTVM already showed `Verified`/`15267cb`, `git status`
+clean. Four-for-four now (issues #6, #7, #11, #8) on the "RTVM already
+current → still route through the two-step handoff, don't skip it" pattern.
+43 is now the current regression baseline (was 27 through issue #9, then
+31 on issue-8's own branch before merge, then 39 after issue #11, now 43
+after issue #8 merged — always recount from `main`, not the branch-only
+number quoted mid-development).
