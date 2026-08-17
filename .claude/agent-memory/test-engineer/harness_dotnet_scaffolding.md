@@ -721,3 +721,61 @@ result, just worth recording): this merge completed the project's
 `docs/RTVM.md` row (all 27) is now `Verified` — this DELIV-900
 regression pass was flagged as the last thing needed before issue #27
 itself closes. 119 remains the current regression baseline.
+
+**DELIV-900 post-release field defect (issue #27 reopened, client
+build failure, 2026-08-17) — PASS on the fix, 119/119, no regression.**
+After the project's first release (`v1.0.2`), the client reported
+`global.json`'s `"rollForward": "latestFeature"` (pinned floor
+`8.0.100`) fails `NETSDK1141` on a real VS2022 workstation whose only
+installed SDKs are newer majors (`9.0.317`/`10.0.303`, no `8.x`) —
+`latestFeature` only rolls forward *within* the pinned major, so no
+match exists. SE's fix: change only `rollForward` to `"latestMajor"`
+(floor unchanged) — correct per Microsoft's own guidance and confirmed
+independently (see technique below). RTVM DELIV-900/TP-900 were
+demoted `Verified`→`In Implementation` for this regression and TP-900
+was expanded to an explicit two-scenario procedure (normal CI-SDK env,
+and newer-major-only env) — re-verify *both* scenarios whenever this
+row is touched again, not just a plain build/test pass.
+
+**Reusable technique: reproducing a "client has no 8.x SDK installed"
+environment on a runner that has every SDK pre-provisioned.** This
+pipeline's own image always has 8.x/9.x/10.x all installed, so
+`dotnet --list-sdks` can never naturally show the client's exact
+symptom. Build an isolated `DOTNET_ROOT` instead:
+```
+mkdir -p /tmp/dotnet_isolated/sdk
+ln -s /usr/share/dotnet/host /tmp/dotnet_isolated/host
+ln -s /usr/share/dotnet/shared /tmp/dotnet_isolated/shared
+ln -s /usr/share/dotnet/packs /tmp/dotnet_isolated/packs
+cp /usr/share/dotnet/dotnet /tmp/dotnet_isolated/dotnet   # must be a real copy, not a symlink
+ln -s /usr/share/dotnet/sdk/<one-version> /tmp/dotnet_isolated/sdk/<one-version>
+export DOTNET_ROOT=/tmp/dotnet_isolated
+export DOTNET_MULTILEVEL_LOOKUP=0
+export PATH=/tmp/dotnet_isolated:$PATH
+dotnet --list-sdks   # should show only the one linked version
+```
+Gotcha: symlinking `dotnet` itself instead of copying it doesn't work —
+the apphost resolves its SDK search path from the *real* binary
+location it was symlinked from, not the symlink's own directory, so
+`--list-sdks` still shows every SDK on the box. Copying the binary
+fixes it. Use this to replay the *broken* config first (confirms the
+repro is byte-for-byte identical to the client's pasted error — same
+`NETSDK1141`, same empty "Installed SDKs:" line) before testing the
+fix, so the fix-passes result actually means something.
+
+**Independent re-verification of an SE-reported client-defect fix
+should rebuild the repro from scratch, not just trust the SE's own
+repro output.** Built my own separate `/tmp/dotnet_isolated` rather
+than reusing anything from the SE's branch/comment, replayed both the
+broken and fixed `global.json` against it, then ran the standard
+build/test checklist under both the isolated single-SDK env (scenario
+b) and this runner's normal multi-SDK env (scenario a, resolves to
+whichever SDK `latestMajor` picks — was `10.0.302` here). 119/119 both
+ways, 0 warnings/errors, `git status` clean. Also re-ran the full
+runner-specific-assumption scan (`RuntimeIdentifier` pins, hardcoded
+OS paths, `OSPlatform`/`RuntimeInformation` checks) independently
+rather than trusting the SE's "nothing else found" — confirms it's
+worth doing personally even when the SE already did the same scan,
+since this is exactly the class of defect (environment-dependent,
+invisible in CI) that benefits most from a second, independently-built
+reproduction rather than re-running the same script the SE already ran.
