@@ -377,3 +377,15 @@ Eight-for-eight now on "RTVM already current → still route through the
 two-step handoff" (issues #6, #7, #11, #8, #10, #14, and now this regression
 pass for #12) — fully settled, no need to keep counting instances explicitly
 going forward unless the pattern actually breaks.
+
+**Regression pass confirmed a ninth time (issue #15, CORE-209,
+CI/CD-requested trunk regression, 2026-08-17):** same checklist against
+`main`@`e741a25` (post CORE-209 merge `310a198`) — 97/97 (matches the
+baseline recorded just above, no drop), 0/0 build warnings/errors,
+NFR-502 clean, `ProjectReference` graph unchanged, `git status` clean,
+RTVM already showed `Verified`/`310a198` for CORE-209 before the run
+started. Confirms the same pattern continues to hold; 97 remains the
+current regression baseline. Landed concurrently with the issue #12
+regression pass recorded just above — both regression requests (#12 and
+#15) were in flight at the same time and both correctly recounted from
+`main` independently rather than trusting a stale quoted total.
