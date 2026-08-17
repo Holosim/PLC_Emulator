@@ -18,17 +18,39 @@ public sealed class TcpJsonServer
     private readonly PlcController _controller;
 
     /// <summary>
-    /// Guards every field below (listener, connected-client state) that
-    /// the accept thread and the per-client read thread can both touch,
-    /// so "is a client currently connected" is never read/written from
-    /// two threads at once (see docs/SDD.md's network-thread note under
-    /// Architecture).
+    /// Guards <see cref="_connectedClient"/> and the act of publishing a
+    /// new <see cref="_clientStream"/> value, so "is a client currently
+    /// connected" is never read/written from two threads at once (see
+    /// docs/SDD.md's network-thread note under Architecture). Deliberately
+    /// never held across the actual socket write in <see cref="SendLine"/>
+    /// — see the OUT-403 fix note there for why that split matters.
     /// </summary>
     private readonly object _clientLock = new();
 
+    /// <summary>
+    /// Serializes concurrent writers of outbound messages (the OUT-403
+    /// free-running scan loop's <see cref="Broadcast"/> calls vs. a
+    /// client thread answering its own <c>read_request</c>) against each
+    /// other, so two NDJSON lines can never interleave on the wire.
+    /// Intentionally a separate lock from <see cref="_clientLock"/>: the
+    /// accept thread never needs this one, so no write rate can ever
+    /// starve a pending <see cref="TcpListener.AcceptTcpClient"/>.
+    /// </summary>
+    private readonly object _writeLock = new();
+
     private TcpListener? _listener;
     private TcpClient? _connectedClient;
-    private NetworkStream? _clientStream;
+
+    /// <summary>
+    /// The current client's stream, or null when no client is connected.
+    /// Volatile so <see cref="SendLine"/> can read it without taking
+    /// <see cref="_clientLock"/> at all (see the OUT-403 fix note there)
+    /// — every write under this field is still done under
+    /// <see cref="_clientLock"/>, which is all a plain reference
+    /// assignment needs to stay safe to read concurrently.
+    /// </summary>
+    private volatile NetworkStream? _clientStream;
+
     private Thread? _acceptThread;
     private volatile bool _stopping;
 
@@ -307,6 +329,17 @@ public sealed class TcpJsonServer
             // Client dropped the connection mid-read; treated the same
             // as a clean disconnect by the cleanup below.
         }
+        catch (ObjectDisposedException)
+        {
+            // Same race as above, just caught via a different exception
+            // type depending on how far the disconnect had progressed —
+            // e.g. Stop() (or a racing Close() elsewhere) disposed the
+            // stream while this thread's ReadLine() was blocked on it.
+            // Same "treat it as a clean disconnect" handling either way;
+            // an uncaught exception here would otherwise crash the whole
+            // process from a background thread, which is strictly worse
+            // than the disconnect it's reacting to.
+        }
         finally
         {
             lock (_clientLock)
@@ -345,24 +378,41 @@ public sealed class TcpJsonServer
     /// <summary>
     /// Writes one NDJSON line (UTF-8, no BOM, <c>\n</c>-terminated per
     /// the ICD transport note) to the currently connected client, if
-    /// any. Holds <see cref="_clientLock"/> for the whole write so a
-    /// concurrent disconnect can't be torn out from under it mid-write.
+    /// any.
     /// </summary>
+    /// <remarks>
+    /// OUT-403 fix note: this used to hold <see cref="_clientLock"/> for
+    /// the whole socket write, which is exactly the lock
+    /// <see cref="AcceptLoop"/> needs to register or reject an incoming
+    /// connection. Once OUT-403 made <see cref="Broadcast"/> run in a
+    /// free-running loop with no delay between iterations, that write
+    /// held the lock so continuously that the accept thread's brief
+    /// acquisition attempts effectively never won it — a second client
+    /// would sit accepted-but-unprocessed indefinitely instead of being
+    /// closed immediately, breaking OUT-400's already-verified rejection
+    /// behavior (TP-400). The fix: read <see cref="_clientStream"/>
+    /// without any lock (it is <c>volatile</c>, and a plain reference
+    /// read/write needs nothing stronger than that to be safe), and
+    /// serialize only the actual write against other writers via
+    /// <see cref="_writeLock"/> — a lock <see cref="AcceptLoop"/> never
+    /// touches, so no broadcast rate can ever starve it again.
+    /// </remarks>
     private void SendLine(string text)
     {
+        var stream = _clientStream;
+        if (stream is null)
+        {
+            return;
+        }
+
         var bytes = Encoding.UTF8.GetBytes(text + "\n");
 
-        lock (_clientLock)
+        lock (_writeLock)
         {
-            if (_clientStream is null)
-            {
-                return;
-            }
-
             try
             {
-                _clientStream.Write(bytes, 0, bytes.Length);
-                _clientStream.Flush();
+                stream.Write(bytes, 0, bytes.Length);
+                stream.Flush();
             }
             catch (IOException)
             {
@@ -371,6 +421,8 @@ public sealed class TcpJsonServer
             }
             catch (ObjectDisposedException)
             {
+                // Same race, just caught via a different exception type
+                // depending on how far the disconnect had progressed.
             }
         }
     }
