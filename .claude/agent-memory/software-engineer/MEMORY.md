@@ -16,6 +16,7 @@
 - [Driver resolution across Core/Drivers boundary](pattern_driver_resolution.md) — DriverResolver delegate in Core, DriverFactory impl in Drivers, Host wires them (CORE-209, issue #15)
 - [Counter edge-detection gap](pattern_counter_edge_detection.md) — CTU/CTD rising-edge state needed CounterState.Cu/Cd fields beyond the documented 3-field schema; flagged for SE sign-off (issue #12)
 - [Host CLI startup wiring](pattern_host_cli_startup.md) — Program.cs UI-001/003 implementation, default `--port 5000` assumption, and the known TcpJsonServer.Start (OUT-400/#20) stub gap that keeps TP-001 from fully passing yet (issue #16)
+- [Multi-controller isolation review](pattern_multi_controller_isolation_review.md) — NFR-500/TP-500 (issue #23): no static/singleton state found on review; same-name-collision test shape for "prove no shared state"; also corrects a wrong claim about Windows CI deployment status — see that file's "deferred-promotion decision" section
 
 ## Platform-specific notes
 
