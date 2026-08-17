@@ -605,3 +605,28 @@ sibling CI/CD regression requests for merges that landed the same day
 can arrive as separate issue threads even after their combined total
 was already established elsewhere — recount fresh each time regardless
 of what a sibling issue's memory entry already confirmed.
+
+**OUT-402 (issue #22, disconnect logging, 2026-08-17) — PASS, 108/108
+(baseline held, no new automated tests added, same shape as OUT-400).**
+Closed the exact gap OUT-400/#20 explicitly deferred: `HandleClient`
+now logs `plcemu: client disconnected (<endpoint>); listening for a new
+connection.` to stdout in its `finally` block, covering both disconnect
+paths uniformly. Verified TP-402 by launching the real process and
+driving it with hand-written Python TCP clients through *both* disconnect
+mechanisms, not just the one the SE demoed: a clean FIN (`socket.
+makefile()` gotcha still applies — close both the file object and the
+raw socket) **and** an abrupt RST (`SO_LINGER` set to `(1, 0)` before
+`close()`, forcing the server down the `IOException` mid-read branch
+instead of the clean read-loop-exit branch) — both produced the same log
+line, and the server kept running/accepted a third client afterward with
+no restart. Worth doing both paths whenever a disconnect-handling
+`finally`/`catch` block is the thing under test — a demo of only the
+clean-FIN path doesn't prove the exception branch also reaches the
+logging code. Reused the CONTROL_LOGIC/NETWORK fixture field names from
+[[harness-dotnet-scaffolding]]'s TP-400 note (`initialValue` not
+`initial`, uppercase `BOOL` type, NETWORK `driver` values are the
+`DriverFactory` constants `DiscreteSensor`/`Relay`, not free-text like
+`"Simulated"` — that free-text guess failed fast with a clear
+`ConfigValidationException` on the first attempt, worth checking
+`DriverFactory.cs`'s actual constants before guessing driver names).
+108 remains the current regression baseline.
