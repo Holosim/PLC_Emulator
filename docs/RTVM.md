@@ -103,6 +103,35 @@ client's intent differs:
   `--port 5050`, client connects and receives the initial snapshot),
   which is exactly TP-001's remaining clause. No further re-verification
   needed; UI-001/UI-003 rows are fully covered as-is.
+- **DELIV-900 field defect (issue #27, 2026-08-17 client report).**
+  `global.json` pinned `"version": "8.0.100"` with
+  `"rollForward": "latestFeature"`. `latestFeature` only rolls forward
+  within the same major (8.x); a client workstation with only
+  `9.0.317`/`10.0.303` installed (no `8.x`) gets `NETSDK1141` in Visual
+  Studio for every project. Reproduced directly (SE/Systems Engineer,
+  2026-08-17): with only a `9.0.316` SDK visible and the original
+  `global.json`, `dotnet --version` fails with the identical
+  "Requested SDK version: 8.0.100 ... Installed SDKs: 9.0.316" error;
+  changing only `rollForward` to `"latestMajor"` (leaving
+  `"version": "8.0.100"` as the floor) resolves cleanly to `9.0.316`
+  with no other change needed. Fix: `global.json`'s `rollForward` →
+  `"latestMajor"`. TP-900/DELIV-900 updated above to test this
+  explicitly. Handed to Software Engineer to apply the one-line fix
+  and confirm a full build/test pass under a non-`8.x`-only SDK
+  environment before Test Engineer re-verifies.
+- **`docs/ci/windows-verification.yml` — not recreated.** The client's
+  2026-08-17 comment states this file "has been added to the workflows
+  in Github," but it does not exist on `main`, in `docs/ci/`, in
+  `.github/workflows/`, or on any branch in this repo's history (last
+  touched at commit `c8a1837`, which *removed* it as C++/MSBuild
+  scaffolding with no role in a .NET project — see
+  `workflows_permission_resolution_plc_emulator.md`). Treating this as
+  the client referring to `build-and-test.yml`'s existing
+  `windows-latest` CI leg (which does exist and already satisfies
+  NFR-501/TP-501) rather than a literal request to recreate the
+  deleted file; not acted on. Flag to Product Manager/client for
+  clarification if a literal `windows-verification.yml` is actually
+  wanted.
 
 ## Requirements
 
@@ -134,7 +163,7 @@ client's intent differs:
 | NFR-501 | Server builds and runs identically on Windows and Linux from the same C#/.NET codebase, with no OS-specific code path left unabstracted. | SN-1, SN-5 | Test | Verified | CI run `31997343615`; merge `03970cd` |
 | NFR-502 | Third-party dependencies are avoided by default; any dependency adopted is referenced only from behind an internal interface/wrapper, never directly from core logic, so it can be swapped later. | SN-5 | Inspection | Verified | `d312747` |
 | NFR-503 | Server does not persist runtime tag/controller state across restarts; each launch (re)loads CONTROL_LOGIC/NETWORK definitions fresh and runs in-memory only. | SN-1 | Test | Verified | `9567727` |
-| DELIV-900 | As a late-stage v1.0 task, the codebase is organized/refactored to compile as a Microsoft Visual Studio solution (`.sln`) with appropriate project files, so the client's engineering team can open and extend it directly in Visual Studio. | SN-5 | Inspection | Verified | `ecbc190` |
+| DELIV-900 | As a late-stage v1.0 task, the codebase is organized/refactored to compile as a Microsoft Visual Studio solution (`.sln`) with appropriate project files, so the client's engineering team can open and extend it directly in Visual Studio — **including on a workstation whose installed .NET SDKs are all newer than `global.json`'s pinned floor** (no exact-version match required; a fresh clone must not require installing an old SDK side by side just to build). | SN-5 | Inspection | In Implementation | `ecbc190` (fix pending — see 2026-08-17 client defect report) |
 
 ## Test Procedures
 
@@ -171,4 +200,4 @@ client's intent differs:
 | TP-501 | NFR-501 | Scan-cycle scenario from TP-200. | Run once, as part of the late-stage consolidation pass alongside TP-900 (not per-feature during development — see SDD's "Target-platform verification strategy"): build and run on a `windows-latest` CI runner and a `ubuntu-latest` CI runner (e.g. `docs/ci/build-and-test.yml`, promoted to `.github/workflows/` at consolidation time). | Identical output on both platforms. |
 | TP-502 | NFR-502 | N/A (design review). | Review `.csproj`/package references; confirm any third-party package is only referenced from a wrapper/interface class. | No direct third-party API usage from core logic classes. |
 | TP-503 | NFR-503 | Server run once, `Start_PB` set true via TP-401. | Stop the process, restart with the same CONTROL_LOGIC/NETWORK files. | `Start_PB` (and all tags) reset to their CONTROL_LOGIC-defined initial values, not the prior run's values. |
-| TP-900 | DELIV-900 | Delivered repository at the late-stage v1.0 milestone. | Open the `.sln` in Visual Studio (or run `msbuild`/`dotnet build` against it as a CI proxy). | All projects load and the solution builds successfully with no missing project-file errors. |
+| TP-900 | DELIV-900 | Delivered repository at the late-stage v1.0 milestone. **Plus:** a workstation whose only installed .NET SDKs are newer major versions than `global.json`'s pinned floor (e.g. only `9.0.317`/`10.0.303` present, no `8.x`) — reproduces the client's 2026-08-17 field report exactly (VS2022, `dotnet --list-sdks` showing `9.0.317`/`10.0.303` only, `global.json` pinned to `8.0.100`). | Open the `.sln` in Visual Studio (or run `msbuild`/`dotnet build` against it as a CI proxy) in both scenarios: (a) normal CI image with the pinned SDK present, (b) only a newer-major SDK present, no exact/`8.x` match. | (a) and (b) both: all projects load and the solution builds successfully with no missing project-file errors and no `NETSDK1141`/"Unable to resolve the .NET SDK version" error — `global.json`'s `rollForward` must resolve to the newest installed SDK rather than failing. |
