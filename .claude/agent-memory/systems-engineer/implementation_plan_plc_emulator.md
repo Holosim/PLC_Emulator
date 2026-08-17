@@ -75,6 +75,13 @@ the number:
   live processes since the added unit test couldn't repro the race
   in-sandbox. RTVM set `In Test` (commits `a66ea25` impl, `c707b04`
   fix) pending CI/CD merge/Verified. #29 (DELIV-901) still FS on #30.
+  **Updated 2026-08-17:** CI/CD merged `issue-30`→`main` as `a32f132`
+  (trunk merge, `v1.0.365` tag, no release cut — DELIV-901 still open),
+  regression testing flagged as needed. RTVM OUT-403 recorded
+  `a32f132` and flipped `In Test`→`Verified`; handed to
+  `agent:test-engineer` (`status:ready-for-test`) for the post-merge
+  regression pass rather than closing outright. #29 (DELIV-901) is now
+  unblocked to proceed once its own dependency check clears.
 
 **Why:** grouping RTVM items into ~22 issues (rather than one per
 single RTVM ID) kept issue count manageable while still giving each
