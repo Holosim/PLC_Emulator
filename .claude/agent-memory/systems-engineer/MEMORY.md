@@ -25,6 +25,7 @@
 
 - [Platform verification schedule](feedback_platform_verification_schedule.md) — default to one-time late-stage consolidation for target-platform verification, not a per-feature dual-runner CI matrix, even when the second runner is "free."
 - [Label reconciliation](feedback_label_reconciliation.md) — on a label-reconciliation flag (mutually exclusive status labels), verify real state via git/RTVM before acting; don't trust the kept label or assume partial work either way.
+- [Workflows permission resolution — PLC_Emulator](workflows_permission_resolution_plc_emulator.md) — App can never get `workflows` scope (doesn't declare it); manual human copy from `docs/ci/` is the permanent route. `windows-verification.yml` deleted for good, not rewritten.
 
 ## Documentation index
 
@@ -32,7 +33,7 @@
      each active product line (VR HMD, gesture-tracking gloves, video
      jukebox controller). -->
 
-- PLC_Emulator: `docs/RTVM.md`/`docs/SDD.md`/`docs/IMPLEMENTATION_PLAN.md` all populated & closed (issues #2-#4). Generate Code Base done (#5). Feature work in issues #6-#27; #6-#23 all fully closed/verified as of 2026-08-17 (#17 UI-002 commit `148648d`, #19 DATA-OUT-301 commit `00f44ee`, #20 OUT-400 commit `40fa9203139cc380aec7abe685de900e11acec19`, #21 OUT-401 commit `861395d`, #22 OUT-402 commit `e200537`, #23 NFR-500 commit `5df0234`). See [[issue-closeout-log-plc-emulator]] for per-issue commit SHAs, merge-conflict notes, and open caveats (incl. #21's flagged-but-unowned scan-cadence gap, still open — no RTVM item owns a free-running scan loop).
+- PLC_Emulator: `docs/RTVM.md`/`docs/SDD.md`/`docs/IMPLEMENTATION_PLAN.md` all populated & closed (issues #2-#4). Generate Code Base done (#5). Feature work in issues #6-#27; #6-#23 all fully closed/verified as of 2026-08-17 (#17 UI-002 commit `148648d`, #19 DATA-OUT-301 commit `00f44ee`, #20 OUT-400 commit `40fa9203139cc380aec7abe685de900e11acec19`, #21 OUT-401 commit `861395d`, #22 OUT-402 commit `e200537`, #23 NFR-500 commit `5df0234`). #24 NFR-501 Verified 2026-08-17 (CI run `31997343615`, inspection-only, zero src/tests diff) — see [[workflows-permission-resolution-plc-emulator]]. See [[issue-closeout-log-plc-emulator]] for per-issue commit SHAs, merge-conflict notes, and open caveats (incl. #21's flagged-but-unowned scan-cadence gap, still open — no RTVM item owns a free-running scan loop).
 - [SDD decisions — PLC_Emulator](sdd_decisions_plc_emulator.md) — NFR-500 controller-isolation design, TCP/JSON ICD message types (tag_update/tag_write/read_request), DELIV-900/NFR-501 one consolidated late-stage pass (not per-feature CI matrix), IDriver lives in PlcEmulator.Core not .Drivers, DriverResolver pattern, Tag.Fault fault-flag mechanism.
 - [Implementation Plan — PLC_Emulator](implementation_plan_plc_emulator.md) — issue-number map (#5 Generate Code Base, #6–#27 one per RTVM group) and dependency rationale for feature-issue queries.
 - [Issue closeout log — PLC_Emulator](issue_closeout_log_plc_emulator.md) — detailed per-issue history (#6-#18): RTVM verify status, CI/CD merge SHAs, conflict resolutions, still-open caveats (e.g. TP-001 listening-clause re-verification pending issue #20/OUT-400), and recurring merge/signature-conflict patterns (`Evaluate` arity growth, `PlcController` ctor, shallow-clone `merge-base` failures, feature-branch lag).
