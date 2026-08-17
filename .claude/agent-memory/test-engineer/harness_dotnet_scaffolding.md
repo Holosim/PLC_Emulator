@@ -441,6 +441,30 @@ component — still the same checklist applies unchanged. Ten-for-ten now
 on "RTVM already current → still route through the two-step handoff."
 97 remains the current regression baseline.
 
+**NFR-500 (issue #23, multi-controller isolation, 2026-08-17) — PASS, 104/104**
+(101 baseline + 3 new `MultiControllerIsolationTests`). First TP-500-style
+requirement whose test procedure is explicitly "Inspection" rather than
+"Test" in `docs/RTVM.md` — SE still produced a concrete unit-test artifact
+(3 tests) rather than leaving it as inspection-only prose, and that's the
+right call: don't treat "verification method: Inspection" in the RTVM as
+license to skip independently checking the code yourself. Verified the
+"no static/singleton mutable state" claim directly with `grep -rn "static"`
+across every `src/*/*.cs` field/method (not just trusting the SE's
+description) — found exactly one `static readonly` field in the whole
+codebase, `ConfigLoader.WireOptions` (immutable `JsonSerializerOptions`
+config, not runtime state); everything else is stateless factory/parse
+methods. Good pattern for any future NFR/architectural-constraint issue
+graded "Inspection": grep for the specific structural claim yourself
+(here, `static` fields) rather than rubber-stamping the SE's inspection
+narrative. Also good test design worth recognizing again if it recurs:
+the new tests deliberately reused **identical** tag/component names
+across two controller instances (not just distinct names) — the
+strongest form of an isolation check, since only a real shared/global
+registry would leak state when names collide. RTVM NFR-500/TP-500 rows
+still showed `Approved` (not yet `Verified`) at pass time, as expected —
+that's the Systems Engineer's next step. 104 is now the current
+regression baseline (101 prior + 3 new).
+
 **Regression pass confirmed an eleventh time (issue #18, DATA-OUT-300,
 CI/CD-requested trunk regression, 2026-08-17):** same checklist against
 `main`@`d73edf6` (post `issue-18` merge `77336c5`, plus memory-only

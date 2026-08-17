@@ -18,6 +18,7 @@
 - [Host CLI startup wiring](pattern_host_cli_startup.md) — Program.cs UI-001/003 implementation, default `--port 5000` assumption, and the known TcpJsonServer.Start (OUT-400/#20) stub gap that keeps TP-001 from fully passing yet (issue #16)
 - [tag_update JSON serialization](pattern_tag_update_serialization.md) — DATA-OUT-301 (issue #19): serialize-vs-transmit scope split from OUT-400/#20, and the camelCase JsonSerializerOptions needed for PascalCase DTOs to emit lowercase wire keys
 - [Inspection-only RTVM issue handling](pattern_inspection_only_issue.md) — NFR-502 dependency review (issue #25): full-compliance finding, no code change, still branch+push+hand off to test-engineer like a normal feature
+- [Multi-controller isolation review](pattern_multi_controller_isolation_review.md) — NFR-500/TP-500 (issue #23): no static/singleton state found on review; same-name-collision test shape for "prove no shared state"; also corrects a wrong claim about Windows CI deployment status — see that file's "deferred-promotion decision" section
 
 ## Platform-specific notes
 
